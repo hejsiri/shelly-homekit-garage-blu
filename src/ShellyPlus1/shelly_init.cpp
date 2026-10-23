@@ -64,9 +64,6 @@ void CreatePeripherals(std::vector<std::unique_ptr<Input>> *inputs,
     InitSysLED(LED_GPIO, LED_ON);
   }
   InitSysBtn(BTN_GPIO, BTN_DOWN);
-#ifdef SHELLY_GARAGE_BLE
-  if (mgos_sys_config_get_shelly_mode() == (int) Mode::kGarageDoor) blu::Init();
-#endif
 }
 
 void CreateComponents(std::vector<std::unique_ptr<Component>> *comps,
@@ -79,6 +76,9 @@ void CreateComponents(std::vector<std::unique_ptr<Component>> *comps,
       sensors.empty() && !addon_input &&
       (mgos_sys_config_get_sw1_in_mode() != (int) InMode::kDetached);
   if (gdo_mode) {
+#ifdef SHELLY_GARAGE_BLE
+    blu::Init();
+#endif
     hap::CreateHAPGDO(1, FindInput(1), FindInput(2), FindOutput(1),
                       FindOutput(1), mgos_sys_config_get_gdo1(), comps, accs,
                       svr, true);

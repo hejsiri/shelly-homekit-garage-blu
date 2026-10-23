@@ -17,6 +17,14 @@ if [[ "$build_root" == *[[:space:]]* || "$build_root" == "$project_root" ]]; the
 fi
 rsync -a --exclude='.git/' --exclude='build*/' --exclude='deps/' --exclude='binlibs/' \
   --exclude='releases/' "$project_root/" "$build_root/"
+# Staging may receive edits made while a previous build was still running:
+# rsync preserves their mtime, which can precede that build's objects. Rebuild
+# application objects and the panel while retaining the SDK cache.
+rm -f "$build_root/fs/index.html.gz"
+app_objects="$build_root/build_$model/objs/esp-idf/mosapp/CMakeFiles/__idf_mosapp.dir$build_root/src"
+if [[ -d "$app_objects" ]]; then
+  find "$app_objects" -name '*.obj' -delete
+fi
 (cd "$build_root" && make "$model" MOS="$mos_bin" "$@")
 mkdir -p "$project_root/build_$model"
 cp "$build_root/build_$model/fw.zip" "$project_root/build_$model/fw.zip"

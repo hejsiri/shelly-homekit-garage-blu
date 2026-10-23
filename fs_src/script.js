@@ -535,7 +535,6 @@ function bluPairRefresh(c) {
     select.onchange = updateCurrentPIN;
     updateCurrentPIN();
     el(c, "blu_pair_confirm").disabled = status.state !== "scanning" || entries.length === 0;
-    if (status.state === "done" || status.state === "error") el(c, "blu_pair_pin").value = "";
   }).catch(e => bluPairStatus(c, e.message || String(e), "error"))
     .finally(() => { c.bluPairPending = false; });
 }
@@ -549,9 +548,11 @@ function bluPairConfirm(c) {
   const request = callDevice("Shelly.BLU.Pair", {
     role: c.bluPairRole, mac: el(c, "blu_pair_candidate").value, pin, current_pin: el(c, "blu_pair_current_pin").value,
   });
-  el(c, "blu_pair_pin").value = "";
-  el(c, "blu_pair_current_pin").value = "";
-  request.then(() => bluPairRefresh(c)).catch(e => {
+  request.then(() => {
+    el(c, "blu_pair_pin").value = "";
+    el(c, "blu_pair_current_pin").value = "";
+    bluPairRefresh(c);
+  }).catch(e => {
     bluPairStatus(c, e.message || String(e), "error");
   });
 }

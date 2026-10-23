@@ -55,7 +55,7 @@ receives the Garage BLU OTA package. Physical pairing remains unverified.
    time out; errors remain visible in the panel.
 7. Repeat for the second endpoint. Enable **BLU endpoint sensors**, set the
    timeout (default 180 seconds, 30–3600 allowed), and save. Saving the general
-   BLU configuration restarts the device; pairing saves its own assignment.
+   BLU configuration refreshes the readings and restarts the service; pairing saves its own assignment.
 
 Discovery lasts 60 seconds, connection/configuration has a 90-second deadline,
 and encrypted-beacon verification can wait for up to 180 seconds. The sensors
@@ -206,3 +206,24 @@ The Plus1 partition-table binary is byte-identical to the official upstream
 2.16.1 Plus1 release. ZIP integrity, per-model manifest/channel mapping, JS
 syntax and version comparison checks passed. Host decoder/AES-CCM/replay tests
 passed. Neither image has been flashed or tested on physical hardware.
+
+## Pairing fixes — 2.16.1-blu3
+
+- Status polling no longer clears PIN input after a pairing error. PINs are
+  cleared after an accepted pairing request, explicit cancellation or a new scan;
+  rejected requests preserve both input fields.
+- BLE pairing is initialized once when garage components are created, including
+  switching from Switch mode without rebooting the device.
+- Saving BLU endpoint settings refreshes readings and assignments immediately;
+  the firmware restarts its service, not necessarily the whole device.
+- Disconnect errors identify the pairing stage and BLE reason code.
+- The panel explicitly declares UTF-8. The build helper forces app-object and
+  panel regeneration to avoid stale artifacts after staging edits.
+
+`node tests/blu_pairing_ui_test.js` verifies PIN preservation across repeated
+status polls and rejected RPCs, and clearing after an accepted RPC.
+Both model images compiled and contain the new disconnect diagnostic.
+The first stock 1.7.5 -> blu2 OTA on a real Plus1 succeeded, with web UI and
+roughly 140 kB free heap shortly after boot. A physical Door/Window was discovered,
+but the initial pairing disconnected before completion; end-to-end encrypted
+pairing is not yet validated. No Gen3 hardware test has been performed.

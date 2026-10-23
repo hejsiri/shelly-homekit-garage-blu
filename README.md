@@ -96,10 +96,10 @@ instalacja OTA i BLE na fizycznym urządzeniu wymagają weryfikacji.
 
 - [Paczki Garage BLU i instrukcja online](https://hejsiri.pl/firmware/garage-blu/)
 - [Pełna instrukcja instalacji i aktualizacji](docs/AKTUALIZACJA.md)
-- [Pobierz firmware 2.16.1-blu2 dla Shelly 1 Gen3 (ZIP)](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu2.zip)
-- [Suma SHA-256 paczki](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu2.zip.sha256)
-- [Pobierz firmware 2.16.1-blu2 dla Shelly Plus 1 (ZIP)](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu2.zip)
-- [Suma SHA-256 paczki Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu2.zip.sha256)
+- [Pobierz firmware 2.16.1-blu3 dla Shelly 1 Gen3 (ZIP)](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu3.zip)
+- [Suma SHA-256 paczki](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu3.zip.sha256)
+- [Pobierz firmware 2.16.1-blu3 dla Shelly Plus 1 (ZIP)](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu3.zip)
+- [Suma SHA-256 paczki Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu3.zip.sha256)
 
 ### Pierwsza instalacja z fabrycznego firmware Gen3 / Plus
 

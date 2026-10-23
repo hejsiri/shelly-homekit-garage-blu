@@ -86,7 +86,7 @@ bool ValidMAC(const char *mac) {
 }
 
 void Invalidate() {
-  configured = false;
+  ResetReadings();
 }
 
 bool Enabled() {
@@ -107,6 +107,9 @@ void ResetReadings() {
 }
 
 void Init() {
+  static bool initialized = false;
+  if (initialized) return;
+  initialized = true;
   ResetReadings();
   PairingInit();
   mgos_event_add_handler(MGOS_BT_GAP_EVENT_SCAN_RESULT, ScanResult, nullptr);

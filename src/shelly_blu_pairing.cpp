@@ -331,7 +331,8 @@ int GapEvent(ble_gap_event *event, void *arg) {
       Discover();
     });
   } else if (event->type == BLE_GAP_EVENT_DISCONNECT) {
-    mgos::InvokeCB([current] {
+    const int reason = event->disconnect.reason;
+    mgos::InvokeCB([current, reason] {
       if (current != generation) return;
       conn = BLE_HS_CONN_HANDLE_NONE;
       if (state == "waiting_encrypted_beacon" || !Active()) return;
@@ -345,8 +346,13 @@ int GapEvent(ble_gap_event *event, void *arg) {
         ble_store_util_delete_peer(&native_peer);
         ble_hs_cfg.sm_mitm = 1;
         Connect();
-      } else
-        Finish("Sensor disconnected before setup completed; wake it and retry");
+      } else {
+        const std::string message = mgos::SPrintf(
+            "Sensor disconnected during %s (BLE reason 0x%02x); wake it and retry",
+            state.c_str(), reason);
+        LOG(LL_WARN, ("BLU pairing: %s", message.c_str()));
+        Finish(message.c_str());
+      }
     });
   }
   return 0;
