@@ -84,6 +84,11 @@ Kierunkiem rozwoju jest obsługa
 który według producenta ma obudowę IP55 oraz łączność Bluetooth i Zigbee.
 To model <strong>SBDW-302C</strong>, inny niż obecnie zaimplementowany SBDW-002C.
 Wymaga osobnego dostosowania i testów; nie jest jeszcze obsługiwany w aktualnym wydaniu.</p>
+<p>Projekt ma być też podstawą do dalszej rozbudowy garażu o inne czujniki
+i akcesoria <strong>Shelly BLU</strong>. Planuję możliwość dodawania pomiaru temperatury
+i wilgotności, wykrywania ruchu i wycieku oraz obsługi przycisku BLU —
+z konfiguracją w tym samym panelu WWW. To planowany kierunek rozwoju;
+aktualne wydanie obsługuje dwa czujniki Door/Window jako krańcówki bramy.</p>
 <h2>Wspierane urządzenia</h2>
 <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%" border="1" cellpadding="10">
 <thead><tr><th scope="col">Urządzenie</th><th scope="col">Status Garage BLU</th></tr></thead>

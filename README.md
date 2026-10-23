@@ -46,6 +46,12 @@ To model **SBDW-302C**, inny niż obecnie zaimplementowany SBDW-002C;
 jego parowanie i zgodność z Garage BLU wymagają osobnego dostosowania i testów.
 Nie jest jeszcze obsługiwany w aktualnym wydaniu.
 
+Projekt ma być też podstawą do dalszej rozbudowy garażu o inne czujniki
+i akcesoria **Shelly BLU**. Planuję możliwość dodawania pomiaru temperatury
+i wilgotności, wykrywania ruchu i wycieku oraz obsługi przycisku BLU —
+z konfiguracją w tym samym panelu WWW. To planowany kierunek rozwoju;
+aktualne wydanie obsługuje dwa czujniki Door/Window jako krańcówki bramy.
+
 ## Wspierany sprzęt
 
 | Urządzenie | Rola w Garage BLU |
