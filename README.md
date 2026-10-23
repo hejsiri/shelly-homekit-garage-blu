@@ -79,7 +79,7 @@ zatrzymuje fizycznie bramy będącej już w ruchu i nie zastępuje zabezpieczeń
 ## Wkrótce
 
 Planuję dodać obsługę **Shelly BLU H&T** (temperatura i wilgotność)
-oraz przycisku **Shelly BLU Button** i czujnika ruchu **Shelly BLU Motion**. Te urządzenia nie są jeszcze obsługiwane
+oraz przycisku **Shelly BLU Button** czujnika ruchu **Shelly BLU Motion** oraz czujnika wycieku Shelly BLU. Te urządzenia nie są jeszcze obsługiwane
 w aktualnym wydaniu firmware.
 
 ## Szybki start
