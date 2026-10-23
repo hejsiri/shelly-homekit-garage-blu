@@ -92,8 +92,8 @@ Wymaga osobnego dostosowania i testów; nie jest jeszcze obsługiwany w aktualny
 <tr><td><strong>Shelly BLU Door/Window (SBDW-002C)</strong></td><td>Dwa czujniki: pełne zamknięcie i pełne otwarcie bramy. Zachowują fabryczny firmware. Zaimplementowane parowanie i odbiór BLE wymagają testów na sprzęcie.</td></tr>
 <tr><td>Shelly 1 Mini Gen3, 1PM Gen3, pozostałe Gen3, Plus, Gen1 i Pro</td><td>Brak paczek i obsługi Garage BLU dla tych modeli w tym wydaniu.</td></tr>
 <tr><td>Shelly Gen4</td><td>Brak portu Garage BLU dla platformy Gen4.</td></tr>
-<tr><td>Shelly BLU H&amp;T (temperatura i wilgotność) oraz Shelly BLU Button</td><td>Wkrótce — planowane wsparcie. Aktualne wydanie jeszcze ich nie obsługuje.</td></tr>
-<tr><td>Shelly BLU Motion i inne czujniki BLE</td><td>Obsługa nie została dodana.</td></tr>
+<tr><td>Shelly BLU H&amp;T (temperatura i wilgotność) oraz Shelly BLU Button i czujnik ruchu Shelly BLU Motion</td><td>Wkrótce — planowane wsparcie. Aktualne wydanie jeszcze ich nie obsługuje.</td></tr>
+<tr><td>Inne czujniki BLE</td><td>Obsługa nie została dodana.</td></tr>
 </tbody></table></div>
 <p>Sama obecność Bluetooth nie oznacza zgodności. Kod innych urządzeń z bazowego Shelly-HomeKit
 został zachowany, ale nie oznacza to obsługi rozszerzenia Garage BLU na tych modelach.</p>
@@ -104,7 +104,7 @@ przez panel WWW Garage BLU. Naszą paczkę OTA instaluje się wyłącznie na ste
 <strong>Shelly 1 Gen3</strong>, a nie na czujnikach. Parowanie i działanie na sprzęcie wymagają jeszcze weryfikacji.</p>
 <h2>Wkrótce</h2>
 <p>Planuję dodać obsługę <strong>Shelly BLU H&amp;T</strong> (temperatura i wilgotność)
-oraz przycisku <strong>Shelly BLU Button</strong>. Te urządzenia nie są jeszcze obsługiwane
+oraz przycisku <strong>Shelly BLU Button</strong> i czujnika ruchu <strong>Shelly BLU Motion</strong>. Te urządzenia nie są jeszcze obsługiwane
 w aktualnym wydaniu firmware.</p>
 <p>Firmware <strong>{html.escape(version)}</strong> wyłącznie dla <strong>Shelly 1 Gen3</strong> (S1G3).
 Nie instaluj na Mini, Gen4 ani innych modelach.</p>
