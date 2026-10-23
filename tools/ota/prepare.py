@@ -76,7 +76,7 @@ na hejsiri.pl. HomeKit komunikuje się z modułem przez Wi-Fi.</p>
 <p>Sama obecność Bluetooth nie oznacza zgodności. Kod innych urządzeń z bazowego Shelly-HomeKit
 został zachowany, ale nie oznacza to obsługi rozszerzenia Garage BLU na tych modelach.</p>
 <h2>Wkrótce</h2>
-<p>Planujemy dodać obsługę <strong>Shelly BLU H&amp;T</strong> (temperatura i wilgotność)
+<p>Planuję dodać obsługę <strong>Shelly BLU H&amp;T</strong> (temperatura i wilgotność)
 oraz przycisku <strong>Shelly BLU Button</strong>. Te urządzenia nie są jeszcze obsługiwane
 w aktualnym wydaniu firmware.</p>
 <p>Firmware <strong>{html.escape(version)}</strong> wyłącznie dla <strong>Shelly 1 Gen3</strong> (S1G3).

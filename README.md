@@ -45,7 +45,7 @@ zatrzymuje fizycznie bramy będącej już w ruchu i nie zastępuje zabezpieczeń
 
 ## Wkrótce
 
-Planujemy dodać obsługę **Shelly BLU H&T** (temperatura i wilgotność)
+Planuję dodać obsługę **Shelly BLU H&T** (temperatura i wilgotność)
 oraz przycisku **Shelly BLU Button**. Te urządzenia nie są jeszcze obsługiwane
 w aktualnym wydaniu firmware.
 
