@@ -63,6 +63,7 @@ class GarageDoorOpener : public Component, public mgos::hap::Service {
 
   static const char *StateStr(State state);
 
+  bool SensorsReady() const;
   void GetInputsState(int *is_closed, int *is_open) const;
   void SetCurState(State new_state);
   void SetTgtState(State new_state, const char *source);
@@ -83,11 +84,12 @@ class GarageDoorOpener : public Component, public mgos::hap::Service {
   mgos::hap::Characteristic *tgt_state_char_ = nullptr;
   mgos::hap::Characteristic *obst_char_ = nullptr;
 
-  State cur_state_;
-  State tgt_state_;
-  State pre_stopped_state_;
+  State cur_state_ = State::kStopped;
+  State tgt_state_ = State::kClosed;
+  State pre_stopped_state_ = State::kStopped;
   int64_t begin_ = 0;
   bool obstruction_detected_ = false;
+  bool sensors_ready_ = true;
 };
 
 void CreateHAPGDO(int id, Input *in_close, Input *in_open, Output *out_close,

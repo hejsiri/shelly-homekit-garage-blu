@@ -12,3 +12,7 @@ fs/conf*.json
 flash-shelly.auth.yaml
 *.cfg.yaml
 .venv
+
+# Native local simulator output
+tools/simulator/*.dylib
+tools/simulator/__pycache__/

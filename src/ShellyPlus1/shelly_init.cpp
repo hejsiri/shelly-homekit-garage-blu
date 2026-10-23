@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include "shelly_blu_garage.hpp"
 #include "shelly_dht_sensor.hpp"
 #include "shelly_hap_garage_door_opener.hpp"
 #include "shelly_hap_input.hpp"
@@ -63,6 +64,9 @@ void CreatePeripherals(std::vector<std::unique_ptr<Input>> *inputs,
     InitSysLED(LED_GPIO, LED_ON);
   }
   InitSysBtn(BTN_GPIO, BTN_DOWN);
+#ifdef SHELLY_GARAGE_BLE
+  if (mgos_sys_config_get_shelly_mode() == (int) Mode::kGarageDoor) blu::Init();
+#endif
 }
 
 void CreateComponents(std::vector<std::unique_ptr<Component>> *comps,

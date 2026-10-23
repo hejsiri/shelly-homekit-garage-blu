@@ -3,13 +3,49 @@
 
 # Open Source Apple HomeKit Firmware for Shelly Devices
 
+## Shelly HomeKit Garage BLU — instalacja i OTA
+
+Shelly HomeKit Garage BLU to firmware do sterowania bramą garażową przez Apple HomeKit
+na **Shelly 1 Gen3**. Bazuje na otwartym projekcie
+[mongoose-os-apps/shelly-homekit](https://github.com/mongoose-os-apps/shelly-homekit),
+który udostępnia urządzenia Shelly w aplikacji Dom bez dodatkowego mostka.
+
+Dodano dwa czujniki **Shelly BLU Door/Window** jako potwierdzenie pełnego zamknięcia
+i otwarcia bramy, parowanie z panelu WWW bez aplikacji Shelly, szyfrowane komunikaty
+BTHome z ochroną przed ponownym użyciem pakietów, blokowanie poleceń przy braku
+wiarygodnego stanu czujników oraz kanał OTA na hejsiri.pl. HomeKit działa przez Wi-Fi,
+a czujniki komunikują się z modułem przez Bluetooth. Obsługa BLE wymaga jeszcze
+weryfikacji na fizycznym sprzęcie.
+
+[Instrukcja instalacji i aktualizacji](docs/AKTUALIZACJA.md) ·
+[Paczki OTA na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/) ·
+[Konfiguracja BLE i ograniczenia](README-BLU.md).
+
+Instrukcje i tabele poniżej pochodzą z projektu bazowego. Ich paczki z rojer.me
+instalują oryginalne Shelly-HomeKit, bez naszych zmian Garage BLU.
+
 This firmware exposes Shelly devices as Apple HomeKit accessories.
 
 Firmware is compatible with stock and can be uploaded via OTA (Watch a 2 minute [video](https://www.youtube.com/watch?v=BZc-kp4dDRw)), for more info take a look at the flashing wiki [here](https://github.com/mongoose-os-apps/shelly-homekit/wiki/Flashing#updating-from-stock-firmware).
 
 Reverting to stock firmware is also possible [see here](https://github.com/mongoose-os-apps/shelly-homekit/wiki/Flashing#reverting-to-stock-firmware).
 
-## Supported devices and features
+## Wspierane urządzenia Garage BLU
+
+| Urządzenie | Status w tym wydaniu |
+| --- | --- |
+| **Shelly 1 Gen3 (S1G3)** | Jedyny model z przygotowaną paczką Garage BLU; kompilacja i testy lokalne przeszły, testy na sprzęcie pozostają do wykonania. |
+| **Shelly BLU Door/Window (SBDW-002C)** | Zaimplementowane dwa czujniki: pełne zamknięcie i pełne otwarcie bramy. Czujniki zachowują fabryczny firmware; parowanie i odbiór BLE wymagają testów na sprzęcie. |
+| Shelly 1 Mini Gen3, 1PM Gen3, pozostałe Gen3, Plus, Gen1 i Pro | Brak paczek i obsługi Garage BLU dla tych modeli w tym wydaniu. |
+| Shelly Gen4 | Brak portu Garage BLU dla platformy Gen4. |
+| Shelly BLU Button, Motion, H&T i inne czujniki BLE | Obsługa nie została dodana. |
+
+Sama obecność Bluetooth nie oznacza zgodności z Garage BLU. Kod pozostałych
+urządzeń z projektu bazowego został zachowany, ale nie oznacza to obsługi
+naszego rozszerzenia BLE. Poniższe tabele opisują **oryginalne Shelly-HomeKit**.
+Nie wgrywaj paczki S1G3 do innego modelu.
+
+## Urządzenia i funkcje projektu bazowego (bez rozszerzenia Garage BLU)
 
 ### Gen 3 Devices
 

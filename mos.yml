@@ -1,6 +1,6 @@
 author: Shelly-HomeKit contributors
 description: A HomeKit firmware for Shelly switches
-version: 2.16.1
+version: 2.16.1-blu1
 
 libs_version: latest
 modules_version: latest
@@ -779,6 +779,7 @@ conds:
         - src/DHT
         - src/ShellyPlus1
       libs:
+        - location: https://github.com/mongoose-os-libs/bt-common
         - location: https://github.com/mongoose-os-libs/onewire
         - location: https://github.com/mongoose-os-libs/dht
         - location: https://github.com/mongoose-os-libs/mongoose
@@ -796,11 +797,14 @@ conds:
         ESP_IDF_EXTRA_PARTITION_2: "shelly,data,0x88,0x7F0000,64K,encrypted"
         ESP_IDF_SDKCONFIG_OPTS: >
           ${build_vars.ESP_IDF_SDKCONFIG_OPTS}
+            CONFIG_ESP32_WIFI_SW_COEXIST_ENABLE=y
+            CONFIG_BT_NIMBLE_MAX_CONNECTIONS=1
             CONFIG_FREERTOS_UNICORE=y
             CONFIG_ESPTOOLPY_FLASHMODE_DIO=y
             CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
             CONFIG_PARTITION_TABLE_OFFSET=0xF000
       cdefs:
+        SHELLY_GARAGE_BLE: 1
         LED_GPIO: 19
         LED_ON: 0
         BTN_GPIO: -1
@@ -815,6 +819,15 @@ conds:
         ADDON_IN_GPIO: 21
         ADDON_DIG_GPIO: 6
       config_schema:
+        - ["bt.enable", true]
+        - ["bt.keep_enabled", true]
+        - ["bt.adv_enable", false]
+        - ["bt.allow_pairing", false]
+        - ["blu", "o", {title: "BLU garage sensors"}]
+        - ["blu.enable", "b", false, {title: "Use two BLU Door/Window endpoint sensors"}]
+        - ["blu.closed_mac", "s", "", {title: "Closed endpoint sensor MAC"}]
+        - ["blu.open_mac", "s", "", {title: "Open endpoint sensor MAC"}]
+        - ["blu.stale_after_s", "i", 180, {title: "Sensor timeout in seconds (30-3600)"}]
         - ["device.id",    "Shelly1G3-????????????"]
         - ["shelly.name",  "Shelly1G3-????????????"]
         - ["wifi.ap.ssid", "Shelly1G3-????????????"]

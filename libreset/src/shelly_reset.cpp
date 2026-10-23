@@ -20,6 +20,9 @@
 #include "mgos.hpp"
 #include "mgos_file_logger.h"
 #include "mgos_vfs.h"
+#ifdef SHELLY_GARAGE_BLE
+#include "nvs.h"
+#endif
 
 #include "shelly_sys_led_btn.hpp"
 #include "shelly_wifi_config.hpp"
@@ -121,6 +124,15 @@ bool WipeDevice() {
       "conf2.json", "conf9.json", KVS_FILE_NAME, ACL_FILE_NAME, AUTH_FILE_NAME,
   };
   bool wiped = false;
+#ifdef SHELLY_GARAGE_BLE
+  nvs_handle_t secure_store;
+  if (nvs_open("blu_secure", NVS_READWRITE, &secure_store) == ESP_OK) {
+    if (nvs_erase_all(secure_store) == ESP_OK &&
+        nvs_commit(secure_store) == ESP_OK)
+      wiped = true;
+    nvs_close(secure_store);
+  }
+#endif
   for (const char *wipe_fn : s_wipe_files) {
     if (remove(wipe_fn) == 0) wiped = true;
   }

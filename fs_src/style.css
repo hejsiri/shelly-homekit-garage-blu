@@ -394,3 +394,17 @@ input:checked + .slider:before {
   background: var(--primary);
   color: white;
 }
+
+.blu-pair-status {
+  font-weight: 600;
+}
+.blu-pair-success { color: #168044; }
+.blu-pair-error { color: #c53232; }
+.blu-pair-waiting { color: #a65c00; }
+.blu-pair-progress { color: #2563c2; }
+@media (prefers-color-scheme: dark) {
+  .blu-pair-success { color: #62df95; }
+  .blu-pair-error { color: #ff8585; }
+  .blu-pair-waiting { color: #ffc369; }
+  .blu-pair-progress { color: #86b7ff; }
+}

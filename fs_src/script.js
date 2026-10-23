@@ -479,6 +479,83 @@ function wcSetConfig(c, cfg, spinner) {
   setComponentConfig(c, cfg, spinner);
 }
 
+function bluPairStatus(c, message, state) {
+  const status = el(c, "blu_pair_status");
+  updateInnerText(status, message);
+  status.className = "blu-pair-status blu-pair-" + state;
+}
+
+function bluPairStart(c, role) {
+  if (!lastInfo || !lastInfo.auth_en) {
+    alert("Set a web panel password in Security Settings before pairing sensors.");
+    return;
+  }
+  c.bluPairRole = role;
+  el(c, "blu_pairing").style.display = "block";
+  updateInnerText(el(c, "blu_pair_title"), role === 0 ? "Pair closing sensor" : "Pair opening sensor");
+  el(c, "blu_pair_pin").value = "";
+  el(c, "blu_pair_current_pin").value = "";
+  callDevice("Shelly.BLU.Discover", {}).then(() => bluPairRefresh(c)).catch(e => {
+    bluPairStatus(c, e.message || String(e), "error");
+  });
+}
+
+function bluPairRefresh(c) {
+  if (c.bluPairPending || el(c, "blu_pairing").style.display === "none") return;
+  c.bluPairPending = true;
+  callDevice("Shelly.BLU.Status", {}).then(status => {
+    const labels = {
+      scanning: "Searching — put your sensor in pairing mode",
+      connecting: "Connecting to new sensor", connecting_secure: "Connecting to secured sensor",
+      securing_link: "Authenticating BLE connection", discovering_services: "Checking sensor services",
+      enabling_beacon: "Enabling beacon mode", setting_pin: "Configuring sensor encryption",
+      waiting_pairing_mode: "Hold the sensor button for 10 seconds again to finish secure reconnection",
+      reconnecting: "Reconnecting using the new PIN", reading_key: "Saving encryption key on Shelly",
+      waiting_encrypted_beacon: "Waiting for a verified encrypted state — wake the sensor if needed",
+      done: "Sensor paired and encrypted state verified", idle: "Ready",
+    };
+    const tone = status.error || status.state === "error" ? "error" :
+      status.state === "done" ? "success" :
+      ["scanning", "waiting_pairing_mode", "waiting_encrypted_beacon"].includes(status.state) ? "waiting" : "progress";
+    bluPairStatus(c, status.error || labels[status.state] || status.state, tone);
+    const select = el(c, "blu_pair_candidate");
+    const selected = select.value;
+    const entries = status.candidates || [];
+    select.replaceChildren(...entries.map(candidate => {
+      const option = document.createElement("option");
+      option.value = candidate.mac;
+      option.textContent = `${candidate.mac} · ${candidate.rssi} dBm · ${candidate.encrypted ? "secured — existing PIN" : "new — choose PIN"}`;
+      return option;
+    }));
+    if (entries.some(candidate => candidate.mac === selected)) select.value = selected;
+    const updateCurrentPIN = () => {
+      const candidate = entries.find(item => item.mac === select.value);
+      el(c, "blu_pair_current_container").style.display = candidate && candidate.encrypted ? "" : "none";
+    };
+    select.onchange = updateCurrentPIN;
+    updateCurrentPIN();
+    el(c, "blu_pair_confirm").disabled = status.state !== "scanning" || entries.length === 0;
+    if (status.state === "done" || status.state === "error") el(c, "blu_pair_pin").value = "";
+  }).catch(e => bluPairStatus(c, e.message || String(e), "error"))
+    .finally(() => { c.bluPairPending = false; });
+}
+
+function bluPairConfirm(c) {
+  const pin = el(c, "blu_pair_pin").value;
+  if (!/^[1-9][0-9]{5}$/.test(pin)) {
+    alert("Enter a six-digit PIN from 100000 to 999999.");
+    return;
+  }
+  const request = callDevice("Shelly.BLU.Pair", {
+    role: c.bluPairRole, mac: el(c, "blu_pair_candidate").value, pin, current_pin: el(c, "blu_pair_current_pin").value,
+  });
+  el(c, "blu_pair_pin").value = "";
+  el(c, "blu_pair_current_pin").value = "";
+  request.then(() => bluPairRefresh(c)).catch(e => {
+    bluPairStatus(c, e.message || String(e), "error");
+  });
+}
+
 function gdoSetConfig(c, cfg, spinner) {
   if (!cfg) {
     let name = el(c, "name").value;
@@ -508,6 +585,25 @@ function gdoSetConfig(c, cfg, spinner) {
     }
     if (c.data.out_mode >= 0) {
       cfg.out_mode = parseInt(el(c, "out_mode").value);
+    }
+  }
+  if (c.data.blu) {
+    cfg.blu = {
+      enable: el(c, "blu_enable").checked,
+      closed_mac: el(c, "blu_closed_mac").value.trim().toUpperCase(),
+      open_mac: el(c, "blu_open_mac").value.trim().toUpperCase(),
+      stale_after_s: Number(el(c, "blu_stale_after_s").value),
+    };
+    const mac = /^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$/;
+    if (cfg.blu.enable && (!mac.test(cfg.blu.closed_mac) || !mac.test(cfg.blu.open_mac) ||
+        cfg.blu.closed_mac === cfg.blu.open_mac ||
+        cfg.blu.closed_mac === "00:00:00:00:00:00" || cfg.blu.open_mac === "00:00:00:00:00:00")) {
+      alert("Enter two distinct BLU sensor MAC addresses");
+      return;
+    }
+    if (!Number.isInteger(cfg.blu.stale_after_s) || cfg.blu.stale_after_s < 30 || cfg.blu.stale_after_s > 3600) {
+      alert("Sensor timeout must be 30-3600 seconds");
+      return;
     }
   }
   setComponentConfig(c, cfg, spinner);
@@ -588,6 +684,16 @@ function findOrAddContainer(cd) {
     case Component_Type.kGarageDoorOpener:
       c = el("gdo_template").cloneNode(true);
       c.id = elId;
+      el(c, "blu_pair_closed").onclick = () => bluPairStart(c, 0);
+      el(c, "blu_pair_open").onclick = () => bluPairStart(c, 1);
+      el(c, "blu_pair_confirm").onclick = () => bluPairConfirm(c);
+      el(c, "blu_pair_cancel").onclick = () => {
+        el(c, "blu_pair_pin").value = "";
+        el(c, "blu_pair_current_pin").value = "";
+        callDevice("Shelly.BLU.Cancel", {}).then(() => bluPairRefresh(c)).catch(e => {
+          bluPairStatus(c, e.message || String(e), "error");
+        });
+      };
       el(c, "save_btn").onclick = function() {
         gdoSetConfig(c, null, el(c, "save_spinner"));
       };
@@ -868,6 +974,22 @@ function updateComponent(cd) {
       break;
     }
     case Component_Type.kGarageDoorOpener: {
+      if (cd.blu) {
+        bluPairRefresh(c);
+        el(c, "blu_config").style.display = "";
+        checkIfNotModified(el(c, "blu_enable"), cd.blu.enable);
+        setValueIfNotModified(el(c, "blu_closed_mac"), cd.blu.closed_mac);
+        setValueIfNotModified(el(c, "blu_open_mac"), cd.blu.open_mac);
+        setValueIfNotModified(el(c, "blu_stale_after_s"), cd.blu.stale_after_s);
+        updateInnerText(el(c, "blu_status"), !cd.blu.enable ? "Wired sensors selected" :
+          (cd.blu.ready ? "BLU sensors ready" : "BLU sensors missing, stale or conflicting — controls blocked"));
+        for (const role of ["closed", "open"]) {
+          const sensor = cd.blu[role];
+          updateInnerText(el(c, "blu_" + role + "_status"), role + ": " + (!sensor.secure ? "not paired securely" : !sensor.seen ? "waiting for encrypted beacon" :
+            `${sensor.active ? "magnet detected" : "magnet absent"}, battery ${sensor.battery < 0 ? "unknown" : sensor.battery + "%"}, RSSI ${sensor.rssi} dBm, ${sensor.age_s}s ago`));
+        }
+        el(c, "toggle_btn").disabled = cd.blu.enable && !cd.blu.ready;
+      }
       updateInnerText(el(c, "head"), cd.name);
       setValueIfNotModified(el(c, "name"), cd.name);
       updateInnerText(el(c, "state"), cd.cur_state_str);
@@ -884,6 +1006,11 @@ function updateComponent(cd) {
         selectIfNotModified(el(c, "out_mode"), cd.out_mode);
       } else {
         el(c, "out_mode_container").style.display = "none";
+      }
+      if (cd.blu) {
+        el(c, "sensor_swap_container").style.display = cd.blu.enable ? "none" : "";
+        el(c, "close_sensor_mode_container").style.display = cd.blu.enable ? "none" : "";
+        el(c, "open_sensor_mode_container").style.display = cd.blu.enable || cd.open_sensor_mode < 0 ? "none" : "";
       }
       break;
     }
@@ -1762,11 +1889,13 @@ function checkUpdate() {
   let e = el("update_status");
   let se = el("update_btn_spinner");
   let errMsg =
-      "Failed, check <a href=\"https://github.com/mongoose-os-apps/shelly-homekit/releases\">GitHub</a>.";
+      "Failed, check <a href=\"https://hejsiri.pl/firmware/garage-blu/\">firmware downloads</a>.";
   e.innerText = "";
   se.className = "spin";
   console.log("Model:", model, "Version:", curVersion);
-  fetch("https://rojer.me/files/shelly/update.json", {
+  fetch(model === "Shelly1Gen3" ?
+            "https://hejsiri.pl/firmware/garage-blu/update.json" :
+            "https://rojer.me/files/shelly/update.json", {
     headers: {
       "X-Model": model,
       "X-Current-Version": curVersion,

@@ -17,10 +17,13 @@
 
 #include "shelly_hap_garage_door_opener.hpp"
 
+#include <strings.h>
+
 #include "mgos.hpp"
 #include "mgos_hap.hpp"
 #include "mgos_system.hpp"
 
+#include "shelly_blu_garage.hpp"
 #include "shelly_main.hpp"
 
 namespace shelly {
@@ -66,6 +69,7 @@ Status GarageDoorOpener::Init() {
       iid++, &kHAPCharacteristicType_CurrentDoorState, 0, 4, 1,
       [this](HAPAccessoryServerRef *, const HAPUInt8CharacteristicReadRequest *,
              uint8_t *value) {
+        if (!SensorsReady()) return kHAPError_Unknown;
         *value = static_cast<uint8_t>(cur_state_);
         LOG(LL_DEBUG, ("GDO %d: Read cur: %d", id(), *value));
         return kHAPError_None;
@@ -99,7 +103,14 @@ Status GarageDoorOpener::Init() {
       kHAPCharacteristicDebugDescription_ObstructionDetected);
   AddChar(obst_char_);
   cur_state_ = (in_close_->GetState() ? State::kClosed : State::kOpen);
-  tgt_state_ = cur_state_;
+#ifdef SHELLY_GARAGE_BLE
+  if (blu::Enabled()) {
+    cur_state_ = State::kStopped;
+    sensors_ready_ = false;
+    obstruction_detected_ = true;
+  }
+#endif
+  tgt_state_ = (cur_state_ == State::kClosed ? State::kClosed : State::kOpen);
   LOG(LL_INFO, ("GDO %d: cur_state %d", id(), (int) cur_state_));
   state_timer_.Reset(100, MGOS_TIMER_REPEAT);
   return Status::OK();
@@ -119,15 +130,46 @@ StatusOr<std::string> GarageDoorOpener::GetInfoJSON() const {
       "move_time: %d, pulse_time_ms: %d, "
       "close_sensor_mode: %d, open_sensor_mode: %d, "
       "out_mode: %d, "
-      "sensor_swap: %B}",
+      "sensor_swap: %B"
+#ifdef SHELLY_GARAGE_BLE
+      ",blu:%s"
+#endif
+      "}",
       id(), type(), cfg_->name, (int) cur_state_, StateStr(cur_state_),
       cfg_->move_time_ms / 1000, cfg_->pulse_time_ms, cfg_->close_sensor_mode,
       cfg_->open_sensor_mode, (out_open_ != out_close_ ? cfg_->out_mode : -1),
-      cfg_->sensor_swap);
+      cfg_->sensor_swap
+#ifdef SHELLY_GARAGE_BLE
+      ,
+      blu::GetInfoJSON().c_str()
+#endif
+  );
 }
 
 Status GarageDoorOpener::SetConfig(const std::string &config_json,
                                    bool *restart_required) {
+#ifdef SHELLY_GARAGE_BLE
+  int8_t blu_enable = mgos_sys_config_get_blu_enable();
+  int stale_after = mgos_sys_config_get_blu_stale_after_s();
+  char *closed_mac = nullptr, *open_mac = nullptr;
+  json_scanf(config_json.c_str(), config_json.size(),
+             "{blu:{enable:%B,closed_mac:%Q,open_mac:%Q,stale_after_s:%d}}",
+             &blu_enable, &closed_mac, &open_mac, &stale_after);
+  mgos::ScopedCPtr closed_owner(closed_mac), open_owner(open_mac);
+  const char *old_closed = mgos_sys_config_get_blu_closed_mac();
+  const char *old_open = mgos_sys_config_get_blu_open_mac();
+  if (old_closed == nullptr) old_closed = "";
+  if (old_open == nullptr) old_open = "";
+  const char *closed = closed_mac ? closed_mac : old_closed;
+  const char *open = open_mac ? open_mac : old_open;
+  if (stale_after < 30 || stale_after > 3600 ||
+      (blu_enable && (!blu::ValidMAC(closed) || !blu::ValidMAC(open) ||
+                      strcasecmp(closed, open) == 0))) {
+    return mgos::Errorf(
+        STATUS_INVALID_ARGUMENT,
+        "BLU requires two distinct sensor MACs and timeout 30-3600s");
+  }
+#endif
   struct mgos_config_gdo cfg = *cfg_;
   cfg.name = nullptr;
   int move_time = -1, pulse_time_ms = -1, out_mode = -1;
@@ -160,6 +202,18 @@ Status GarageDoorOpener::SetConfig(const std::string &config_json,
     cfg_->sensor_swap = sensor_swap;
     *restart_required = true;
   }
+#ifdef SHELLY_GARAGE_BLE
+  if (blu_enable != mgos_sys_config_get_blu_enable() ||
+      strcmp(closed, old_closed) != 0 || strcmp(open, old_open) != 0 ||
+      stale_after != mgos_sys_config_get_blu_stale_after_s()) {
+    mgos_sys_config_set_blu_enable(blu_enable);
+    mgos_sys_config_set_blu_closed_mac(closed);
+    mgos_sys_config_set_blu_open_mac(open);
+    mgos_sys_config_set_blu_stale_after_s(stale_after);
+    blu::Invalidate();
+    *restart_required = true;
+  }
+#endif
   // We don't impose a limit on pulse time.
   // Apply.
   if (cfg.name != nullptr && strcmp(cfg_->name, cfg.name) != 0) {
@@ -189,6 +243,10 @@ Status GarageDoorOpener::SetState(const std::string &state_json) {
   int8_t toggle = -1;
   json_scanf(state_json.c_str(), state_json.size(), "{toggle: %B}", &toggle);
   if (toggle != -1 && toggle) {
+    if (!SensorsReady()) {
+      return mgos::Errorf(STATUS_UNAVAILABLE,
+                          "BLU sensors unavailable or conflicting");
+    }
     ToggleState("RPC");
     RunOnce();
   }
@@ -216,7 +274,20 @@ const char *GarageDoorOpener::StateStr(State state) {
   return "???";
 }
 
+bool GarageDoorOpener::SensorsReady() const {
+#ifdef SHELLY_GARAGE_BLE
+  if (blu::Enabled()) return blu::Ready();
+#endif
+  return true;
+}
+
 void GarageDoorOpener::GetInputsState(int *is_closed, int *is_open) const {
+#ifdef SHELLY_GARAGE_BLE
+  if (blu::Enabled()) {
+    blu::GetInputs(is_closed, is_open);
+    return;
+  }
+#endif
   bool in_close_act_state = (cfg_->close_sensor_mode == 0);
   *is_closed = (in_close_->GetState() == in_close_act_state);
   if (in_open_ != nullptr &&
@@ -233,7 +304,7 @@ void GarageDoorOpener::SetCurState(State new_state) {
   LOG(LL_INFO,
       ("GDO %d: Cur State: %s -> %s (%d -> %d)", id(), StateStr(cur_state_),
        StateStr(new_state), (int) cur_state_, (int) new_state));
-  bool obst_notify;
+  bool obst_notify = false;
   if (cur_state_ == State::kStopped) {
     // Leaving Stopepd state - reset the "obstruction detected" flag.
     obstruction_detected_ = false;
@@ -253,6 +324,7 @@ void GarageDoorOpener::SetCurState(State new_state) {
 }
 
 void GarageDoorOpener::ToggleState(const char *source) {
+  if (!SensorsReady()) return;
   // Every target state change generates a pulse.
   State new_state =
       (tgt_state_ == State::kClosed ? State::kOpen : State::kClosed);
@@ -295,6 +367,7 @@ void GarageDoorOpener::ToggleState(const char *source) {
 HAPError GarageDoorOpener::HAPTgtStateWrite(
     HAPAccessoryServerRef *, const HAPUInt8CharacteristicWriteRequest *,
     uint8_t value) {
+  if (!SensorsReady()) return kHAPError_InvalidState;
   if ((value == kHAPCharacteristicValue_TargetDoorState_Open &&
        (cur_state_ == State::kOpen || cur_state_ == State::kOpening)) ||
       (value == kHAPCharacteristicValue_TargetDoorState_Closed &&
@@ -327,6 +400,19 @@ void GarageDoorOpener::SetTgtState(State new_state, const char *src) {
 }
 
 void GarageDoorOpener::RunOnce() {
+  const bool ready = SensorsReady();
+  if (ready != sensors_ready_) {
+    sensors_ready_ = ready;
+    cur_state_char_->RaiseEvent();
+  }
+  if (!ready) {
+    SetCurState(State::kStopped);
+    if (!obstruction_detected_) {
+      obstruction_detected_ = true;
+      obst_char_->RaiseEvent();
+    }
+    return;
+  }
   int is_closed, is_open;
   GetInputsState(&is_closed, &is_open);
   LOG(LL_DEBUG,
