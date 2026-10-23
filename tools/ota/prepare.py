@@ -62,6 +62,28 @@ jeden potwierdza pełne zamknięcie, drugi pełne otwarcie bramy. Rozszerzenie o
 z panelu WWW bez aplikacji Shelly, szyfrowane komunikaty BTHome z ochroną przed ponownym użyciem
 pakietów, blokowanie poleceń przy braku wiarygodnego stanu czujników oraz własny kanał aktualizacji OTA
 na hejsiri.pl. HomeKit komunikuje się z modułem przez Wi-Fi.</p>
+<h2>Idea projektu</h2>
+<p>Chciałem stworzyć prosty sposób na dodanie bramy garażowej do Apple HomeKit
+<strong>bez plątaniny kabli prowadzących do czujników</strong>. Bezprzewodowe czujniki BLU
+mają ułatwić i przyspieszyć montaż, szczególnie przy istniejącym napędzie,
+gdzie prowadzenie dodatkowego okablowania bywa kłopotliwe.</p>
+<p>Kluczowe są <strong>dwa czujniki — po jednym dla każdego położenia krańcowego</strong>.
+Pierwszy potwierdza całkowite zamknięcie bramy, a drugi całkowite otwarcie.
+W rozwiązaniu z jednym czujnikiem zamknięcia jego zwolnienie oznacza tylko
+„brama nie jest zamknięta”; nie potwierdza pełnego otwarcia. Brama może być
+w ruchu albo zatrzymać się w połowie.</p>
+<p>Zależało mi na tym, by potwierdzenie obu pozycji pochodziło z czujników,
+niezależnie od tego, czy bramę uruchomiono z aplikacji Dom, przyciskiem na ścianie
+czy zwykłym pilotem radiowym. Naprzemienne korzystanie z HomeKit i pilota
+nie wymaga wtedy zgadywania położenia na podstawie ostatniej komendy z aplikacji.
+<strong>Do takiego potwierdzania obu stanów projekt wymaga dwóch czujników.</strong>
+Nie jest to ciągły pomiar położenia bramy między krańcówkami.</p>
+<p>W założeniach projektu ważna jest również możliwość montażu czujników na zewnątrz.
+Kierunkiem rozwoju jest obsługa
+<a href="https://www.shelly.com/pl/products/shelly-blu-door-window-outdoor-zb-ivory">Shelly BLU Door/Window Outdoor ZB</a>,
+który według producenta ma obudowę IP55 oraz łączność Bluetooth i Zigbee.
+To model <strong>SBDW-302C</strong>, inny niż obecnie zaimplementowany SBDW-002C.
+Wymaga osobnego dostosowania i testów; nie jest jeszcze obsługiwany w aktualnym wydaniu.</p>
 <h2>Wspierane urządzenia</h2>
 <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%" border="1" cellpadding="10">
 <thead><tr><th scope="col">Urządzenie</th><th scope="col">Status Garage BLU</th></tr></thead>

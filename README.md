@@ -18,6 +18,34 @@ weryfikacji na fizycznym sprzęcie.
 [Paczki OTA na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/) ·
 [Konfiguracja BLE i ograniczenia](README-BLU.md).
 
+## Idea projektu
+
+Chciałem stworzyć prosty sposób na dodanie bramy garażowej do Apple HomeKit
+**bez plątaniny kabli prowadzących do czujników**. Bezprzewodowe czujniki BLU
+mają ułatwić i przyspieszyć montaż, szczególnie przy istniejącym napędzie,
+gdzie prowadzenie dodatkowego okablowania bywa kłopotliwe.
+
+Kluczowe są **dwa czujniki — po jednym dla każdego położenia krańcowego**.
+Pierwszy potwierdza, że brama jest całkowicie zamknięta, a drugi, że jest
+całkowicie otwarta. W rozwiązaniu z jednym czujnikiem zamknięcia jego
+zwolnienie oznacza tylko „brama nie jest zamknięta”; nie potwierdza pełnego
+otwarcia. Brama może przecież być w ruchu albo zatrzymać się w połowie.
+
+Zależało mi na tym, by potwierdzenie obu pozycji pochodziło z czujników,
+niezależnie od tego, czy bramę uruchomiono z aplikacji Dom, przyciskiem
+na ścianie czy zwykłym pilotem radiowym. Dzięki temu naprzemienne korzystanie
+z HomeKit i pilota nie wymaga zgadywania położenia na podstawie ostatniej
+komendy z aplikacji. **Do takiego potwierdzania obu stanów projekt wymaga
+dwóch czujników.** Nie jest to ciągły pomiar położenia bramy między krańcówkami.
+
+W założeniach projektu ważna jest również możliwość montażu czujników
+na zewnątrz. Kierunkiem rozwoju jest obsługa
+[Shelly BLU Door/Window Outdoor ZB](https://www.shelly.com/pl/products/shelly-blu-door-window-outdoor-zb-ivory),
+który według producenta ma obudowę IP55 oraz łączność Bluetooth i Zigbee.
+To model **SBDW-302C**, inny niż obecnie zaimplementowany SBDW-002C;
+jego parowanie i zgodność z Garage BLU wymagają osobnego dostosowania i testów.
+Nie jest jeszcze obsługiwany w aktualnym wydaniu.
+
 ## Wspierany sprzęt
 
 | Urządzenie | Rola w Garage BLU |
