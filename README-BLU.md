@@ -1,6 +1,6 @@
 # Garage door with encrypted Shelly BLU sensors
 
-Target: **Shelly 1 Gen3**, not Mini or Gen4. HomeKit uses Wi-Fi. The two
+Targets: **Shelly 1 Gen3** and **Shelly Plus 1**, with separate firmware packages. Not Mini or Gen4. HomeKit uses Wi-Fi. The two
 Shelly BLU Door/Window (SBDW-002C) sensors retain their original firmware.
 
 This is an experimental implementation. The firmware compiles, cryptographic
@@ -12,9 +12,10 @@ preview as evidence of successful radio pairing.
 
 | Urządzenie | Status w tym wydaniu |
 | --- | --- |
-| **Shelly 1 Gen3 (S1G3)** | Jedyny model z przygotowaną paczką Garage BLU; kompilacja i testy lokalne przeszły, testy na sprzęcie pozostają do wykonania. |
+| **Shelly 1 Gen3 (S1G3)** | Osobna paczka Garage BLU dla Gen3; kompilacja i testy lokalne przeszły, testy na sprzęcie pozostają do wykonania. |
+| **Shelly Plus 1 (Plus1)** | Osobna paczka ESP32 z obsługą BLE; działanie na sprzęcie wymaga weryfikacji. |
 | **Shelly BLU Door/Window (SBDW-002C)** | Zaimplementowane dwa czujniki: pełne zamknięcie i pełne otwarcie bramy. Czujniki zachowują fabryczny firmware; parowanie i odbiór BLE wymagają testów na sprzęcie. |
-| Shelly 1 Mini Gen3, 1PM Gen3, pozostałe Gen3, Plus, Gen1 i Pro | Brak paczek i obsługi Garage BLU dla tych modeli w tym wydaniu. |
+| Shelly 1 Mini Gen3, 1PM Gen3, pozostałe Gen3, pozostałe Plus, Gen1 i Pro | Brak paczek i obsługi Garage BLU dla tych modeli w tym wydaniu. |
 | Shelly Gen4 | Brak portu Garage BLU dla platformy Gen4. |
 | Shelly BLU H&T (temperatura i wilgotność), Shelly BLU Button, czujnik ruchu Shelly BLU Motion oraz czujnik wycieku Shelly BLU | Wkrótce — planowane wsparcie; jeszcze niedostępne w aktualnym wydaniu. |
 | Inne czujniki BLE | Obsługa nie została dodana. |
@@ -29,7 +30,7 @@ The upstream rojer.me packages do not contain these BLU changes.
 
 BLU Door/Window sensors do not need a firmware update or replacement firmware.
 They are intended to run their original Shelly firmware; pair them with the
-controller through the Garage BLU web panel. Only the Shelly 1 Gen3 controller
+controller through the Garage BLU web panel. Only the Shelly 1 Gen3 or Shelly Plus 1 controller
 receives the Garage BLU OTA package. Physical pairing remains unverified.
 
 1. Set an administrator password in the web panel's **Security Settings**.
@@ -156,13 +157,13 @@ BLE pairing on physical hardware remains unverified.
 
 ## OTA hosting — hejsiri.pl
 
-The Shelly1Gen3 web panel uses `https://hejsiri.pl/firmware/garage-blu/update.json`.
+The Shelly1Gen3 and ShellyPlus1 web panels use `https://hejsiri.pl/firmware/garage-blu/update.json`.
 Other model panels retain the upstream update channel. Garage BLU releases use
 `2.16.1-bluN` versions so subsequent BLE builds can be compared by the existing
 version parser. Publish only the tested build intended for this model.
 
 After `bash tools/build-blu.sh`, run `python3 tools/ota/prepare.py` to generate
-`releases/hosting/garage-blu/`: versioned ZIP, SHA-256, channel JSON, metadata,
+`releases/hosting/garage-blu/`: model-specific versioned ZIPs, SHA-256, channel JSON, metadata,
 static download page and CORS/preflight configuration. The output contains no
 sensor keys, configuration backups or device credentials. Upload this directory
 to `domains/hejsiri.pl/public_html/firmware/garage-blu/` on the active hosting.
@@ -179,3 +180,29 @@ and hejsiri.pl update channel. SHA-256:
 Published to the active Hostido document root. Public HTTPS download matches
 this checksum; JSON CORS headers, OPTIONS preflight (204), and ZIP byte-range
 requests (206) verified. No device was flashed; hardware validation is pending.
+
+## Building Shelly Plus 1
+
+Use `SHELLY_BLU_MODEL=ShellyPlus1 bash tools/build-blu.sh` for the ESP32 Plus1 image.
+The default `bash tools/build-blu.sh` still builds ESP32-C3 S1G3. Build both with
+the same version before running `python3 tools/ota/prepare.py`; the OTA channel
+maps each model to its own ZIP. Do not interchange their packages.
+
+The Plus1 target retains the upstream pinout, 4 MB flash partition layout and
+0x190000 app slots, and enables BLE scanning, outgoing NimBLE pairing and Wi-Fi
+coexistence. Physical pairing, RAM, reception and OTA installation must be tested
+on each model separately.
+
+## Build verification — 2026-10-23 / blu2
+
+Both targets compiled successfully as `2.16.1-blu2`:
+
+| Target | Build ID | ZIP bytes | App bytes / slot bytes |
+| --- | --- | --- | --- |
+| Shelly Plus 1 | 20261023-083745 | 1806208 | 1375584 / 1638400 (84.0%) |
+| Shelly 1 Gen3 | 20261023-084052 | 2241371 | 1356752 / 2818048 (48.1%) |
+
+The Plus1 partition-table binary is byte-identical to the official upstream
+2.16.1 Plus1 release. ZIP integrity, per-model manifest/channel mapping, JS
+syntax and version comparison checks passed. Host decoder/AES-CCM/replay tests
+passed. Neither image has been flashed or tested on physical hardware.

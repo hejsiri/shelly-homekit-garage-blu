@@ -1,6 +1,6 @@
 # Instalacja i aktualizacja Shelly HomeKit Garage BLU
 
-Dotyczy wyłącznie **Shelly 1 Gen3 (S1G3)**. Paczka nie jest przeznaczona dla
+Dotyczy **Shelly 1 Gen3 (S1G3)** oraz **Shelly Plus 1 (Plus1)**. Każdy model ma osobną paczkę OTA; nie są zamienne. Paczki nie są przeznaczone dla
 Shelly 1 Mini Gen3, 1PM ani Gen4. Wydanie jest eksperymentalne: kompilacja i testy
 lokalne przeszły, ale instalacja OTA oraz BLE na fizycznym urządzeniu wymagają
 weryfikacji. Nie mamy potwierdzenia bezproblemowego przejścia z fabrycznego 2.1.0.
@@ -10,13 +10,13 @@ weryfikacji. Nie mamy potwierdzenia bezproblemowego przejścia z fabrycznego 2.1
 Czujników **Shelly BLU Door/Window nie trzeba aktualizować ani zmieniać ich
 firmware**. Mają działać na oryginalnym firmware Shelly; wystarczy sparować je
 z modułem przez panel WWW Garage BLU. Paczka OTA z tej instrukcji jest
-przeznaczona wyłącznie dla sterownika **Shelly 1 Gen3**, a nie dla czujników.
+przeznaczona dla sterownika **Shelly 1 Gen3 lub Shelly Plus 1**, a nie dla czujników.
 Parowanie i działanie na fizycznym sprzęcie wymagają jeszcze weryfikacji.
 
 ## Pobieranie
 
 Aktualna paczka i jej suma SHA-256: <https://hejsiri.pl/firmware/garage-blu/>.
-Pierwsze wydanie to **2.16.1-blu1**. Pobierz ZIP bez rozpakowywania. Opcjonalnie
+Aktualne wydanie to **2.16.1-blu2**, z osobnymi plikami dla Gen3 i Plus 1. Pobierz ZIP bez rozpakowywania. Opcjonalnie
 porównaj `shasum -a 256 nazwa-paczki.zip` z plikiem `.sha256` obok paczki.
 `update.json` jest listą aktualizacji dla naszego panelu, a nie plikiem firmware.
 
@@ -32,7 +32,7 @@ porównaj `shasum -a 256 nazwa-paczki.zip` z plikiem `.sha256` obok paczki.
    tego jako potwierdzenia zgodności z naszym firmware. Nie obniżaj wersji
    fabrycznej tylko po to, by użyć starszej instrukcji instalacji.
 
-## Pierwsza instalacja z fabrycznego firmware Gen3
+## Pierwsza instalacja z fabrycznego firmware Gen3 / Plus
 
 1. Otwórz lokalny panel Shelly pod `http://ADRES_IP/` i zaloguj się, jeżeli
    włączona jest autoryzacja.
@@ -40,18 +40,24 @@ porównaj `shasum -a 256 nazwa-paczki.zip` z plikiem `.sha256` obok paczki.
    lub adresu URL, jeżeli panel udostępnia taką opcję. Wskaż ZIP z hejsiri.pl.
 3. Alternatywą dla instalacji przez URL jest fabryczne RPC `Shelly.Update`.
    Poniższy adres **rozpoczyna aktualizację** — zastąp `ADRES_IP` adresem Shelly
-   i otwórz go dopiero, gdy jesteś gotowy:
+   i otwórz go dopiero, gdy jesteś gotowy. Przykład dotyczy **Gen3**; dla **Plus 1** użyj drugiego adresu:
 
    ```text
-   http://ADRES_IP/rpc/Shelly.Update?url=https%3A%2F%2Fhejsiri.pl%2Ffirmware%2Fgarage-blu%2Fshelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu1.zip
+   http://ADRES_IP/rpc/Shelly.Update?url=https%3A%2F%2Fhejsiri.pl%2Ffirmware%2Fgarage-blu%2Fshelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu2.zip
+   ```
+
+   **Shelly Plus 1:**
+
+   ```text
+   http://ADRES_IP/rpc/Shelly.Update?url=https%3A%2F%2Fhejsiri.pl%2Ffirmware%2Fgarage-blu%2Fshelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu2.zip
    ```
 
    Przy włączonej autoryzacji użyj uwierzytelnionego panelu lub klienta RPC.
    Nie wyłączaj hasła, aby ominąć błąd autoryzacji. Stare adresy `/ota?url=...`
-   z instrukcji Gen1 nie są instrukcją RPC dla Gen3.
+   z instrukcji Gen1 nie są instrukcją RPC dla Gen3 / Plus.
 4. Nie odłączaj zasilania. Poczekaj na zakończenie aktualizacji i restart,
    następnie ponownie otwórz panel. Sprawdź adres w routerze, jeśli się zmienił.
-5. Sprawdź w panelu model i wersję `2.16.1-blu1`. Ustaw hasło administratora,
+5. Sprawdź w panelu model i wersję `2.16.1-blu2`. Ustaw hasło administratora,
    wybierz **Garage Door Opener**, ustaw sterowanie zgodnie z napędem i sparuj
    czujniki **Closing sensor** oraz **Opening sensor**. Przetestuj oba położenia
    i działanie przekaźnika pod nadzorem przed normalnym użyciem bramy.

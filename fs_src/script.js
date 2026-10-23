@@ -1893,7 +1893,7 @@ function checkUpdate() {
   e.innerText = "";
   se.className = "spin";
   console.log("Model:", model, "Version:", curVersion);
-  fetch(model === "Shelly1Gen3" ?
+  fetch(["Shelly1Gen3", "ShellyPlus1"].includes(model) ?
             "https://hejsiri.pl/firmware/garage-blu/update.json" :
             "https://rojer.me/files/shelly/update.json", {
     headers: {

@@ -3,7 +3,7 @@
 # Shelly HomeKit Garage BLU
 
 Shelly HomeKit Garage BLU to firmware do sterowania bramą garażową przez Apple HomeKit
-na **Shelly 1 Gen3**. Bazuje na otwartym projekcie
+na **Shelly 1 Gen3** i **Shelly Plus 1**. Bazuje na otwartym projekcie
 [mongoose-os-apps/shelly-homekit](https://github.com/mongoose-os-apps/shelly-homekit),
 który udostępnia urządzenia Shelly w aplikacji Dom bez dodatkowego mostka.
 
@@ -57,16 +57,17 @@ aktualne wydanie obsługuje dwa czujniki Door/Window jako krańcówki bramy.
 | Urządzenie | Rola w Garage BLU |
 | --- | --- |
 | **Shelly 1 Gen3 (S1G3)** | Sterownik bramy, przekaźnik, panel WWW i połączenie z Apple HomeKit przez Wi-Fi. |
+| **Shelly Plus 1 (Plus1)** | Sterownik bramy na ESP32; osobna paczka firmware, ten sam panel i obsługa BLE. |
 | **Shelly BLU Door/Window (SBDW-002C) — 2 sztuki** | Czujniki pełnego zamknięcia i pełnego otwarcia bramy; komunikacja Bluetooth, fabryczny firmware czujników. |
 
-Paczka OTA jest przeznaczona wyłącznie dla Shelly 1 Gen3.
+Każdy sterownik ma własną paczkę OTA. Paczki S1G3 i Plus1 nie są zamienne.
 Kompilacja i testy lokalne przeszły; instalacja, parowanie BLE i działanie
 na fizycznym sprzęcie pozostają do sprawdzenia.
 
 **Czujników Shelly BLU Door/Window nie trzeba aktualizować ani zmieniać ich
 firmware. Mają działać na oryginalnym firmware Shelly — wystarczy sparować je
 z modułem w panelu WWW Garage BLU.** Naszą paczkę firmware instaluje się tylko
-na sterowniku Shelly 1 Gen3. Działanie parowania na sprzęcie wymaga jeszcze weryfikacji.
+na sterowniku Shelly 1 Gen3 lub Shelly Plus 1 — wybierz odpowiednią paczkę. Działanie parowania na sprzęcie wymaga jeszcze weryfikacji.
 
 ## Funkcje Garage BLU
 
@@ -90,18 +91,20 @@ w aktualnym wydaniu firmware.
 
 ## Szybki start
 
-Dotyczy wyłącznie **Shelly 1 Gen3 (S1G3)**. Wydanie eksperymentalne;
+Dotyczy **Shelly 1 Gen3 (S1G3)** i **Shelly Plus 1 (Plus1)**. Wydanie eksperymentalne;
 instalacja OTA i BLE na fizycznym urządzeniu wymagają weryfikacji.
 
 - [Paczki Garage BLU i instrukcja online](https://hejsiri.pl/firmware/garage-blu/)
 - [Pełna instrukcja instalacji i aktualizacji](docs/AKTUALIZACJA.md)
-- [Pobierz firmware 2.16.1-blu1 (ZIP)](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu1.zip)
-- [Suma SHA-256 paczki](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu1.zip.sha256)
+- [Pobierz firmware 2.16.1-blu2 dla Shelly 1 Gen3 (ZIP)](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu2.zip)
+- [Suma SHA-256 paczki](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu2.zip.sha256)
+- [Pobierz firmware 2.16.1-blu2 dla Shelly Plus 1 (ZIP)](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu2.zip)
+- [Suma SHA-256 paczki Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu2.zip.sha256)
 
-### Pierwsza instalacja z fabrycznego firmware Gen3
+### Pierwsza instalacja z fabrycznego firmware Gen3 / Plus
 
 Otwórz lokalny panel urządzenia i postępuj zgodnie z
-[instrukcją dla firmware fabrycznego](docs/AKTUALIZACJA.md#pierwsza-instalacja-z-fabrycznego-firmware-gen3).
+[instrukcją dla firmware fabrycznego](docs/AKTUALIZACJA.md#pierwsza-instalacja-z-fabrycznego-firmware-gen3--plus).
 Użyj naszej paczki ZIP lub fabrycznego RPC `Shelly.Update` z adresem paczki.
 Instrukcja zawiera gotowy adres RPC do uzupełnienia adresem IP urządzenia.
 Nie mamy jeszcze potwierdzenia przejścia z fabrycznego 2.1.0 na fizycznym sprzęcie.
