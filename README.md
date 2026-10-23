@@ -43,6 +43,12 @@ na fizycznym sprzęcie pozostają do sprawdzenia.
 Opisane funkcje wymagają weryfikacji na sprzęcie. Blokowanie poleceń nie
 zatrzymuje fizycznie bramy będącej już w ruchu i nie zastępuje zabezpieczeń napędu.
 
+## Wkrótce
+
+Planujemy dodać obsługę **Shelly BLU H&T** (temperatura i wilgotność)
+oraz przycisku **Shelly BLU Button**. Te urządzenia nie są jeszcze obsługiwane
+w aktualnym wydaniu firmware.
+
 ## Quick Start
 
 Dotyczy wyłącznie **Shelly 1 Gen3 (S1G3)**. Wydanie eksperymentalne;
