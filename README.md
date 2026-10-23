@@ -49,7 +49,7 @@ Planujemy dodać obsługę **Shelly BLU H&T** (temperatura i wilgotność)
 oraz przycisku **Shelly BLU Button**. Te urządzenia nie są jeszcze obsługiwane
 w aktualnym wydaniu firmware.
 
-## Quick Start
+## Szybki start
 
 Dotyczy wyłącznie **Shelly 1 Gen3 (S1G3)**. Wydanie eksperymentalne;
 instalacja OTA i BLE na fizycznym urządzeniu wymagają weryfikacji.
