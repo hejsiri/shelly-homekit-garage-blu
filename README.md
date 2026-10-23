@@ -21,7 +21,7 @@ weryfikacji na fizycznym sprzęcie.
 [Paczki OTA na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/) ·
 [Konfiguracja BLE i ograniczenia](README-BLU.md).
 
-Instrukcje i tabele poniżej pochodzą z projektu bazowego. Ich paczki z rojer.me
+Instrukcje i tabela poniżej pochodzą z projektu bazowego. Ich paczki z rojer.me
 instalują oryginalne Shelly-HomeKit, bez naszych zmian Garage BLU.
 
 This firmware exposes Shelly devices as Apple HomeKit accessories.
@@ -32,18 +32,14 @@ Reverting to stock firmware is also possible [see here](https://github.com/mongo
 
 ## Wspierane urządzenia Garage BLU
 
-| Urządzenie | Status w tym wydaniu |
-| --- | --- |
-| **Shelly 1 Gen3 (S1G3)** | Jedyny model z przygotowaną paczką Garage BLU; kompilacja i testy lokalne przeszły, testy na sprzęcie pozostają do wykonania. |
-| **Shelly BLU Door/Window (SBDW-002C)** | Zaimplementowane dwa czujniki: pełne zamknięcie i pełne otwarcie bramy. Czujniki zachowują fabryczny firmware; parowanie i odbiór BLE wymagają testów na sprzęcie. |
-| Shelly 1 Mini Gen3, 1PM Gen3, pozostałe Gen3, Plus, Gen1 i Pro | Brak paczek i obsługi Garage BLU dla tych modeli w tym wydaniu. |
-| Shelly Gen4 | Brak portu Garage BLU dla platformy Gen4. |
-| Shelly BLU Button, Motion, H&T i inne czujniki BLE | Obsługa nie została dodana. |
+Paczka Garage BLU jest przygotowana wyłącznie dla **Shelly 1 Gen3 (S1G3)**
+z dwoma czujnikami **Shelly BLU Door/Window (SBDW-002C)**, potwierdzającymi
+pełne zamknięcie i otwarcie bramy. Kompilacja i testy lokalne przeszły;
+instalacja, parowanie i działanie na sprzęcie pozostają do sprawdzenia.
 
-Sama obecność Bluetooth nie oznacza zgodności z Garage BLU. Kod pozostałych
-urządzeń z projektu bazowego został zachowany, ale nie oznacza to obsługi
-naszego rozszerzenia BLE. Poniższe tabele opisują **oryginalne Shelly-HomeKit**.
-Nie wgrywaj paczki S1G3 do innego modelu.
+Poniższa tabela Gen3 opisuje funkcje **oryginalnego Shelly-HomeKit**.
+Rozszerzenie Garage BLU nie zostało dodane do pozostałych modeli.
+Nie wgrywaj paczki S1G3 do innego urządzenia.
 
 ## Urządzenia i funkcje projektu bazowego (bez rozszerzenia Garage BLU)
 
@@ -58,54 +54,6 @@ Nie wgrywaj paczki S1G3 do innego modelu.
 |Roller shutter mode                         |✗        |✗        |✓        |✗        |✗         |✗           |✗  
 |Power measurement                           |✗        |✓        |✓        |✗        |✗         |✓           |✓
 |Temperature/Humidity measurement<sup>4</sup>|✓        |✓        |✓        |✓        |✗         |✗           |✗ 
-
-### Plus devices
-
-|                                            |[+1]|[+1Mini]|[+1PMMini]|[+1PM]|[+2PM]|+i4 [AC]/[DC]|[+Plug S]|[+Uni]
-|-                                           |-   |-       |-         |-     |-     |-            |-        |-     
-|Switch & Co.<sup>1</sup>                    |✓   |✓       |✓         |✓     |✓     |✗            |✓        |✓     
-|Stateless Input<sup>2</sup>                 |✓   |✓       |✓         |✓     |✓     |✓            |✗        |✓    
-|Sensors<sup>3</sup>                         |✓   |✓       |✓         |✓     |✓     |✓            |✗        |✓     
-|Garage door opener                          |✓   |✓       |✓         |✓     |✓     |✗            |✗        |✓    
-|Roller shutter mode                         |✗   |✗       |✗         |✗     |✓     |✗            |✗        |✗     
-|Power measurement                           |✗   |✗       |-         |✓     |✓     |✗            |✓        |✗     
-|Temperature/Humidity measurement<sup>4</sup>|✓   |✗       |✗         |✓     |✓     |✓            |✗        |✓     
-
-### Light Controllers
-
-|                         |[+RGBWPM]|
-|-|-|
-|Brightness control       |✓|
-|CCT                      |✓|
-|RGB(W)                   |✓|
-|Switch & Co <sup>1</sup> |✓|
-|Power measurement        |-|
-
-
-### Pro devices
-
-Currently not supported.
-
-### Gen 1 switches
-
-||[1]|1PM|[1L]|[Plug]|[PlugS]|2|2.5|i3|[UNI]|
-|-|-|-|-|-|-|-|-|-|-|
-|Switch & Co.<sup>1</sup>|✓|✓|✓|✓|✓|✓|✓|✗|✓|
-|Stateless Input<sup>2</sup>|✓|✓|✓|✗|✗|✓|✓|✓|✓|
-|Sensors<sup>3</sup>|✓|✓|✓|✗|✗|✓|✓|✓|✓|
-|Temperature/Humidity measurement|✓<sup>4</sup>|✓<sup>4</sup>|✗|✗|✗|✗|✗|✗|✓|
-|Garage door opener|✓|✓|✗|✗|✗|✓|✓|✗|✓|
-|Roller shutter mode|✗|✗|✗|✗|✗|✗|✓|✗|✗|
-|Power measurement|✗|✓|-|✓|✓|✗|✓|✗|✗|
-
-### Gen 1 light bulbs / led strips
-
-||[Duo]|[Duo RGBW]|[Vintage]|[RGBW2]|
-|-|-|-|-|-|
-|Brightness control|✓|✓|✓|✓|
-|CCT|✓|✗|✗|✓|
-|RGB(W)|✗|✓|✗|✓|
-|Power measurement|-|-|-|-|
 
 _Notes:_  
 _✓: supported_  
