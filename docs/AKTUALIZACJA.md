@@ -5,6 +5,14 @@ Shelly 1 Mini Gen3, 1PM ani Gen4. Wydanie jest eksperymentalne: kompilacja i tes
 lokalne przeszły, ale instalacja OTA oraz BLE na fizycznym urządzeniu wymagają
 weryfikacji. Nie mamy potwierdzenia bezproblemowego przejścia z fabrycznego 2.1.0.
 
+## Czujniki BLU pozostają na oryginalnym firmware
+
+Czujników **Shelly BLU Door/Window nie trzeba aktualizować ani zmieniać ich
+firmware**. Mają działać na oryginalnym firmware Shelly; wystarczy sparować je
+z modułem przez panel WWW Garage BLU. Paczka OTA z tej instrukcji jest
+przeznaczona wyłącznie dla sterownika **Shelly 1 Gen3**, a nie dla czujników.
+Parowanie i działanie na fizycznym sprzęcie wymagają jeszcze weryfikacji.
+
 ## Pobieranie
 
 Aktualna paczka i jej suma SHA-256: <https://hejsiri.pl/firmware/garage-blu/>.

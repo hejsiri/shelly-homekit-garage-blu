@@ -29,6 +29,11 @@ Paczka OTA jest przeznaczona wyłącznie dla Shelly 1 Gen3.
 Kompilacja i testy lokalne przeszły; instalacja, parowanie BLE i działanie
 na fizycznym sprzęcie pozostają do sprawdzenia.
 
+**Czujników Shelly BLU Door/Window nie trzeba aktualizować ani zmieniać ich
+firmware. Mają działać na oryginalnym firmware Shelly — wystarczy sparować je
+z modułem w panelu WWW Garage BLU.** Naszą paczkę firmware instaluje się tylko
+na sterowniku Shelly 1 Gen3. Działanie parowania na sprzęcie wymaga jeszcze weryfikacji.
+
 ## Funkcje Garage BLU
 
 | Funkcja | Zaimplementowane działanie |

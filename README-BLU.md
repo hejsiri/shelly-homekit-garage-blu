@@ -27,6 +27,11 @@ The upstream rojer.me packages do not contain these BLU changes.
 
 ## Add a sensor without the Shelly application
 
+BLU Door/Window sensors do not need a firmware update or replacement firmware.
+They are intended to run their original Shelly firmware; pair them with the
+controller through the Garage BLU web panel. Only the Shelly 1 Gen3 controller
+receives the Garage BLU OTA package. Physical pairing remains unverified.
+
 1. Set an administrator password in the web panel's **Security Settings**.
    Provisioning RPCs require authentication to be configured. Use a trusted
    local network: the existing panel uses HTTP/WebSocket, not HTTPS.

@@ -75,6 +75,11 @@ na hejsiri.pl. HomeKit komunikuje się z modułem przez Wi-Fi.</p>
 </tbody></table></div>
 <p>Sama obecność Bluetooth nie oznacza zgodności. Kod innych urządzeń z bazowego Shelly-HomeKit
 został zachowany, ale nie oznacza to obsługi rozszerzenia Garage BLU na tych modelach.</p>
+<h2>Czujniki BLU — bez zmiany firmware</h2>
+<p><strong>Czujników Shelly BLU Door/Window nie trzeba aktualizować ani zmieniać ich firmware.</strong>
+Mają działać na oryginalnym firmware Shelly — wystarczy sparować je z modułem
+przez panel WWW Garage BLU. Naszą paczkę OTA instaluje się wyłącznie na sterowniku
+<strong>Shelly 1 Gen3</strong>, a nie na czujnikach. Parowanie i działanie na sprzęcie wymagają jeszcze weryfikacji.</p>
 <h2>Wkrótce</h2>
 <p>Planuję dodać obsługę <strong>Shelly BLU H&amp;T</strong> (temperatura i wilgotność)
 oraz przycisku <strong>Shelly BLU Button</strong>. Te urządzenia nie są jeszcze obsługiwane
