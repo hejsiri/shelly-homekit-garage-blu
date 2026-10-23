@@ -16,7 +16,7 @@ preview as evidence of successful radio pairing.
 | **Shelly BLU Door/Window (SBDW-002C)** | Zaimplementowane dwa czujniki: pełne zamknięcie i pełne otwarcie bramy. Czujniki zachowują fabryczny firmware; parowanie i odbiór BLE wymagają testów na sprzęcie. |
 | Shelly 1 Mini Gen3, 1PM Gen3, pozostałe Gen3, Plus, Gen1 i Pro | Brak paczek i obsługi Garage BLU dla tych modeli w tym wydaniu. |
 | Shelly Gen4 | Brak portu Garage BLU dla platformy Gen4. |
-| Shelly BLU H&T (temperatura i wilgotność) oraz Shelly BLU Button , czujnik ruchu Shelly BLU Motion oraz czujnik wycieku Shelly BLU | Wkrótce — planowane wsparcie; jeszcze niedostępne w aktualnym wydaniu. |
+| Shelly BLU H&T (temperatura i wilgotność), Shelly BLU Button, czujnik ruchu Shelly BLU Motion oraz czujnik wycieku Shelly BLU | Wkrótce — planowane wsparcie; jeszcze niedostępne w aktualnym wydaniu. |
 | Inne czujniki BLE | Obsługa nie została dodana. |
 
 ## Installation and OTA updates
