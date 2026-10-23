@@ -71,91 +71,33 @@ Features that are not yet supported:
 
 ## Quick Start
 
-### Updating from stock firmware
+Dotyczy wyłącznie **Shelly 1 Gen3 (S1G3)**. Wydanie eksperymentalne;
+instalacja OTA i BLE na fizycznym urządzeniu wymagają weryfikacji.
 
-  * **Important:** Please update to the latest stock firmware prior to converting to Shelly-HomeKit (2.0.0 on Plus/Gen3 Devices).
+- [Paczki Garage BLU i instrukcja online](https://hejsiri.pl/firmware/garage-blu/)
+- [Pełna instrukcja instalacji i aktualizacji](docs/AKTUALIZACJA.md)
+- [Pobierz firmware 2.16.1-blu1 (ZIP)](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu1.zip)
+- [Suma SHA-256 paczki](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu1.zip.sha256)
 
-  * Watch a 2 minute [video](https://www.youtube.com/watch?v=BZc-kp4dDRw).
+### Pierwsza instalacja z fabrycznego firmware Gen3
 
-    * *New:* One link for all device types: `http://A.B.C.D/ota?url=http://shelly.rojer.cloud/update`
-    
-    <details>
-     
-      <summary>If that doesn't work (did you remember to have the stock firmware at the correct version), try the link for a specific model</summary>
+Otwórz lokalny panel urządzenia i postępuj zgodnie z
+[instrukcją dla firmware fabrycznego](docs/AKTUALIZACJA.md#pierwsza-instalacja-z-fabrycznego-firmware-gen3).
+Użyj naszej paczki ZIP lub fabrycznego RPC `Shelly.Update` z adresem paczki.
+Instrukcja zawiera gotowy adres RPC do uzupełnienia adresem IP urządzenia.
+Nie mamy jeszcze potwierdzenia przejścia z fabrycznego 2.1.0 na fizycznym sprzęcie.
 
-      * Gen 1 Devices:
-      
-        * Shelly 1: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-Shelly1.zip`
+### Aktualizacja z istniejącego Shelly-HomeKit
 
-        * Shelly 1L: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-Shelly1L.zip`
+Pobierz powyższy ZIP bez rozpakowywania. W panelu wybierz
+**Firmware → Update from file → Upload**, poczekaj na restart i sprawdź wersję.
 
-        * Shelly 1PM: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-Shelly1PM.zip`
+### Kolejne aktualizacje Garage BLU
 
-        * Shelly 2: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-Shelly2.zip`  
-        _Note: Not for Shelly Dimmer 2!_
-
-        * Shelly 2.5: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-Shelly25.zip`
-
-        * Shelly Duo: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyDuo.zip`
-
-        * Shelly Duo RGBW (ColorBulb): `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyColorBulb.zip`
-
-        * Shelly i3: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyI3.zip`
-       
-        * Shelly Plug: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyPlug.zip`
-
-        * Shelly Plug S: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyPlugS.zip`
-       
-        * Shelly RGBW2: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyRGBW2.zip`  
-        _Note: The Shelly must be in color mode to flash, flashing in white mode is not supported!_
-
-        * Shelly UNI: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyUNI.zip`
-
-        * Shelly Vintage: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyVintage.zip`
-
-
-      * Gen 2 Devices
-
-        * Shelly Plus 1: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyPlus1.zip`
-
-        * Shelly Plus 1 Mini: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyPlus1Mini.zip`
-
-        * Shelly Plus 1PM: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyPlus1PM.zip`
-   
-        * Shelly Plus 1PM Mini: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyPlus1PMMini.zip`
-      
-        * Shelly Plus 2PM: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyPlus2PM.zip`
-   
-        * Shelly Plus Plug S: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyPlusPlugS.zip`
-   
-        * Shelly Plus RGBWPM: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyPlusRGBWPM.zip`
-
-        * Shelly Plus I4 AC & DC: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyPlusI4.zip`
-
-        * Shelly Plus UNI: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyPlusUni.zip`
-
-      * Gen 3 Devices
-   
-        * Shelly 1 Gen3: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-Shelly1Gen3.zip`
-       
-        * Shelly 1PM Gen3: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-Shelly1PMGen3.zip`
-    
-        * Shelly 2PM Gen3: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-Shelly2PMGen3.zip`
-       
-        * Shelly I4 Gen3: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyI4Gen3.zip` 
-
-        * Shelly Mini 1 Gen3: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyMini1Gen3.zip`
-   
-        * Shelly Mini 1 PM Gen3: `http://A.B.C.D/ota?url=http://rojer.me/files/shelly/shelly-homekit-ShellyMini1PMGen3.zip`
-
-
-     </details>
-
-  * See [here](https://github.com/mongoose-os-apps/shelly-homekit/wiki/Flashing#updating-from-stock-firmware) for detailed instructions.
-
-  * Script [here](https://github.com/mongoose-os-apps/shelly-homekit/wiki/Flashing#Script) for an automated way to update your devices.
-    * ./flash_shelly.py hostname  (for single device)
-    * ./flash_shelly.py -a  (for all devices on the network)
+W panelu wybierz **Firmware → Update → Check**, a po wykryciu nowszego
+wydania — **Install**. Panel korzysta z
+[kanału OTA Garage BLU](https://hejsiri.pl/firmware/garage-blu/update.json).
+Po restarcie sprawdź wersję i stany obu czujników.
 
 ## Documentation
 
