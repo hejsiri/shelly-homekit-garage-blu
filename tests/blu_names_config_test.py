@@ -69,7 +69,7 @@ int main(){
  assert(!g.SetConfig(R"({"blu":{"motion_name":"Changed","stale_after_s":1}})",&restart).ok);
  assert(names[2]==old&&!restart);
  assert(g.SetConfig(R"({"blu":{"motion_name":""}})",&restart).ok&&restart);
- assert(std::string(blu::SensorName(2))=="Czujnik ruchu");
+ assert(std::string(blu::SensorName(2))=="Motion sensor");
  restart=false;
  assert(g.SetConfig("{\"blu\":{\"motion_name\":\""+std::string(64,'x')+"\"}}",&restart).ok&&restart);
  assert(names[2].size()==64&&blu::invalidations==0);

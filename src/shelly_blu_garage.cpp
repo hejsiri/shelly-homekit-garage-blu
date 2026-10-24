@@ -163,8 +163,8 @@ const char *SensorMAC(int role) {
 const Sensor &MotionReading() { return sensors[2]; }
 const char *SensorName(int role) {
   const char *name = nullptr;
-  static const char *defaults[] = {"Czujnik zamknięcia", "Czujnik otwarcia",
-                                 "Czujnik ruchu", "Wewnątrz", "Na zewnątrz", "Przycisk"};
+  static const char *defaults[] = {"Closing sensor", "Opening sensor",
+                                 "Motion sensor", "Indoor", "Outdoor", "Button"};
   switch (role) {
     case 0: name = mgos_sys_config_get_blu_closed_name(); break;
     case 1: name = mgos_sys_config_get_blu_open_name(); break;

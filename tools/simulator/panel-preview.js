@@ -4,10 +4,10 @@ const previewInfo = {
  version:'2.16.1 + BLU',fw_build:'20261022-171641',sys_mode:2,gdo_avail:true,wc_avail:false,
  hap_cn:1,hap_paired:false,hap_running:true,hap_ip_conns_pending:0,hap_ip_conns_active:0,hap_ip_conns_max:16,
  uptime:3600,sys_temp:39,auth_en:true,
- components:[{id:1,type:5,name:'Brama garażowa',cur_state:1,cur_state_str:'closed',move_time:20,pulse_time_ms:500,
+ components:[{id:1,type:5,name:'Garage door',cur_state:1,cur_state_str:'closed',move_time:20,pulse_time_ms:500,
  close_sensor_mode:0,open_sensor_mode:-1,out_mode:-1,sensor_swap:false,resume_after_stop:false,
- blu:{enable:true,closed_mac:'AA:BB:CC:DD:EE:01',open_mac:'AA:BB:CC:DD:EE:02',stale_after_s:180,presence_timeout_s:45,button_press_seq:0,button_press_age_ms:-1,ready:true,button_mac:'AA:BB:CC:DD:EE:07',button:{name:'Przycisk w aucie',packet_seq:1,secure:true,seen:true,battery:93,rssi:-60,age_s:3},
- closed:{name:'Czujnik zamknięcia',packet_seq:1,secure:true,seen:true,active:true,battery:92,rssi:-58,age_s:2},open:{name:'Czujnik otwarcia',packet_seq:1,secure:true,seen:true,active:false,battery:84,rssi:-65,age_s:3},motion_mac:'AA:BB:CC:DD:EE:04',motion:{name:'Czujnik ruchu',packet_seq:1,secure:true,seen:true,active:false,battery:88,rssi:-51,age_s:0},indoor_mac:'AA:BB:CC:DD:EE:05',indoor:{name:'Wewnątrz',packet_seq:1,secure:true,seen:true,temperature:21.4,humidity:48,battery:94,rssi:-55,age_s:12},outdoor_mac:'AA:BB:CC:DD:EE:06',outdoor:{name:'Na zewnątrz',packet_seq:1,secure:true,seen:true,temperature:8.7,humidity:76,battery:91,rssi:-72,age_s:22}}}]
+ blu:{enable:true,closed_mac:'AA:BB:CC:DD:EE:01',open_mac:'AA:BB:CC:DD:EE:02',stale_after_s:180,presence_timeout_s:45,button_press_seq:0,button_press_age_ms:-1,ready:true,button_mac:'AA:BB:CC:DD:EE:07',button:{name:'Button in car',packet_seq:1,secure:true,seen:true,battery:93,rssi:-60,age_s:3},
+ closed:{name:'Closing sensor',packet_seq:1,secure:true,seen:true,active:true,battery:92,rssi:-58,age_s:2},open:{name:'Opening sensor',packet_seq:1,secure:true,seen:true,active:false,battery:84,rssi:-65,age_s:3},motion_mac:'AA:BB:CC:DD:EE:04',motion:{name:'Motion sensor',packet_seq:1,secure:true,seen:true,active:false,battery:88,rssi:-51,age_s:0},indoor_mac:'AA:BB:CC:DD:EE:05',indoor:{name:'Indoor',packet_seq:1,secure:true,seen:true,temperature:21.4,humidity:48,battery:94,rssi:-55,age_s:12},outdoor_mac:'AA:BB:CC:DD:EE:06',outdoor:{name:'Outdoor',packet_seq:1,secure:true,seen:true,temperature:8.7,humidity:76,battery:91,rssi:-72,age_s:22}}}]
 };
 let previewBeaconAt = Date.now();
 let previewMoveStart = 0, previewPosition = 0, previewMoveFrom = 0;
@@ -86,13 +86,13 @@ callDevice=function(method,params){
    c.blu.closed.active=false;c.blu.open.active=false;
    refreshUI();return Promise.resolve({});
  }
- return Promise.reject(new Error('Podgląd panelu: ta operacja wymaga fizycznego Shelly.'));
+ return Promise.reject(new Error('Panel preview: this action requires a physical Shelly device.'));
 };
 onLoad=function(){
  const previewStyles=document.querySelector('link[rel="stylesheet"]');
  previewStyles.href="style.css?preview="+Date.now();
  const banner=document.createElement('div');
- banner.textContent='PODGLĄD PANELU FIRMWARE · przykładowe dane · bez połączenia z Shelly';
+ banner.textContent='FIRMWARE PANEL PREVIEW · sample data · not connected to Shelly';
  banner.style.cssText='padding:12px;text-align:center;background:#fff0bd;color:#302600;font:14px system-ui';
  document.body.prepend(banner);
  updateCommonVisibility(true);

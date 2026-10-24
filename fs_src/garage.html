@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="pl">
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Garaż — Tesla Model S 2023</title>
+<title>Garage — Tesla Model S 2023</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f4f5f7;color:#202329;font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1200px;margin:28px auto;padding:28px;background:white;border-radius:26px}header{display:flex;justify-content:space-between;align-items:center;padding:0 8px}h1{margin:0;font-size:23px;font-weight:600}header span{font-size:13px;color:#85858b}.layout{display:grid;grid-template-columns:minmax(0,1fr) 244px;gap:40px;align-items:center}.scene{position:relative;aspect-ratio:1254/1100;overflow:hidden;background:white;min-width:0}.base{position:absolute;width:100%;height:auto;display:block;mask-image:linear-gradient(to bottom,#000 80%,transparent 87.5%);-webkit-mask-image:linear-gradient(to bottom,#000 80%,transparent 87.5%)}.scene:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to right,white,transparent 4.2%,transparent 95.8%,white);z-index:2}.aperture{position:absolute;left:15.4705%;top:32%;width:68.5805%;height:51.9091%;overflow:hidden}.leaf{position:absolute;inset:0;background:#403f3e;will-change:transform}.leaf img{position:absolute;max-width:none;width:100%;height:100%;left:0;top:0;pointer-events:none}aside{display:flex;flex-direction:column;gap:12px;padding:24px 8px 24px 0;min-width:0}.home-tile{appearance:none;border:0;width:100%;aspect-ratio:1.214;display:flex;flex-direction:column;align-items:flex-start;padding:6.2%;border-radius:30px;background:#e6e6eb;color:#85858b;text-align:left;font:inherit;cursor:pointer;transition:background .18s,transform .12s}.home-tile:active{transform:scale(.97)}.home-tile:focus-visible{outline:3px solid #00bfb2;outline-offset:4px}.home-tile.active{background:white;color:#090909;box-shadow:0 2px 18px #00000014}.icon-disc{width:26.5%;aspect-ratio:1;border-radius:50%;background:#cfcfd4;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#61d8d3}.home-tile.active .icon-disc{background:#00bfb2;color:white}.garage-symbol{position:relative;width:61%;height:54%;border:2px solid currentColor;border-radius:1px;overflow:hidden}.garage-symbol span{position:absolute;left:2px;right:2px;top:2px;bottom:-1px;background:currentColor;transform:translateY(calc(var(--door-open,0) * -86%));opacity:.92}.garage-symbol span:before{content:"";position:absolute;top:2px;left:3px;right:3px;height:5px;background:repeating-linear-gradient(to right,#00bfb2 0 5px,currentColor 5px 7px)}.garage-symbol span:after{content:"";position:absolute;bottom:3px;width:7px;height:1.5px;left:calc(50% - 3.5px);background:#00a69e}.home-tile .tile-name{margin-top:auto;padding-top:20px;font-size:19px;font-weight:600;line-height:1.14;letter-spacing:-.5px;white-space:nowrap}.home-tile strong{font-size:18px;font-weight:400;color:#929296;line-height:1.2;margin-top:3px}.home-tile.moving strong:after{content:"";display:inline-block;width:10px;height:10px;margin-left:8px;border:2px dotted #c6c6c9;border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.sensor-list{display:grid;gap:10px}.sensor-tile{display:flex;align-items:center;gap:13px;min-height:70px;border-radius:25px;padding:13px 16px;background:#f0f0f3}.sensor-tile svg{width:26px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:#85858b;flex-shrink:0}.sensor-tile strong{font-size:14px;font-weight:600;display:block}.sensor-tile span{display:block;font-size:17px;color:#85858b;line-height:1.2;margin-top:2px}.position{font-size:12px;color:#8b8b91}.time{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:#85858b}.time input{width:56px;padding:6px;border:1px solid #d9dde2;border-radius:8px;font:inherit;color:#202329;background:white}footer{font-size:12px;color:#929298;padding:12px 8px 0}.demo-label{font-size:11px;color:#a0a0a6;margin-bottom:-5px}@media(max-width:700px){main{margin:12px;padding:20px 16px;border-radius:22px}header{padding:0 4px}.layout{display:flex;flex-direction:column;gap:0}.scene{width:100%;max-width:600px;margin:auto}aside{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;padding:0 4px 12px}.home-tile{grid-column:1;grid-row:1 / 3;border-radius:26px;padding:7%;align-self:start}.sensor-list{grid-column:2;grid-row:1 / 4;gap:9px}.sensor-tile{min-height:63px;padding:10px 12px;border-radius:22px;gap:8px}.sensor-tile svg{width:23px;height:27px}.sensor-tile strong{font-size:12px}.sensor-tile span{font-size:15px}.home-tile .tile-name{font-size:clamp(12px,3.7vw,20px);padding-top:14px;letter-spacing:-.45px}.home-tile strong{font-size:clamp(13px,3.7vw,18px)}.position{grid-column:1;grid-row:3}.time{grid-column:1 / -1}.demo-label{display:none}header span{font-size:11px}footer{padding:4px}}@media(prefers-reduced-motion:reduce){.home-tile.moving strong:after{animation:none}}
 
@@ -87,26 +87,26 @@ aside .dashboard-tile .tile-copy .door-state{display:flex;align-items:baseline;g
 .scene{visibility:hidden}html[data-scene-ready="true"] .scene{visibility:visible}
 </style>
 <main>
-<div class="toolbar"><div class="mode-group" aria-label="Wygląd"><button type="button" data-theme-mode="day" aria-label="Dzień" title="Dzień"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><button type="button" data-theme-mode="night" aria-label="Noc" title="Noc"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z"/></svg></button><button type="button" data-theme-mode="auto">Auto</button></div><div class="mode-group" aria-label="Samochód"><button type="button" id="car-toggle" aria-label="Pokaż samochód" title="Samochód w garażu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 10 2-6h12l2 6M3 10h18v8H3zM5 18v3m14-3v3M6 14h2m8 0h2"/></svg></button></div></div>
+<div class="toolbar"><div class="mode-group" aria-label="Appearance"><button type="button" data-theme-mode="day" aria-label="Day" title="Day"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><button type="button" data-theme-mode="night" aria-label="Night" title="Night"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z"/></svg></button><button type="button" data-theme-mode="auto">Auto</button></div><div class="mode-group" aria-label="Car"><button type="button" id="car-toggle" aria-label="Show car" title="Car in the garage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 10 2-6h12l2 6M3 10h18v8H3zM5 18v3m14-3v3M6 14h2m8 0h2"/></svg></button></div></div>
 
-<div class="garage-details" aria-label="Odczyty czujników"><div id="weather-outdoor" class="weather-row"></div><div id="weather-indoor" class="weather-row"></div></div>
+<div class="garage-details" aria-label="Sensor readings"><div id="weather-outdoor" class="weather-row"></div><div id="weather-indoor" class="weather-row"></div></div>
 <div class="layout">
-<div class="scene" role="img" aria-label="Garaż z animowaną bramą">
+<div class="scene" role="img" aria-label="Garage with an animated door">
 <div class="house-canvas"><img class="house-background" alt="">
 <div class="aperture"><img class="interior" alt=""><div class="car-ground"></div><img class="car-layer" alt=""><div class="leaf" id="leaf"><img alt=""></div></div>
 </div></div>
-<aside aria-label="Sterowanie bramą">
-<button id="garage-control" class="home-tile dashboard-tile" type="button" aria-label="Otwórz bramę garażową">
+<aside aria-label="Garage door controls">
+<button id="garage-control" class="home-tile dashboard-tile" type="button" aria-label="Open garage door">
 <span class="homekit-icon" aria-hidden="true"><img class="icon-open" src="garage-icon-open.svg" alt=""><img class="icon-closed" src="garage-icon-closed.svg" alt=""></span>
-<span class="tile-copy"><span class="tile-name">Brama garażowa</span>
-<strong class="door-state tile-status"><svg class="obstruction-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M10.27 3.5a2 2 0 0 1 3.46 0l8.66 15A2 2 0 0 1 20.66 21H3.34a2 2 0 0 1-1.73-3l8.66-15ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Zm0 8a1.25 1.25 0 1 0 0 2.5A1.25 1.25 0 0 0 12 16Z"/></svg><span id="status" aria-live="polite">Zamknięte</span><span id="position" class="position"></span></strong></span>
+<span class="tile-copy"><span class="tile-name">Garage door</span>
+<strong class="door-state tile-status"><svg class="obstruction-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M10.27 3.5a2 2 0 0 1 3.46 0l8.66 15A2 2 0 0 1 20.66 21H3.34a2 2 0 0 1-1.73-3l8.66-15ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Zm0 8a1.25 1.25 0 1 0 0 2.5A1.25 1.25 0 0 0 12 16Z"/></svg><span id="status" aria-live="polite">Closed</span><span id="position" class="position"></span></strong></span>
 </button>
-<div class="sensor-list" aria-label="Czujniki"><div class="sensor-tile dashboard-tile" id="motion-tile" hidden><span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 28 32" aria-hidden="true"><circle cx="16" cy="5" r="2.5"/><path d="m13 11 4-2 3 5 4 1M16 11l-4 8 5 3 2 7M12 19l-4 9M12 12l-3 4M2 8h5M1 14h4M2 21h4"/></svg></span><div class="tile-copy"><strong class="tile-name">Czujnik ruchu</strong><span class="tile-status">—</span></div></div><div class="presence-tile dashboard-tile" id="car-presence" hidden><span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 28 32" aria-hidden="true"><path d="m6 14 2-6a2 2 0 0 1 2-1h8a2 2 0 0 1 2 1l2 6M7 14h14a2 2 0 0 1 2 2v7H5v-7a2 2 0 0 1 2-2Zm0 9v3m14-3v3M8 18h3m6 0h3M11 22h6"/></svg></span><div class="tile-copy"><strong class="tile-name">Obecność auta</strong><span class="tile-status">—</span></div></div>
+<div class="sensor-list" aria-label="Sensors"><div class="sensor-tile dashboard-tile" id="motion-tile" hidden><span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 28 32" aria-hidden="true"><circle cx="16" cy="5" r="2.5"/><path d="m13 11 4-2 3 5 4 1M16 11l-4 8 5 3 2 7M12 19l-4 9M12 12l-3 4M2 8h5M1 14h4M2 21h4"/></svg></span><div class="tile-copy"><strong class="tile-name">Motion sensor</strong><span class="tile-status">—</span></div></div><div class="presence-tile dashboard-tile" id="car-presence" hidden><span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 28 32" aria-hidden="true"><path d="m6 14 2-6a2 2 0 0 1 2-1h8a2 2 0 0 1 2 1l2 6M7 14h14a2 2 0 0 1 2 2v7H5v-7a2 2 0 0 1 2-2Zm0 9v3m14-3v3M8 18h3m6 0h3M11 22h6"/></svg></span><div class="tile-copy"><strong class="tile-name">Car presence</strong><span class="tile-status">—</span></div></div>
 
 
 </div>
 
-<div class="button-tile dashboard-tile" id="button-indicator" role="status" aria-label="BLU Button1" hidden><span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 28 32" aria-hidden="true"><rect x="6" y="4" width="16" height="24" rx="5"/><circle cx="14" cy="14" r="4.5"/><path d="M12 24h4"/></svg></span><div class="tile-copy"><strong class="tile-name">Przycisk</strong><span class="tile-status">Gotowy</span></div></div>
+<div class="button-tile dashboard-tile" id="button-indicator" role="status" aria-label="BLU Button1" hidden><span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 28 32" aria-hidden="true"><rect x="6" y="4" width="16" height="24" rx="5"/><circle cx="14" cy="14" r="4.5"/><path d="M12 24h4"/></svg></span><div class="tile-copy"><strong class="tile-name">Button</strong><span class="tile-status">Ready</span></div></div>
 </aside>
 </div>
 
@@ -146,8 +146,8 @@ const paths=[`garage-v16-${theme}.webp`,`garage-v16-interior-${theme}.webp`,`gar
 try{await Promise.all(paths.map(readyAsset));}catch(e){console.warn('Cannot load complete garage theme',e);return;}if(request!==themeRequest)return;
 exterior.src=paths[0];base.src=paths[1];document.querySelector('.leaf img').src=paths[2];document.querySelector('.car-layer').src=paths[3];document.documentElement.dataset.car=car;document.querySelector('.car-layer').hidden=car!=='car';document.querySelector('.car-ground').hidden=car!=='car';document.documentElement.dataset.theme=theme;parent.postMessage({garageAction:'theme',theme},location.origin);
 document.documentElement.dataset.sceneReady='true';
-base.closest('.scene').setAttribute('aria-label',car==='car'?'Garaż z Teslą Model S':'Pusty garaż przy domu');
-document.querySelectorAll('[data-theme-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeMode===mode)));document.getElementById('car-toggle').setAttribute('aria-pressed',String(car==='car'));document.getElementById('car-toggle').setAttribute('aria-label',car==='car'?'Ukryj samochód':'Pokaż samochód');}
+base.closest('.scene').setAttribute('aria-label',car==='car'?'Garage with a Tesla Model S':'Empty garage');
+document.querySelectorAll('[data-theme-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeMode===mode)));document.getElementById('car-toggle').setAttribute('aria-pressed',String(car==='car'));document.getElementById('car-toggle').setAttribute('aria-label',car==='car'?'Hide car':'Show car');}
 document.querySelectorAll('[data-theme-mode]').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.themeMode;try{localStorage.setItem('garage-theme',mode);}catch(_){}apply();}));document.getElementById('car-toggle').addEventListener('click',()=>{car=car==='car'?'empty':'car';try{localStorage.setItem('garage-car',car);}catch(_){}apply();});system.addEventListener('change',()=>{if(mode==='auto')apply();});
 const scene=document.querySelector('.scene'),canvas=document.querySelector('.house-canvas');
 function fitScene(){const box=scene.getBoundingClientRect(),scale=Math.max(box.width/1122,box.height/1402);canvas.style.width=(1122*scale)+'px';canvas.style.height=(1402*scale)+'px';canvas.style.left=((box.width-1122*scale)/2)+'px';canvas.style.top=((box.height-1402*scale)/2)+'px';}
@@ -157,7 +157,7 @@ new ResizeObserver(fitScene).observe(scene);fitScene();apply();
 (()=>{
 const leaf=document.getElementById('leaf'),status=document.getElementById('status'),position=document.getElementById('position'),control=document.getElementById('garage-control');
 const sensors=document.querySelectorAll('.sensor-tile');let frame=0,received=false,lastUpdate=0,lastButtonSequence=null,buttonPulseTimer=0;
-control.disabled=true;status.textContent='Ładowanie…';
+control.disabled=true;status.textContent='Loading…';
 control.addEventListener('click',()=>{if(!control.disabled)parent.postMessage({garageAction:'toggle'},location.origin);});
 function sensorValue(node,value){node.querySelector(':scope > div > span').textContent=value;}
 function update(data){
@@ -165,10 +165,10 @@ function update(data){
  const cd=data.status,blu=cd.blu||{},blocked=blu.enable&&!blu.ready,state=blocked?'unavailable':cd.cur_state_str;
  control.disabled=blocked||!['open','closed','opening','closing','stopped'].includes(state);
  const moving=state==='opening'||state==='closing';
- const captions={closed:'Zamknięte',open:'Otwarte',opening:'Otwieranie…',closing:'Zamykanie…',stopped:'Zatrzymane',unavailable:'Brak danych'};
- control.querySelector('.tile-name').textContent=cd.name||'Brama garażowa';
+ const captions={closed:'Closed',open:'Open',opening:'Opening…',closing:'Closing…',stopped:'Stopped',unavailable:'No data'};
+ control.querySelector('.tile-name').textContent=cd.name||'Garage door';
  const obstructed=!!(cd.obstruction_detected??cd.movement_timed_out)&&!blocked;
- status.textContent=obstructed?'Przeszkody':captions[state]||'Stan nieznany';control.classList.toggle('obstructed',obstructed);control.classList.toggle('active',state!=='closed'&&state!=='unavailable');control.classList.toggle('closed',state==='closed');control.setAttribute('aria-label',moving?'Zatrzymaj bramę':state==='closed'?'Otwórz bramę':'Zamknij bramę');
+ status.textContent=obstructed?'Obstruction':captions[state]||'Unknown state';control.classList.toggle('obstructed',obstructed);control.classList.toggle('active',state!=='closed'&&state!=='unavailable');control.classList.toggle('closed',state==='closed');control.setAttribute('aria-label',moving?'Stop garage door':state==='closed'?'Open garage door':'Close garage door');
  const motion=data.motion||{from:.5,to:.5,duration:0,elapsed:0},start=performance.now();
  function paint(now){
   const age=Math.max(0,now-start)+motion.elapsed;
@@ -182,13 +182,13 @@ function update(data){
  }
  paint(start);
  const fresh=s=>s&&s.secure&&s.seen&&s.age_s>=0&&s.age_s<=blu.stale_after_s;
- sensors[0].querySelector('.tile-name').textContent=blu.motion&&blu.motion.name||'Czujnik ruchu';
- sensors[0].hidden=!(blu.motion&&blu.motion.secure);sensors[0].classList.toggle('active',!!(fresh(blu.motion)&&blu.motion.active));sensorValue(sensors[0],fresh(blu.motion)?(blu.motion.active?'Ruch wykryty':'Brak ruchu'):'Brak danych');
+ sensors[0].querySelector('.tile-name').textContent=blu.motion&&blu.motion.name||'Motion sensor';
+ sensors[0].hidden=!(blu.motion&&blu.motion.secure);sensors[0].classList.toggle('active',!!(fresh(blu.motion)&&blu.motion.active));sensorValue(sensors[0],fresh(blu.motion)?(blu.motion.active?'Motion detected':'No motion'):'No data');
 
 
  const tempIcon='<svg viewBox="-1 -1 18 24" aria-hidden="true"><path d="M5 12V4a3 3 0 0 1 6 0v8a5 5 0 1 1-6 0Z"/><path d="M8 6v10"/></svg>';
  const waterIcon='<svg viewBox="-1 -1 18 23" aria-hidden="true"><path d="M8 1S1 10 1 13a7 7 0 0 0 14 0C15 10 8 1 8 1Z"/></svg>';
- for(const [role,label] of [['outdoor','Na zewnątrz'],['indoor','Wewnątrz']]){
+ for(const [role,label] of [['outdoor','Outdoor'],['indoor','Indoor']]){
    const v=blu[role],node=document.getElementById('weather-'+role);node.hidden=!(v&&v.secure);
    node.innerHTML='<span class="sensor-label"></span> '+tempIcon+(fresh(v)?Number(v.temperature).toFixed(1)+' °C':'—')+' '+waterIcon+(fresh(v)?Number(v.humidity)+'%':'—');
    node.querySelector('.sensor-label').textContent=(v&&v.name||label)+':';
@@ -196,21 +196,21 @@ function update(data){
  const indicator=document.getElementById('button-indicator');indicator.hidden=!(blu.button&&blu.button.secure);
  const seq=Number(blu.button_press_seq)||0,pressAge=Number(blu.button_press_age_ms);
  if(lastButtonSequence!==null&&seq!==lastButtonSequence&&seq>0&&pressAge>=0&&pressAge<=2500&&!indicator.hidden){
-   indicator.classList.add('pulse');indicator.querySelector(':scope > div > span').textContent='Naciśnięty';
-   clearTimeout(buttonPulseTimer);buttonPulseTimer=setTimeout(()=>{indicator.classList.remove('pulse');indicator.querySelector(':scope > div > span').textContent='Gotowy';},1000);
+   indicator.classList.add('pulse');indicator.querySelector(':scope > div > span').textContent='Pressed';
+   clearTimeout(buttonPulseTimer);buttonPulseTimer=setTimeout(()=>{indicator.classList.remove('pulse');indicator.querySelector(':scope > div > span').textContent='Ready';},1000);
  }
  lastButtonSequence=seq;
- indicator.querySelector('.tile-name').textContent=blu.button&&blu.button.name||'Przycisk';
+ indicator.querySelector('.tile-name').textContent=blu.button&&blu.button.name||'Button';
  const button=blu.button,presence=document.getElementById('car-presence');presence.hidden=!(button&&button.secure);
  const present=button&&button.secure&&button.seen&&button.age_s>=0&&button.age_s<=(blu.presence_timeout_s||45);
- presence.querySelector(':scope > div > span').textContent=present?'Wykryto':'Nie wykryto';presence.classList.toggle('active',!!present);
- presence.querySelector('.tile-name').textContent=button&&button.name||'Obecność auta';
- presence.title='Obecność przycisku BLU w zasięgu — nie potwierdza miejsca zaparkowania';
+ presence.querySelector(':scope > div > span').textContent=present?'Detected':'Not detected';presence.classList.toggle('active',!!present);
+ presence.querySelector('.tile-name').textContent=button&&button.name||'Car presence';
+ presence.title='BLU button detected within range — this does not confirm the parking location';
 
 }
 window.addEventListener('message',e=>{if(e.source===parent&&e.origin===location.origin&&e.data&&e.data.garageTelemetry)update(e.data.garageTelemetry);});
 // A disconnected panel must not continue presenting old readings as live.
-setInterval(()=>{if(received&&performance.now()-lastUpdate>15000){control.disabled=true;status.textContent='Brak połączenia';control.classList.remove('obstructed');if(frame)cancelAnimationFrame(frame);sensors.forEach(s=>sensorValue(s,'Brak danych'));}},3000);
+setInterval(()=>{if(received&&performance.now()-lastUpdate>15000){control.disabled=true;status.textContent='Disconnected';control.classList.remove('obstructed');if(frame)cancelAnimationFrame(frame);sensors.forEach(s=>sensorValue(s,'No data'));}},3000);
 parent.postMessage({garageAction:'ready'},location.origin);
 })();
 </script>

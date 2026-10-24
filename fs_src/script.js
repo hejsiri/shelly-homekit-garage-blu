@@ -524,7 +524,7 @@ function bluSensorStatus(node, sensor, timeout, kind = false) {
     const bars = rssi === null ? 0 : rssi >= -60 ? 4 : rssi >= -70 ? 3 : rssi >= -80 ? 2 : 1;
     const age = Math.max(0, Math.floor(Number(sensor.age_s) || 0));
     const stale = age > timeout;
-    const state = kind === "button" ? (stale ? "Poza zasięgiem" : "W zasięgu") : kind === "ht" ? bluHTValues(sensor) : kind ? (sensor.active ? "Motion" : "No motion") : sensor.active ? "Closed" : "Open";
+    const state = kind === "button" ? (stale ? "Out of range" : "In range") : kind === "ht" ? bluHTValues(sensor) : kind ? (sensor.active ? "Motion" : "No motion") : sensor.active ? "Closed" : "Open";
     html = `<span class="blu-badge ${stale ? "blu-stale" : sensor.active ? "blu-closed" : "blu-open"}" title="${kind === 'ht' ? 'Temperature and humidity' : kind ? 'Motion sensor' : 'Sensor contact'}${stale ? ' — stale reading' : ''}">${state}${stale ? ' · stale' : ''}</span>` +
       `<span class="blu-power" title="Battery" aria-label="Battery ${battery < 0 ? 'unknown' : battery + '%'}"><span class="blu-battery" aria-hidden="true"><i style="width:${Math.max(0, battery)}%"></i></span>${battery < 0 ? '—' : battery + '%'}</span>` +
       `<span class="blu-signal" title="${rssi === null ? 'Signal unknown' : rssi + ' dBm'}" role="img" aria-label="Signal ${bars} of 4 bars">${[1,2,3,4].map(n => `<i class="${n <= bars ? 'filled' : ''}"></i>`).join('')}</span>` +

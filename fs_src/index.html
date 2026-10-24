@@ -19,7 +19,7 @@
     <span id="device_name" hidden></span>
     <div id="badges_container">
       <a class="badge" id="notify_disconnected" style="display:none">Disconnected</a>
-      <a class="badge" id="notify_update" style="display:none" href="#update_container">Dostępna aktualizacja</a>
+      <a class="badge" id="notify_update" style="display:none" href="#update_container">Update available</a>
       <a class="badge" id="notify_overheat" style="display:none">Overheating</a>
       <a class="badge" id="notify_failsafe" style="display:none">Failsafe mode</a>
     </div>
@@ -860,7 +860,7 @@
               <input type="text" id="blu_button_name" aria-label="Button device name" maxlength="64">
             </div>
             <p id="blu_button_status" class="blu-sensor"></p>
-            <p class="help">Beacon obecności: przycisk w zasięgu BLE. Przechowuj go w aucie. Pojedynczy klik: otwórz / stop / zamknij. Beacon nigdy nie uruchamia bramy.</p>
+            <p class="help">Presence beacon: the button is within BLE range. Keep it in your car. Single press: open / stop / close. Beacons never trigger the garage door.</p>
             <div class="form-control">
               <label>Sensor timeout:</label>
               <input type="number" id="blu_stale_after_s" min="30" max="3600"> seconds
@@ -901,7 +901,7 @@
               <span class="slider round"></span>
             </label>
           </div>
-          <p class="help">Dopasuj do reakcji napędu na impuls. Ta opcja nie zmienia programu sterownika bramy.</p>
+          <p class="help">Match this setting to how your garage door opener responds to a pulse. This option does not change the opener's programming.</p>
           <div class="form-control" id="sensor_swap_container">
             <label>Swap Inputs (Sensors):</label>
             <label class="switch">
