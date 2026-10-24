@@ -2,7 +2,7 @@
 
 Garage BLU adds encrypted Shelly BLU devices and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu35 for Shelly Plus 1**. Shelly 1 Gen3
+The current OTA release is **2.16.1-blu36 for Shelly Plus 1**. Shelly 1 Gen3
 support remains in the source; new Gen3 builds and hardware checks are paused.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
 

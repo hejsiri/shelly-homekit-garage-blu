@@ -116,8 +116,8 @@ są na razie wstrzymane. Nowe funkcje wymagają weryfikacji na sprzęcie.
 
 - [Paczki Garage BLU i instrukcja online](https://hejsiri.pl/firmware/garage-blu/)
 - [Pełna instrukcja instalacji i aktualizacji](docs/AKTUALIZACJA.md)
-- [Pobierz firmware 2.16.1-blu35 dla Shelly Plus 1 (ZIP)](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu35.zip)
-- [Suma SHA-256 paczki Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu35.zip.sha256)
+- [Pobierz firmware 2.16.1-blu36 dla Shelly Plus 1 (ZIP)](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu36.zip)
+- [Suma SHA-256 paczki Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu36.zip.sha256)
 
 ### Pierwsza instalacja z fabrycznego firmware Gen3 / Plus
 

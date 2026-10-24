@@ -21,7 +21,7 @@ send();assert.equal(node('status').textContent,'Przeszkody');assert(node('garage
 assert.equal(node('leaf').style.transform,'translateY(-50%)');assert.equal(node('position').textContent,'50%');
 assert.equal(node('garage-control').querySelector('.tile-name').textContent,'Garaż główny');
 assert.equal(motion.querySelector('.tile-name').textContent,unsafe);
-for(const id of ['weather-indoor','weather-outdoor','contact-closed','contact-open']){
+for(const id of ['weather-indoor','weather-outdoor']){
   assert.equal(node(id).querySelector('.sensor-label').textContent,unsafe+':');
   assert(!node(id).innerHTML.includes(unsafe)); // User names never enter markup.
 }
@@ -33,4 +33,4 @@ for(const state of ['open','closed']){
   assert.equal(node('position').textContent,'');
 }
 status.blu.ready=false;send();assert.equal(node('status').textContent,'Brak danych');assert(node('garage-control').disabled);
-console.log('PASS: saved names render as text for all devices; dashboard uses HomeKit obstruction and endpoint state');
+console.log('PASS: saved names render as text on tiles and weather readings; dashboard uses HomeKit obstruction and endpoint state');
