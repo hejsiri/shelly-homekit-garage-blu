@@ -26,7 +26,7 @@
 Shelly BLU Door/Window potwierdzają pełne zamknięcie i otwarcie, a opcjonalne
 Motion, H&amp;T i Button1 dodają odczyty ruchu, temperatury, wilgotności i obecności.</p>
 <nav aria-label="Na tej stronie">
-  <a href="#pobieranie">Pobieranie</a><a href="#sprzet">Sprzęt</a>
+  <a href="#pobieranie">Pobieranie</a><a href="#sprzet">Sprzęt</a><a href="#gen3">Shelly 1 Gen3</a>
   <a href="#konfiguracja">Pierwsze uruchomienie</a><a href="#aktualizacja">Aktualizacja</a>
   <a href="#funkcje">Obsługa</a><a href="#problemy">Problemy</a><a href="#dokumentacja">Dokumentacja</a>
 </nav>
@@ -64,6 +64,18 @@ pozostaje do wykonania; metadane mają <code>hardware_tested: false</code>.</p>
 <p>Urządzenia BLU zachowują oryginalny firmware Shelly. Door/Window Outdoor ZB
 (SBDW-302C) i czujnik wycieku pozostają w planach. H&amp;T Gen3 z ekranem e-ink jest
 urządzeniem Wi-Fi, a nie obsługiwanym tu BLU H&amp;T.</p>
+</section>
+
+<section id="gen3">
+<h2>Shelly 1 Gen3</h2>
+<p>Od blu38 dostępna jest osobna paczka <strong>S1G3 / ESP32-C3</strong> dla Shelly 1 Gen3.
+Zawiera te same funkcje Garage BLU co Plus1: HomeKit, krańcówki Door/Window, Motion,
+H&amp;T, Button1, parowanie i wizualizację. Nie jest przeznaczona dla Mini ani 1PM Gen3.</p>
+<p>$gen3_download</p>
+<p><a href="$repo/blob/master/docs/SHELLY_1_GEN3.md">Poradnik Shelly 1 Gen3: instalacja, konfiguracja i stan weryfikacji</a>
+· <a href="SHELLY_1_GEN3.md">plik Markdown</a></p>
+<p>Kompilacja i kontrola paczki przeszły. Instalacja, BLE i przekaźnik na fizycznym Gen3
+pozostają do sprawdzenia; metadane mają <code>hardware_tested: false</code>.</p>
 </section>
 
 <section id="konfiguracja">
@@ -149,6 +161,7 @@ napędu już będącego w ruchu ani nie zastępuje jego zabezpieczeń.</p>
 <section id="dokumentacja">
 <h2>Dokumentacja i zgłoszenia</h2>
 <ul>
+<li><a href="$repo/blob/master/docs/SHELLY_1_GEN3.md">Shelly 1 Gen3 — osobny poradnik</a> · <a href="SHELLY_1_GEN3.md">plik Markdown</a></li>
 <li><a href="$repo/blob/master/docs/AKTUALIZACJA.md">Instalacja i aktualizacje</a> · <a href="AKTUALIZACJA.md">plik Markdown</a></li>
 <li><a href="$repo/blob/master/docs/KONFIGURACJA.md">Konfiguracja i obsługa</a> · <a href="KONFIGURACJA.md">plik Markdown</a></li>
 <li><a href="$repo/blob/master/docs/ROZWIAZYWANIE_PROBLEMOW.md">Rozwiązywanie problemów</a> · <a href="ROZWIAZYWANIE_PROBLEMOW.md">plik Markdown</a></li>

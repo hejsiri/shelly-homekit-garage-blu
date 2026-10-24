@@ -4,6 +4,7 @@ Instrukcja dla **2.16.1-blu38**, stan: **2026-10-24**. Dostępne są osobne pacz
 dla **Shelly Plus 1 (Plus1)** i **Shelly 1 Gen3 (S1G3 / ESP32-C3)**.
 Wybierz dokładny model — paczki Plus1 i S1G3 nie są zamienne.
 
+[Poradnik Shelly 1 Gen3](SHELLY_1_GEN3.md) ·
 [Konfiguracja po instalacji](KONFIGURACJA.md) ·
 [Rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md) · [Historia zmian](HISTORIA_ZMIAN.md)
 

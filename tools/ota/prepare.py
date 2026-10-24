@@ -65,7 +65,7 @@ channel = [['.*', {'version': version, 'rel_notes': base,
 downloads = ''.join(
     f'<li><strong>{html.escape(model)}</strong>: <a href="{r["url"]}">ZIP {html.escape(r["version"])} ({r["size"]:,} bajtów)</a> · '
     f'<a href="{r["url"]}.sha256">SHA-256</a></li>' for model, r in releases.items())
-for guide in ['AKTUALIZACJA.md', 'KONFIGURACJA.md', 'ROZWIAZYWANIE_PROBLEMOW.md', 'HISTORIA_ZMIAN.md']:
+for guide in ['AKTUALIZACJA.md', 'KONFIGURACJA.md', 'ROZWIAZYWANIE_PROBLEMOW.md', 'HISTORIA_ZMIAN.md', 'SHELLY_1_GEN3.md']:
     (out / guide).write_bytes((root / 'docs' / guide).read_bytes())
 (out / '.htaccess').write_text('''Options -Indexes
 AddType application/zip .zip
@@ -85,6 +85,11 @@ AddType application/json .json
 ''')
 repo = 'https://github.com/hejsiri/shelly-homekit-garage-blu'
 model_names = {'ShellyPlus1': 'Shelly Plus 1', 'Shelly1Gen3': 'Shelly 1 Gen3'}
+gen3 = releases.get('Shelly1Gen3')
+gen3_download = (
+    f'<a href="{gen3["url"]}">ZIP {html.escape(gen3["version"])} dla Shelly 1 Gen3</a> · '
+    f'<a href="{gen3["url"]}.sha256">SHA-256</a>' if gen3 else
+    'Brak paczki Gen3 w tym zestawie.')
 stock_update_examples = ''.join(
     f'<h4>{html.escape(model_names[model])}</h4>'
     f'<pre>http://ADRES_IP/rpc/Shelly.Update?url={html.escape(quote(r["url"], safe=""))}</pre>'
@@ -104,6 +109,7 @@ landing = Template((Path(__file__).parent / 'landing.html').read_text())
     target_notice=html.escape(target_notice),
     downloads=downloads,
     metadata_rows=metadata_rows,
+    gen3_download=gen3_download,
     stock_update_examples=stock_update_examples,
     plus1_status='Bieżąca paczka.' if 'ShellyPlus1' in releases else 'Brak paczki w tym zestawie.',
     gen3_status='Bieżąca paczka ESP32-C3. Test na fizycznym Gen3 pozostaje do wykonania.' if 'Shelly1Gen3' in releases else

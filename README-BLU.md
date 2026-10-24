@@ -8,6 +8,7 @@ its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
 
 User documentation (Polish, with the English UI labels):
+[Shelly 1 Gen3 guide](docs/SHELLY_1_GEN3.md),
 [install/update](docs/AKTUALIZACJA.md), [configuration](docs/KONFIGURACJA.md),
 [troubleshooting](docs/ROZWIAZYWANIE_PROBLEMOW.md), and
 [release history](docs/HISTORIA_ZMIAN.md). The current panel and this document

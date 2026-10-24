@@ -44,6 +44,17 @@ na sterowniku, a urządzenia BLU paruje w jego panelu WWW.
 Door/Window Outdoor ZB (SBDW-302C) i czujnik wycieku BLU pozostają w planach.
 H&T Gen3 z ekranem e-ink korzysta z Wi-Fi i nie jest obsługiwanym tu BLU H&T.
 
+## Shelly 1 Gen3
+
+Od **blu38** publikowana jest osobna paczka **S1G3 / ESP32-C3** dla Shelly 1 Gen3.
+Zawiera te same funkcje Garage BLU co Plus1, w tym krańcówki BLE, Motion, H&T,
+Button1, parowanie w panelu, wizualizację i HomeKit.
+
+[Poradnik Shelly 1 Gen3](docs/SHELLY_1_GEN3.md) zawiera linki do ZIP-u i SHA-256,
+instrukcję pierwszego uruchomienia oraz stan weryfikacji. Paczka nie jest dla Mini
+ani 1PM Gen3. Kompilacja i kontrola paczki przeszły; test fizycznego Gen3 pozostaje
+do wykonania.
+
 ## Funkcje
 
 | Funkcja | Zachowanie w blu38 |
