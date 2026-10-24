@@ -1,6 +1,6 @@
 # Historia zmian Garage BLU
 
-Bieżące opisy i instrukcje dotyczą **2.16.1-blu48** (stan: 2026-10-24).
+Bieżące opisy i instrukcje dotyczą **2.16.1-blu49** (stan: 2026-10-24).
 Zobacz [instalację i aktualizacje](AKTUALIZACJA.md), [konfigurację](KONFIGURACJA.md)
 i [rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md).
 
@@ -391,3 +391,28 @@ urządzenia przy wyświetlaniu nieaktualnego statusu.
 Testy obejmują odrzucanie wycofanych modeli we wszystkich rolach, zachowanie
 obsługiwanych trybów discovery, odczyty LYWSDCGQ, szyfrowanie BLU i istniejące
 usługi HomeKit. Pełny test tej wersji na fizycznej bramie i Gen3 pozostaje do wykonania.
+
+## blu49 — eksperymentalny LYWSD03MMC bez tokenów
+
+Nowy klient GATT odczytuje fabryczny LYWSD03MMC bez PIN-u, konta Xiaomi i bindkey.
+Panel udostępnia typ **Xiaomi LYWSD03MMC (experimental)** w dwóch rolach H&T;
+modal wykrywa urządzenie i automatycznie próbuje odczytu. Zapis następuje dopiero
+po sprawdzeniu modelu i poprawnego pięciobajtowego pomiaru. Nieudana próba nie
+zastępuje wcześniejszego przypisania.
+
+Klient wyszukuje cechy po UUID zamiast stałych uchwytów ATT. Czyta model, opcjonalne
+wersje firmware/sprzętu i temperaturę, wilgotność oraz napięcie. Obsługuje zapasową
+cechę danych, timeouty, anulowanie i spóźnione odpowiedzi. Nie inicjuje SMP i nie
+wysyła zapisów GATT. Bateria jest oznaczona jako szacunek z napięcia.
+
+Odczyt co 5 minut, po jednym termometrze; ponowienia 1/2/5 minut, minimum 15 minut
+świeżości. Ruch bramy odkłada lub przerywa odczyt, a krańcówki zachowują swój próg
+świeżości. Istniejące usługi HomeKit i ich identyfikatory pozostają bez zmian.
+Poprawiono także zapis nazw nieszyfrowanych termometrów w panelu.
+
+Testy hosta obejmują rzeczywisty klient GATT z asynchronicznym adapterem BLE,
+walidację danych, UUID, odrzucone zabezpieczenie, timeouty, anulowanie, odłożenie
+podczas ruchu, zapisy dopiero po sukcesie oraz regresję BLU/HomeKit/panelu.
+Próba fizyczna **B1.4 / 2.1.1_0159** pozostaje do wykonania; przykład źródłowy
+potwierdza to firmware na B1.5. MCCGQ02HL i szyfrowane beacony z ręcznym kluczem
+nadal nie są obsługiwane. Obrazy Plus1/Gen3 mają `hardware_tested: false`.

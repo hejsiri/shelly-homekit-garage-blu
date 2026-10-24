@@ -125,6 +125,8 @@ bool HTReady(int role,bool temperature);
 bool SecureFor(int,const uint8_t*){return false;}
 bool XiaomiFor(int role,const uint8_t*){return role==3&&xiaomi;}
 int mgos_sys_config_get_blu_stale_after_s(){return 180;}
+int SensorTimeout(int){return 180;}
+bool XiaomiGATTScanPaused(){return false;}
 bool MotionReady(){return false;}
 bool MotionLightReady(){return false;}
 '''

@@ -34,4 +34,10 @@ assert.equal(calls[1].blu.button_name,'');assert.equal(calls[1].blu.car_name,'')
 cd.blu.button.secure=false;ctx.updateComponent(cd);
 assert.equal(field('blu_car_name_row').style.display,'none');ctx.gdoSetConfig(c);
 assert(!('car_name' in calls[2].blu)); // Unpaired devices do not overwrite saved labels.
-console.log('PASS: independent car/button names, empty placeholders, UTF-8 validation and polling-safe edits');
+// Key-free Xiaomi thermometers have paired=true and secure=false; their names still save.
+cd.blu.indoor={paired:true,secure:false,protocol:'xiaomi_gatt',name:'Indoor'};ctx.updateComponent(cd);
+field('blu_indoor_name').value='  Bedroom  ';ctx.gdoSetConfig(c);
+assert.equal(calls.at(-1).blu.indoor_name,'Bedroom');
+cd.blu.indoor.paired=false;ctx.updateComponent(cd);ctx.gdoSetConfig(c);
+assert(!('indoor_name' in calls.at(-1).blu));
+console.log('PASS: independent labels, key-free Xiaomi names, UTF-8 validation and polling-safe edits');

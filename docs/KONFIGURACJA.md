@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1-blu48 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Instrukcja dla **2.16.1-blu49 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -118,10 +118,39 @@ nie zestawia połączenia BLE. Nie zmienia to szyfrowania krańcówek ani przyci
 Temperatura ma rozdzielczość 0,1 °C, wilgotność jest zaokrąglana do całego procenta.
 Każdy pomiar ma własny czas ważności; sam beacon baterii nie odświeża pomiarów.
 
-Od blu48 jedynym obsługiwanym modelem Xiaomi jest LYWSDCGQ/01ZM.
-Eksperymentalne LYWSD03MMC i MCCGQ02HL wymagające ręcznego klucza zostały
-wycofane z panelu i parowania. Jeśli były wcześniej przypisane, sparuj w danej
-roli obsługiwany model. Nie trzeba resetować Shelly ani parowania HomeKit.
+## Xiaomi LYWSD03MMC — próba bez klucza (blu49)
+
+1. Zostaw oryginalny firmware termometru. Przy **Indoor H&T** lub **Outdoor H&T**
+   wybierz **Xiaomi LYWSD03MMC (experimental)**, a następnie **Pair**.
+2. Połóż włączony termometr blisko Shelly. Zamknij aplikacje, które utrzymują
+   połączenie Bluetooth z tym termometrem. Nie trzeba naciskać przycisku, wpisywać
+   PIN-u ani pobierać tokenów z Xiaomi Home.
+3. Po wykryciu jednego zgodnego urządzenia modal automatycznie spróbuje odczytu.
+   Przy kilku urządzeniach wybierz właściwy MAC. Przypisanie jest zapisywane dopiero
+   po sprawdzeniu modelu LYWSD03MMC i poprawnych pomiarów. Błąd odczytu zachowuje
+   wcześniejsze przypisanie.
+4. Po sukcesie pomiary trafiają do panelu i istniejących usług H&T w HomeKit.
+   Nie trzeba usuwać Shelly z Domu. Pole **Name** działa tak samo jak przy innych H&T.
+
+Shelly odczytuje termometr przez krótkie połączenie GATT co **5 minut**, po jednym
+urządzeniu naraz. Po błędzie ponawia próbę po 1, 2, a następnie 5 minutach. Nie zapisuje
+nic w czujniku, nie zmienia jego firmware i nie uruchamia parowania PIN/SMP.
+Bateria oznaczona `~` jest szacunkiem z napięcia 2,1–3,1 V, a nie dokładnym pomiarem
+pozostałej pojemności. Diagnostyka `blu.indoor.gatt` / `blu.outdoor.gatt` w GetInfo
+zawiera odczytaną wersję firmware i sprzętu oraz ostatni błąd.
+
+Odczyt ma budżet 10 sekund i timeout połączenia 3 sekundy. Skanowanie BLE wraca po
+nawiązaniu połączenia; krótka przerwa skanowania nie unieważnia świeżych krańcówek.
+Ich próg nieświeżości pozostaje bez zmian. Odczyty są odkładane podczas ruchu bramy,
+a trwający odczyt przerywa rozpoczęcie ruchu. Dla tego termometru pomiar staje się
+nieświeży po minimum **15 minutach** (lub dłuższym ustawionym czasie). Nieudany odczyt
+nie odświeża daty starych pomiarów.
+
+To funkcja eksperymentalna. [Opublikowany przykład odczytu](https://github.com/ManiAm/raspi-enviro-watch#reading-ble-device-characteristics)
+dotyczy firmware **2.1.1_0159** i sprzętu **B1.5**. Użytkownik ma **B1.4 / 2.1.1_0159**:
+zgodność wymaga próby na tym egzemplarzu. Zaszyfrowane beacony tego modelu nie są
+dekodowane, a wcześniejsze przypisania z blu46 nie są automatycznie przywracane.
+**MCCGQ02HL oraz modele wymagające ręcznego klucza nadal nie są obsługiwane.**
 
 ## Własne nazwy
 

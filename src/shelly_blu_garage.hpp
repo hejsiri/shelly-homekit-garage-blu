@@ -4,6 +4,7 @@
 #include <functional>
 #include <string>
 #include "shelly_blu_bthome.hpp"
+struct mgos_bt_addr;
 namespace shelly {
 namespace blu {
 void Init();
@@ -28,6 +29,9 @@ const Sensor &ReadingFor(int role);
 bool SensorReady(int role);
 bool HTReady(int role, bool temperature);
 bool SensorPaired(int role);
+int SensorTimeout(int role);
+void SetThermometerReading(int role, const mgos_bt_addr &address,
+                           const Sensor &reading, int voltage_mv);
 }  // namespace blu
 }  // namespace shelly
 #endif

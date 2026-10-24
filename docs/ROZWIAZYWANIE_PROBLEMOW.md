@@ -1,6 +1,6 @@
 # Rozwiązywanie problemów Garage BLU
 
-Dla **2.16.1-blu48 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Dla **2.16.1-blu49 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](KONFIGURACJA.md) · [Historia zmian](HISTORIA_ZMIAN.md)
@@ -195,9 +195,24 @@ z takimi danymi. MAC można zamaskować, zachowując możliwość rozróżnienia
 - W zgłoszeniu podaj Version, rolę Indoor/Outdoor i tekst modalu. Debug Info zawiera
   dla obu ról stan przypisania i osobną gotowość temperatury/wilgotności.
 
-## Wycofane modele Xiaomi z blu46/47
+## Xiaomi LYWSD03MMC: bezpośredni odczyt nie działa
 
-LYWSD03MMC i MCCGQ02HL nie są obsługiwane od blu48, ponieważ wymagały ręcznego
-pozyskania klucza. Nie ma już formularza bindkey. W danej roli sparuj Shelly BLU
-lub — wyłącznie dla Indoor/Outdoor H&T — Xiaomi LYWSDCGQ/01ZM. Istniejące
-parowanie Shelly z HomeKit nie wymaga resetowania.
+- Wymagane blu49 i typ **Xiaomi LYWSD03MMC (experimental)** przy Indoor/Outdoor H&T.
+- Termometr musi być włączony i blisko Shelly. Zamknij Xiaomi Home, skanery BLE
+  i inne aplikacje połączone z nim — mogą zajmować jego jedyne połączenie.
+- Nie wpisuj tokenu ani PIN-u. Shelly nic nie zapisuje w termometrze.
+- Wykrycie MAC nie oznacza jeszcze zgodności. Sukces wymaga odczytu modelu i danych;
+  błąd zostaje w modalu, a wcześniejsze przypisanie pozostaje zapisane.
+- Skopiuj pełny błąd z modalu. Po udanym dodaniu ostatni błąd odświeżania i wersje
+  urządzenia można sprawdzić w GetInfo → `blu.indoor.gatt` / `blu.outdoor.gatt`.
+- Dane odświeżają się co 5 minut. Nieświeżość następuje po minimum 15 minutach;
+  brak natychmiastowej zmiany na ekranie po zmianie temperatury jest oczekiwany.
+- `~90%` oznacza szacunek baterii z napięcia, nie dokładny stan pojemności.
+- B1.4 z 2.1.1_0159 nie został jeszcze fizycznie zweryfikowany. Jeśli firmware
+  odmawia odczytu bez zabezpieczenia, panel pokaże błąd; nie przechodzimy na tokeny.
+
+## Wycofane modele Xiaomi z ręcznym kluczem
+
+Obsługa szyfrowanych beaconów LYWSD03MMC z blu46 i MCCGQ02HL z blu47 pozostaje
+wycofana. Blu49 dodaje osobną próbę LYWSD03MMC przez GATT, bez przywracania
+pól bindkey ani protokołów z ręcznymi kluczami. MCCGQ02HL nadal nie jest obsługiwany.

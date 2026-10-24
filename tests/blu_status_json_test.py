@@ -42,6 +42,7 @@ struct Sensor {
 struct Address { unsigned char addr[6]; } addresses[6] = {};
 bool known[6] = {true, true, true, true, false, true};
 unsigned button_press_sequence = 0;
+int voltages[6] = {-1,-1,-1,-1,3000,-1};
 unsigned packet_sequence[6] = {1,2,3,4,5,6};
 double button_press_time = 0;
 bool Enabled() { return true; }
@@ -55,6 +56,9 @@ int mgos_sys_config_get_blu_stale_after_s() { return 180; }
 double mgos_uptime() { return 150; }
 bool SecureFor(int role, const unsigned char *) { return role!=3; }
 bool XiaomiFor(int role, const unsigned char *) { return role==3; }
+bool XiaomiGATTFor(int role, const unsigned char *) { return role==4; }
+std::string XiaomiGATTStatusJSON(int) { return "{}"; }
+int SensorTimeout(int role) { return role==4 ? 900 : 180; }
 bool SensorPaired(int role) { return role!=4; }
 bool SensorReady(int role) { return role!=4; }
 bool HTReady(int role,bool) { return role==3; }

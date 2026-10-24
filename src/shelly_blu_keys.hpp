@@ -4,7 +4,7 @@
 #include <stdint.h>
 namespace shelly {
 namespace blu {
-enum : uint8_t { kProtocolBTHome = 0, kProtocolXiaomi = 1 };
+enum : uint8_t { kProtocolBTHome = 0, kProtocolXiaomi = 1, kProtocolXiaomiGATT = 4 };
 struct SecureRecord {
   uint32_t version;
   uint8_t mac[6];
@@ -19,6 +19,7 @@ bool AcceptSecure(int role, const uint8_t mac[6], const uint8_t *service,
                   size_t size, uint8_t *plain, size_t *plain_size);
 bool SecureFor(int role, const uint8_t mac[6]);
 bool XiaomiFor(int role, const uint8_t mac[6]);
+bool XiaomiGATTFor(int role, const uint8_t mac[6]);
 void ResetReadings();
 }  // namespace blu
 }  // namespace shelly

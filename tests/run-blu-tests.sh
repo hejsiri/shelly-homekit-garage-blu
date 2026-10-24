@@ -27,6 +27,8 @@ clang++ -std=c++14 -DSHELLY_GARAGE_BLE -Wall -Wextra -Werror -fsanitize=address,
   src/shelly_blu_keys.cpp "$crypto_build/library/libmbedcrypto.a" -o "$test_dir/secure"
 "$test_dir/secure" "$test_dir/nvs.bin"
 "$test_dir/secure" "$test_dir/nvs.bin" restart
+python3 tests/blu_xiaomi_gatt_test.py
+python3 tests/blu_xiaomi_garage_test.py
 python3 tests/blu_status_json_test.py
 python3 tests/blu_hap_topology_test.py
 python3 tests/blu_hap_layout_migration_test.py

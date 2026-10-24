@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   uint8_t plain[32] = {}; size_t length = sizeof(plain);
   if (argc == 3) {
     assert(!AcceptSecure(0, mac.data(), packet.data(), packet.size(), plain, &length));
-    assert(XiaomiFor(4,mac.data())&&!SecureFor(4,mac.data()));
+    assert(XiaomiGATTFor(4,mac.data())&&!XiaomiFor(4,mac.data())&&!SecureFor(4,mac.data()));
     puts("PASS: replay rejected and Xiaomi binding retained after process restart"); return 0;
   }
   SecureRecord record = {}; record.version = 1;
@@ -102,6 +102,11 @@ int main(int argc, char **argv) {
   assert(SaveRecord(4,record));
   record.protocol=kProtocolBTHome;
   assert(SaveRecord(3,record)&&SecureFor(3,mac.data())&&!XiaomiFor(3,mac.data()));
+  record.protocol=kProtocolXiaomiGATT;
+  for(int slot:{0,1,2,5})assert(!SaveRecord(slot,record));
+  assert(SaveRecord(4,record)&&XiaomiGATTFor(4,mac.data())&&!XiaomiFor(4,mac.data())&&!SecureFor(4,mac.data()));
+  assert(!XiaomiGATTFor(4,wrong_mac.data()));
+  length=sizeof(plain);assert(!AcceptSecure(4,mac.data(),packet.data(),packet.size(),plain,&length));
   // Removed encrypted-Xiaomi protocols cannot create bindings in any role.
   for(uint8_t protocol:{2,3}) for(int slot=0;slot<6;slot++) {
     auto removed=record;removed.protocol=protocol;assert(!SaveRecord(slot,removed));

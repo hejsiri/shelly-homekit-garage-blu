@@ -23,6 +23,7 @@ extern "C" {
 #include "shelly_blu_garage.hpp"
 #include "shelly_blu_keys.hpp"
 #include "shelly_blu_xiaomi.hpp"
+#include "shelly_blu_xiaomi_gatt.hpp"
 #include "shelly_main.hpp"
 
 namespace shelly {
@@ -86,6 +87,8 @@ void RestoreSecurity() {
   security_changed = false;
 }
 void Finish(const char *message) {
+  const bool xiaomi_read = state == "reading_xiaomi";
+  if (xiaomi_read) XiaomiGATTCancel();
   generation++;
   security_ticket++;
   state = message ? "error" : "done";
@@ -94,6 +97,7 @@ void Finish(const char *message) {
   passkey.store(0);
   new_pin = 0;
   pending_key.fill(0);
+  if (xiaomi_read) return;  // This client owns its connection; keep the scan running.
   if (conn != BLE_HS_CONN_HANDLE_NONE) {
     ble_gap_terminate(conn, BLE_ERR_REM_USER_CONN_TERM);
     conn = BLE_HS_CONN_HANDLE_NONE;
@@ -728,11 +732,12 @@ void DiscoverRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *, mg_str ar
   }
   int model = 0;
   json_scanf(args.p, args.len, "{model:%d}", &model);
-  if (model != 0 && model != 3 && model != 0x01aa) {
+  if (model != 0 && model != 3 && model != 0x01aa && model != 0x055b) {
     mg_rpc_send_errorf(ri, 400, "Unsupported thermometer model");
     return;
   }
   discovery_model = model;
+  XiaomiGATTCancel();  // Discovery has priority over background thermometer reads.
   state = "scanning";
   error.clear();
   diagnostics.clear();
@@ -801,7 +806,7 @@ void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
   }
   if ((discovery_model && candidate->model != discovery_model) ||
       (selected_role == 5 ? candidate->model != 1 : selected_role >= 3 ?
-      (candidate->model != 3 && candidate->model != 0x01aa) :
+      (candidate->model != 3 && candidate->model != 0x01aa && candidate->model != 0x055b) :
       candidate->model != (selected_role == 2 ? 5 : 2))) {
     mg_rpc_send_errorf(ri, 400, "Select the correct device model for this role");
     return;
@@ -812,6 +817,50 @@ void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
       mg_rpc_send_errorf(ri, 400, "Device is already assigned to another role");
       return;
     }
+  }
+  if (candidate->model == 0x055b) {
+    role = selected_role;
+    peer = candidate->addr;
+    const auto address = peer;
+    const unsigned current = ++generation;
+    diagnostics.clear();
+    state = "reading_xiaomi";
+    deadline = mgos_uptime() + 12;
+    const bool started = XiaomiGATTStart(role, peer,
+        [selected_role, address, current](const Sensor &reading, int voltage, const std::string &failure) {
+      if (generation != current || state != "reading_xiaomi") return;
+      if (!failure.empty()) { Finish(failure.c_str()); return; }
+      // Keep the previous assignment until the model and measurements verify.
+      const std::string previous = SensorMAC(selected_role) ? SensorMAC(selected_role) : "";
+      char mac[MGOS_BT_ADDR_STR_LEN];
+      mgos_bt_addr_to_str(&address, 0, mac);
+      auto set_mac = [selected_role](const char *value) {
+        if (selected_role == 3) mgos_sys_config_set_blu_indoor_mac(value);
+        else mgos_sys_config_set_blu_outdoor_mac(value);
+      };
+      set_mac(mac);
+      if (!mgos_sys_config_save(&mgos_sys_config, false, nullptr)) {
+        set_mac(previous.c_str());
+        Finish("Cannot save thermometer assignment");
+        return;
+      }
+      SecureRecord record = {};
+      record.version = 1;
+      record.protocol = kProtocolXiaomiGATT;
+      memcpy(record.mac, address.addr, 6);
+      if (!SaveRecord(selected_role, record)) {
+        set_mac(previous.c_str());
+        mgos_sys_config_save(&mgos_sys_config, false, nullptr);
+        Finish("Cannot save thermometer assignment; previous assignment retained");
+        return;
+      }
+      SetThermometerReading(selected_role, address, reading, voltage);
+      Finish(nullptr);
+      mgos::InvokeCB([] { RestartService(); });
+    });
+    if (!started) Finish("Wait until the garage stops, then retry adding the thermometer");
+    mg_rpc_send_responsef(ri, "{}");
+    return;
   }
   if (candidate->model == 0x01aa) {
     StoreXiaomi(selected_role, *candidate);
@@ -903,10 +952,10 @@ bool PairingScan() {
          state == "waiting_user_pairing" || state == "verifying_existing_key";
 }
 bool PairingConnecting() {
-  return Active() && !PairingScan();
+  return XiaomiGATTConnecting() || (Active() && state != "reading_xiaomi" && !PairingScan());
 }
 bool PairingBusy() {
-  return Active();
+  return Active() && state != "reading_xiaomi";
 }
 void PairingVerified(int verified_role) {
   if ((state == "waiting_encrypted_beacon" || state == "waiting_beacon" ||
@@ -933,6 +982,11 @@ void PairingAdvertisement(void *data) {
            result->scan_rsp.len, result->addr.addr, &reading))) {
     model = 0x01aa;
     pairing = true;
+  } else if (state == "scanning" && discovery_model == 0x055b &&
+      (Xiaomi03Advertisement(reinterpret_cast<const uint8_t *>(result->adv_data.p), result->adv_data.len) ||
+       Xiaomi03Advertisement(reinterpret_cast<const uint8_t *>(result->scan_rsp.p), result->scan_rsp.len))) {
+    model = 0x055b;
+    pairing = true;
   } else {
   mg_str manufacturer = mgos_bt_gap_parse_adv_data(
         result->scan_rsp, MGOS_BT_GAP_EIR_MANUFACTURER_SPECIFIC_DATA);
@@ -952,7 +1006,7 @@ void PairingAdvertisement(void *data) {
       i += n;
     }
   }
-  if (!pairing || (model != 1 && model != 2 && model != 5 && model != 3 && model != 0x01aa) ||
+  if (!pairing || (model != 1 && model != 2 && model != 5 && model != 3 && model != 0x01aa && model != 0x055b) ||
       (state == "scanning" && discovery_model && model != discovery_model)) return;
   if (state == "waiting_pairing_mode" || state == "waiting_security_retry" ||
       state == "waiting_user_pairing") {

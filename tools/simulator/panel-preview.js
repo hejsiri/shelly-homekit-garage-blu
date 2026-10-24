@@ -43,6 +43,7 @@ callDevice=function(method,params){
    previewDiscoveryStart=Date.now();
    previewPair={state:"scanning",error:"",candidates:[{mac:"AA:BB:CC:DD:EE:03",rssi:-48,encrypted:false,model:2},{mac:"AA:BB:CC:DD:EE:04",rssi:-51,encrypted:false,model:5},{mac:"AA:BB:CC:DD:EE:05",rssi:-52,encrypted:false,model:3},{mac:"AA:BB:CC:DD:EE:07",rssi:-50,encrypted:false,model:1}]};
    previewPair.model=params.model||0;
+   if(params.model===1371) previewPair.candidates=[{mac:"A4:C1:38:AA:EA:0D",rssi:-48,encrypted:false,model:1371}];
    if(params.model===426) previewPair.candidates=[{mac:"58:2D:34:3B:2E:BF",rssi:-55,encrypted:false,model:426}];
    return Promise.resolve({});
  }
@@ -56,12 +57,13 @@ callDevice=function(method,params){
    if(previewPair.state==='scanning' && Date.now()-previewDiscoveryStart<3000)
      return Promise.resolve({...previewPair,candidates:[]});
    if(previewPairStart && previewPair.state!=="done" && previewPair.state!=="error") {
-     const stages=previewPair.model===426?["waiting_beacon","waiting_beacon","done"]:["connecting","securing_link","discovering_services","enabling_beacon","reading_key","waiting_encrypted_beacon","done"];
+     const stages=previewPair.model===1371?["reading_xiaomi","reading_xiaomi","done"]:previewPair.model===426?["waiting_beacon","waiting_beacon","done"]:["connecting","securing_link","discovering_services","enabling_beacon","reading_key","waiting_encrypted_beacon","done"];
      previewPair.state=stages[Math.min(stages.length-1,Math.floor((Date.now()-previewPairStart)/1000))];
      if(previewPair.state==="done") {
        const role=["closed","open","motion","indoor","outdoor","button"][previewPair.role];
        previewInfo.components[0].blu[role+"_mac"]=previewPair.mac;
        if(previewPair.model===426) Object.assign(previewInfo.components[0].blu[role],{protocol:'xiaomi',paired:true,secure:false,ready:true,temperature_ready:true,humidity_ready:true,seen:true,temperature:18,humidity:66,battery:59,rssi:-55,age_s:0});
+       if(previewPair.model===1371) Object.assign(previewInfo.components[0].blu[role],{protocol:'xiaomi_gatt',paired:true,secure:false,ready:true,temperature_ready:true,humidity_ready:true,seen:true,temperature:21.6,humidity:48,battery:90,battery_estimated:true,voltage_mv:3000,timeout_s:900,rssi:-48,age_s:0,gatt:{firmware:'2.1.1_0159',hardware:'B1.4',error:'',poll_interval_s:300}});
        if(role==='motion') Object.assign(previewInfo.components[0].blu.motion,{secure:true,seen:true,active:false,battery:88,rssi:-51,age_s:0});
      }
    }

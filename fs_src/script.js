@@ -518,7 +518,7 @@ function garageRefresh(c, cd) {
 function bluSensorStatus(node, sensor, timeout, kind = false) {
   const paired = sensor.paired ?? sensor.secure;
   let html = "Not paired";
-  if (paired && !sensor.seen) html = `<span class="blu-badge blu-waiting">${sensor.protocol === "xiaomi" ? "Waiting for beacon" : "Waiting for encrypted beacon"}</span>`;
+  if (paired && !sensor.seen) html = `<span class="blu-badge blu-waiting">${sensor.protocol === "xiaomi_gatt" ? "Waiting for thermometer reading" : sensor.protocol === "xiaomi" ? "Waiting for beacon" : "Waiting for encrypted beacon"}</span>`;
   if (paired && sensor.seen) {
     const battery = Number.isFinite(sensor.battery) && sensor.battery >= 0 ? Math.min(100, Math.round(sensor.battery)) : -1;
     const rssi = Number.isFinite(sensor.rssi) ? sensor.rssi : null;
@@ -527,7 +527,7 @@ function bluSensorStatus(node, sensor, timeout, kind = false) {
     const stale = age > timeout || sensor.ready === false;
     const state = kind === "button" ? (stale ? "Out of range" : "In range") : kind === "ht" ? bluHTValues(sensor) : kind ? (sensor.active ? "Motion" : "No motion") : sensor.active ? "Closed" : "Open";
     html = `<span class="blu-badge ${stale ? "blu-stale" : sensor.active ? "blu-closed" : "blu-open"}" title="${kind === 'ht' ? 'Temperature and humidity' : kind ? 'Motion sensor' : 'Sensor contact'}${stale ? ' — stale reading' : ''}">${state}${stale ? ' · stale' : ''}</span>` +
-      `<span class="blu-power" title="Battery" aria-label="Battery ${battery < 0 ? 'unknown' : battery + '%'}"><span class="blu-battery" aria-hidden="true"><i style="width:${Math.max(0, battery)}%"></i></span>${battery < 0 ? '—' : battery + '%'}</span>` +
+      `<span class="blu-power" title="${sensor.battery_estimated ? 'Estimated from battery voltage (' + sensor.voltage_mv + ' mV)' : 'Battery'}" aria-label="Battery ${battery < 0 ? 'unknown' : battery + '%'}"><span class="blu-battery" aria-hidden="true"><i style="width:${Math.max(0, battery)}%"></i></span>${battery < 0 ? '—' : (sensor.battery_estimated ? '~' : '') + battery + '%'}</span>` +
       `<span class="blu-signal" title="${rssi === null ? 'Signal unknown' : rssi + ' dBm'}" role="img" aria-label="Signal ${bars} of 4 bars">${[1,2,3,4].map(n => `<i class="${n <= bars ? 'filled' : ''}"></i>`).join('')}</span>` +
       `<span class="blu-age">${age}s ago</span>`;
   }
@@ -581,17 +581,20 @@ function bluPairRender(c) {
   updateInnerText(el(c, "blu_pair_selected"), c.bluPairSelected ? `Device detected: ${c.bluPairSelected.mac}` : "");
   const finding = ["starting", "scanning"].includes(state);
   const xiaomi = c.bluPairModel === 426;
+  const xiaomiGatt = c.bluPairModel === 1371;
   updateInnerText(el(c, "blu_pair_step"), finding ? "Step 1 of 2 · Find device" : state === "done" ? "Pairing complete" :
     finished ? "Pairing stopped" : "Step 2 of 2 · Set up device");
   let help = needsSetup ? "This device needs a six-digit PIN to enable encrypted readings. Enter a new PIN to finish setup." :
     needsCurrent ? "This device requires its existing PIN to connect. Enter it once to continue." :
     choosing ? "More than one matching device is nearby. Select the one you want to pair." :
+    finding && xiaomiGatt ? "Keep the Xiaomi LYWSD03MMC powered on near Shelly. Close other apps connected to it. Shelly will try a direct reading automatically. No pairing mode, PIN, account or key is needed. Compatibility is experimental." :
     finding && xiaomi ? "Keep the Xiaomi LYWSDCGQ/01ZM powered on near Shelly. It broadcasts automatically; no pairing mode or PIN is needed. One detected device is added automatically. If several match, select yours." :
     finding ? "Hold the device button for more than 10 seconds, then release it. Keep it near Shelly. Pairing continues automatically when one matching device is detected." :
     state === "waiting_user_pairing" ? "Hold the same device's button for more than 10 seconds, then release it. Pairing resumes automatically when it is detected again." :
     state === "waiting_security_retry" ? "Keep the device near Shelly. The connection will resume automatically if the device is still in pairing mode." :
     state === "waiting_pairing_mode" ? "Keep the device near Shelly. Pairing will continue when it is detected again." :
     state === "waiting_encrypted_beacon" ? "Wake the device or trigger a reading to confirm that encrypted data is received." :
+    state === "reading_xiaomi" ? "Reading temperature and humidity directly. Keep the thermometer near Shelly and close other apps connected to it. No PIN or key is needed." :
     state === "waiting_beacon" ? "Keep the thermometer near Shelly while temperature and humidity readings arrive. No button press or PIN is needed." :
     state === "done" ? "The device is ready to use. You can close this window." :
     state === "error" && bluPairHasRecentReadings(c) ? "Recent encrypted readings are available from this device using its saved key. This new pairing attempt did not finish. Close this window and check the device status before retrying." :
@@ -601,7 +604,7 @@ function bluPairRender(c) {
   updateInnerText(el(c, "blu_pair_help"), help);
   const labels = {
     starting: "Starting discovery…", scanning: needsCurrent ? "Enter the current device PIN to continue." : choosing ? "Choose a device to continue." : "Searching for your device…",
-    connecting: "Connecting to device…", connecting_secure: "Connecting to device…",
+    reading_xiaomi: "Reading thermometer…", connecting: "Connecting to device…", connecting_secure: "Connecting to device…",
     securing_link: "Securing the connection…", discovering_services: "Checking device…",
     enabling_beacon: "Configuring device…", setting_pin: "Configuring encryption…", setting_key: "Configuring encryption automatically…",
     verifying_existing_key: "Checking existing encrypted readings…", waiting_encryption_pin: "Encryption PIN required by this device.",
@@ -635,7 +638,7 @@ function bluPairStart(c, role) {
   c.bluPairRevision = 0;
   c.bluPairRole = role;
   c.bluPairModel = role === 3 || role === 4 ?
-    (el(c, role === 3 ? "blu_indoor_type" : "blu_outdoor_type").value === "xiaomi" ? 426 : 3) : 0;
+    ({shelly: 3, xiaomi: 426, xiaomi_gatt: 1371}[el(c, role === 3 ? "blu_indoor_type" : "blu_outdoor_type").value] || 3) : 0;
   c.bluPairState = "starting";
   c.bluPairCandidates = [];
   c.bluPairListSignature = "";
@@ -843,7 +846,7 @@ function gdoSetConfig(c, cfg, spinner) {
       stale_after_s: Number(el(c, "blu_stale_after_s").value),
     };
     for (const role of ["closed", "open", "motion", "indoor", "outdoor", "button"]) {
-      if (!c.data.blu[role] || !c.data.blu[role].secure) continue;
+      if (!c.data.blu[role] || !(c.data.blu[role].paired ?? c.data.blu[role].secure)) continue;
       const name = el(c, "blu_" + role + "_name").value.trim();
       if (new TextEncoder().encode(name).length > 64) {
         alert("Device name is too long. Please use a shorter name.");
@@ -1260,10 +1263,10 @@ function updateComponent(cd) {
           const sensor = cd.blu[role];
           el(c, "blu_" + role + "_name_row").style.display = sensor && (sensor.paired ?? sensor.secure) ? "" : "none";
           if (!sensor) continue;
-          if (["indoor", "outdoor"].includes(role)) selectIfNotModified(el(c, "blu_" + role + "_type"), sensor.protocol === "xiaomi" ? "xiaomi" : "shelly");
+          if (["indoor", "outdoor"].includes(role)) selectIfNotModified(el(c, "blu_" + role + "_type"), sensor.protocol === "xiaomi_gatt" ? "xiaomi_gatt" : sensor.protocol === "xiaomi" ? "xiaomi" : "shelly");
           const name = role === "button" ? cd.blu.button_name ?? sensor.name ?? "" : sensor.name || "";
           setValueIfNotModified(el(c, "blu_" + role + "_name"), name);
-          bluSensorStatus(el(c, "blu_" + role + "_status"), sensor, role === "button" ? cd.blu.presence_timeout_s || 45 : cd.blu.stale_after_s, role === "button" ? "button" : role === "motion" ? true : ["indoor", "outdoor"].includes(role) ? "ht" : false);
+          bluSensorStatus(el(c, "blu_" + role + "_status"), sensor, role === "button" ? cd.blu.presence_timeout_s || 45 : sensor.timeout_s || cd.blu.stale_after_s, role === "button" ? "button" : role === "motion" ? true : ["indoor", "outdoor"].includes(role) ? "ht" : false);
         }
         el(c, "blu_car_name_row").style.display = cd.blu.button && cd.blu.button.secure ? "" : "none";
         setValueIfNotModified(el(c, "blu_car_name"), cd.blu.car_name || "");

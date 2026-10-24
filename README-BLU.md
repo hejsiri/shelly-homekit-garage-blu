@@ -1,8 +1,8 @@
 # Garage BLU — configuration and development
 
-Garage BLU adds encrypted Shelly BLU devices, passive Xiaomi thermometers and a garage dashboard to
+Garage BLU adds encrypted Shelly BLU devices, Xiaomi thermometers and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu48 for Shelly Plus 1 and Shelly 1 Gen3**,
+The current OTA release is **2.16.1-blu49 for Shelly Plus 1 and Shelly 1 Gen3**,
 with separate model-specific ZIPs and checksums. The Gen3 image targets ESP32-C3;
 its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
@@ -30,6 +30,7 @@ A preview does not demonstrate successful BLE pairing or relay operation.
 | Two BLU Door/Window, SBDW-002C | Fully closed and fully open endpoints. |
 | One BLU Motion, SBMO-003Z | Motion in the panel and an optional HomeKit Motion Sensor service. |
 | Two BLU H&T, SBHT-003C | Indoor/outdoor temperature and humidity in the panel and HomeKit. |
+| Xiaomi LYWSD03MMC (experimental) | Stock firmware direct GATT reads without a PIN, bindkey or Xiaomi account. Indoor/Outdoor H&T only. B1.4 / 2.1.1_0159 needs a physical test. |
 | Xiaomi LYWSDCGQ/01ZM (MJ_HT_V1) | Stock unencrypted MiBeacon temperature, humidity and battery. Replaces either Indoor or Outdoor BLU H&T; two thermometer slots total. No PIN, Xiaomi account or sensor firmware change. |
 | One BLU Button1 | Single press: open / stop / close. HomeKit occupancy and programmable button services (single / double / long press) within the garage accessory. Authenticated beacons determine presence in BLE range. |
 
@@ -77,16 +78,39 @@ A physical LYWSDCGQ/01ZM was observed on Plus1/blu45: live temperature, humidity
 and battery (36 %) appeared in the web panel. This did not test physical relay
 operation or a full hardware test of the current release.
 
-Since blu48, Xiaomi support is limited to LYWSDCGQ/01ZM, which can be added
-using normal broadcasts without a manual key or Xiaomi account. Experimental
-LYWSD03MMC and MCCGQ02HL support from blu46/47 has been withdrawn. The panel no
-longer offers those models or a bindkey form; their discovery requests are rejected.
-They are not replaced by insecure plaintext modes. Existing Shelly BLU encryption
-and the passive LYWSDCGQ protocol remain separate. If one of the withdrawn models
-was previously assigned, pair a supported device in that role; this update does
-not erase stored sensor records or reset HomeKit pairings.
-Future device integrations should support registration without asking users to
-extract secret keys from cloud accounts.
+## Xiaomi LYWSD03MMC: experimental key-free GATT reads (blu49)
+
+Choose **Xiaomi LYWSD03MMC (experimental)** in either H&T selector and click **Pair**.
+Keep the stock thermometer powered near Shelly and close other connected Bluetooth
+apps. No pairing-mode button press, PIN, manual MAC, cloud login or bindkey is required.
+One matching device continues automatically; several require selecting the intended MAC.
+Shelly verifies the Device Information model and a valid five-byte measurement before
+saving the assignment. Failed probes keep the previous assignment.
+
+The client reads characteristics by UUID, without fixed ATT handles, GATT writes or
+SMP initiation. It reads model `0x2a24`, optional firmware/hardware `0x2a26` / `0x2a27`,
+then `ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6` (or the stock mirror
+`8edfffef-3d1b-9c37-4623-ad7265f14076`). Data is signed little-endian temperature in
+hundredths of a degree, humidity percent and little-endian battery millivolts.
+The panel marks battery percent `~` because it is an estimate from 2.1–3.1 V.
+[The reference implementation](https://github.com/ManiAm/raspi-enviro-watch#reading-ble-device-characteristics)
+demonstrates stock **2.1.1_0159 / B1.5**. **B1.4 / 2.1.1_0159 is not yet verified**.
+
+Only one 10-second read transaction runs at a time, with a 3-second connection timeout.
+Polling runs every 300 seconds, retries back off 60/120/300 seconds, and movement defers
+or cancels reads. Scanning resumes once connected; a bounded 4-second scan grace keeps
+fresh endpoints valid during connection setup, without extending their stale timeout.
+GATT thermometer freshness is at least 900 seconds; failures never refresh old readings.
+RPC reports `protocol: "xiaomi_gatt"`, `paired: true`, `secure: false`, per-role
+`timeout_s`, `voltage_mv`, `battery_estimated`, and `gatt` diagnostics (versions/error).
+HomeKit reuses existing H&T service IDs; each field retains normal fault/stale handling.
+
+NVS protocol **4** identifies this key-free client. Withdrawn manual-key protocols **2/3**
+remain rejected. Stock encrypted MiBeacon readings are not decrypted, old blu46 bindings
+are not restored automatically, and **MCCGQ02HL remains unsupported**. Host tests exercise
+the production asynchronous client, malformed payloads, identity, mirror fallback,
+timeouts, cancellation, late callbacks, movement deferral, assignment commit/rollback,
+role isolation and unchanged endpoint freshness checks. Physical validation is pending.
 
 ## Pair and name devices
 
@@ -94,7 +118,7 @@ extract secret keys from cloud accounts.
    Pairing RPCs require authentication to be configured. The local panel uses
    HTTP/WebSocket, so use a trusted local network.
 2. Click **Pair** beside the required role. Discovery starts in a modal.
-3. Hold the device button for more than 10 seconds, then release it. One matching
+3. For Shelly BLU, hold the device button for more than 10 seconds, then release it. Xiaomi thermometers use the key-free steps above. One matching
    device is selected automatically. If several match, choose the intended one.
 4. No PIN is requested by default. The modal asks for one only if the device
    requires legacy authentication or PIN-based encryption activation.

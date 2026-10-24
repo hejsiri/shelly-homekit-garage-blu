@@ -25,6 +25,7 @@
 #include "mgos_system.hpp"
 
 #include "shelly_blu_garage.hpp"
+#include "shelly_blu_xiaomi_gatt.hpp"
 #include "shelly_main.hpp"
 
 namespace shelly {
@@ -337,6 +338,9 @@ void GarageDoorOpener::GetInputsState(int *is_closed, int *is_open) const {
 }
 
 void GarageDoorOpener::SetCurState(State new_state) {
+#ifdef SHELLY_GARAGE_BLE
+  blu::XiaomiGATTSetGarageMoving(new_state == State::kOpening || new_state == State::kClosing);
+#endif
   if (cur_state_ == new_state) return;
   LOG(LL_INFO,
       ("GDO %d: Cur State: %s -> %s (%d -> %d)", id(), StateStr(cur_state_),

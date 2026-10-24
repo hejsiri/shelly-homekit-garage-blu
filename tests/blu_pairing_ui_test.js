@@ -144,6 +144,11 @@ function fixture(candidates = [sensor()]) {
   f=fixture([sensor(426)]);f.e.blu_outdoor_type.value='xiaomi';f.start(4);await tick();
   assert.equal(f.count('Pair'),1);
   f=fixture([sensor(426)]);f.start(3);await tick();assert.equal(f.count('Pair'),0);
+  f=fixture([sensor(1371)]);f.e.blu_outdoor_type.value='xiaomi_gatt';f.start(4);
+  assert.match(f.e.blu_pair_help.textContent,/No pairing mode, PIN, account or key/);await tick();
+  assert.equal(f.count('Pair'),1);assert.equal(f.calls.find(call=>call.method==='Shelly.BLU.Discover').params.model,1371);
+  await f.refresh({state:'reading_xiaomi',candidates:[],error:''});
+  assert.match(f.e.blu_pair_status.textContent,/Reading thermometer/);f.hidden('pair_current_container');f.hidden('pair_new_container');
   // Manual-key Xiaomi models cannot be selected by any supported role.
   for(const model of [1371,2443]) for(const role of [0,1,2,3,4,5]) {
     f=fixture([sensor(model)]);f.start(role);await tick();assert.equal(f.count('Pair'),0);

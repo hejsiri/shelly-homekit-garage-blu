@@ -14,6 +14,11 @@ const char *Name(int role) {
   static const char *names[] = {"closed", "open", "motion", "indoor", "outdoor", "button"};
   return names[role];
 }
+bool ValidProtocol(int role, uint8_t protocol) {
+  return protocol == kProtocolBTHome ||
+         ((role == 3 || role == 4) &&
+          (protocol == kProtocolXiaomi || protocol == kProtocolXiaomiGATT));
+}
 }  // namespace
 bool LoadRecord(int role, SecureRecord *record) {
   if (role < 0 || role > 5) return false;
@@ -24,8 +29,7 @@ bool LoadRecord(int role, SecureRecord *record) {
     esp_err_t err = nvs_get_blob(handle, Name(role), &cache[role], &length);
     nvs_close(handle);
     if (err != ESP_OK || length != sizeof(SecureRecord) ||
-        cache[role].version != 1 || cache[role].protocol > kProtocolXiaomi ||
-        (cache[role].protocol == kProtocolXiaomi && role != 3 && role != 4))
+        cache[role].version != 1 || !ValidProtocol(role, cache[role].protocol))
       return false;
     loaded[role] = true;
   }
@@ -34,8 +38,7 @@ bool LoadRecord(int role, SecureRecord *record) {
 }
 bool SaveRecord(int role, const SecureRecord &record) {
   if (role < 0 || role > 5 || record.version != 1 ||
-      record.protocol > kProtocolXiaomi ||
-      (record.protocol == kProtocolXiaomi && role != 3 && role != 4)) return false;
+      !ValidProtocol(role, record.protocol)) return false;
   nvs_handle_t handle;
   if (nvs_open("blu_secure", NVS_READWRITE, &handle) != ESP_OK) return false;
   esp_err_t err = nvs_set_blob(handle, Name(role), &record, sizeof(record));
@@ -55,6 +58,11 @@ bool XiaomiFor(int role, const uint8_t mac[6]) {
   SecureRecord record;
   return (role == 3 || role == 4) && LoadRecord(role, &record) &&
          record.protocol == kProtocolXiaomi && memcmp(record.mac, mac, 6) == 0;
+}
+bool XiaomiGATTFor(int role, const uint8_t mac[6]) {
+  SecureRecord record;
+  return (role == 3 || role == 4) && LoadRecord(role, &record) &&
+         record.protocol == kProtocolXiaomiGATT && memcmp(record.mac, mac, 6) == 0;
 }
 bool AcceptSecure(int role, const uint8_t mac[6], const uint8_t *service,
                   size_t size, uint8_t *plain, size_t *plain_size) {

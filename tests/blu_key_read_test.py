@@ -29,6 +29,7 @@ harness = r'''
 #define SHELLY_GARAGE_BLE
 #include "shelly_blu_keys.hpp"
 #include "shelly_blu_xiaomi.hpp"
+#include "shelly_blu_xiaomi_gatt.hpp"
 #define BLE_HS_ATT_ERR(x) (0x100 + (x))
 #define BLE_ATT_ERR_INSUFFICIENT_AUTHEN 5
 #define BLE_ATT_ERR_INSUFFICIENT_ENC 15
@@ -76,8 +77,9 @@ int ble_gattc_write_flat(int,int,const void *data,int size,ReadCallback,void *) 
  key_writes++;const auto *p=static_cast<const uint8_t *>(data);written_key.assign(p,p+size);return 0;
 }
 void esp_fill_random(void *out,size_t size) { for(size_t i=0;i<size;i++)static_cast<uint8_t *>(out)[i]=0xa0+i; }
-struct Address { unsigned char addr[6]; int type=0; } peer = {{1,2,3,4,5,6},0};
-using mgos_bt_addr = Address;
+struct mgos_bt_addr { unsigned char addr[6]; int type=0; };
+using Address = mgos_bt_addr;
+Address peer = {{1,2,3,4,5,6},0};
 Address native_peer = {};
 struct mg_str { const char *p; size_t len; };
 mg_str mg_mk_str(const char *s) { return {s,strlen(s)}; }
@@ -86,7 +88,8 @@ void mgos_bt_addr_from_str(mg_str text,Address *out) {
  unsigned b[6];assert(sscanf(text.p,"%x:%x:%x:%x:%x:%x",b,b+1,b+2,b+3,b+4,b+5)==6);
  for(int i=0;i<6;i++)out->addr[i]=b[i];
 }
-const char *SensorMAC(int) { return ""; }
+std::string indoor_mac, outdoor_mac;
+const char *SensorMAC(int role) { return role==3?indoor_mac.c_str():role==4?outdoor_mac.c_str():""; }
 struct mg_rpc_request_info {};
 struct mg_rpc_frame_info {};
 bool authorized=true;
@@ -118,16 +121,23 @@ mg_str mgos_bt_gap_parse_adv_data(mg_str response,int) { return response; }
 void mgos_bt_addr_to_esp32(Address *addr,Address *out) { *out=*addr; }
 struct Candidate { Address addr; int rssi; bool encrypted; uint16_t model; double seen; };
 std::vector<Candidate> candidates;
-void mgos_bt_addr_to_str(Address *, int, char *out) { strcpy(out,"01:02:03:04:05:06"); }
+void mgos_bt_addr_to_str(const Address *, int, char *out) { strcpy(out,"01:02:03:04:05:06"); }
 void mgos_sys_config_set_blu_closed_mac(const char *) {}
 void mgos_sys_config_set_blu_open_mac(const char *) {}
 void mgos_sys_config_set_blu_motion_mac(const char *) {}
-void mgos_sys_config_set_blu_indoor_mac(const char *) {}
-void mgos_sys_config_set_blu_outdoor_mac(const char *) {}
+void mgos_sys_config_set_blu_indoor_mac(const char *s) { indoor_mac=s; }
+void mgos_sys_config_set_blu_outdoor_mac(const char *s) { outdoor_mac=s; }
 void mgos_sys_config_set_blu_button_mac(const char *) {}
 int mgos_sys_config;
-bool mgos_sys_config_save(int *, bool, void *) { return true; }
+bool config_ok=true,record_ok=true;
+bool mgos_sys_config_save(int *, bool, void *) { return config_ok; }
 void shelly::blu::ResetReadings() { reset_readings++; }
+namespace shelly { namespace blu {
+XiaomiGATTCallback probe;
+bool XiaomiGATTStart(int,const mgos_bt_addr &,XiaomiGATTCallback cb) { probe=cb;return true; }
+void XiaomiGATTCancel() { probe=nullptr; }
+void SetThermometerReading(int,const mgos_bt_addr &,const Sensor &,int) {}
+}}
 void RestoreSecurity() {}
 double now=100;
 double mgos_uptime() { return now; }
@@ -135,7 +145,7 @@ namespace shelly { namespace blu {
 SecureRecord persisted = {}, previous = {};
 bool have_previous = false;
 bool LoadRecord(int, SecureRecord *out) { *out = previous; return have_previous; }
-bool SaveRecord(int, const SecureRecord &record) { persisted = record; saved++; return true; }
+bool SaveRecord(int, const SecureRecord &record) { if(!record_ok)return false;persisted = record;saved++;return true; }
 }}
 using namespace shelly::blu;
 std::atomic<unsigned> generation(1);
@@ -192,6 +202,7 @@ void Tick() {
  Drain();
 }
 void Reset() {
+ config_ok=record_ok=true;indoor_mac.clear();outdoor_mac.clear();
  generation++; state = "reading_key"; error.clear(); traces.clear();requested_model=scan_stops=0;
  now=100;discovery_model=0;authorized=true;rpc_error=responses=service_restarts=0;connection_attempts=0;candidates.clear();
  request={1,"01:02:03:04:05:06",nullptr,nullptr};
@@ -218,7 +229,7 @@ void Advertise(bool pairing,bool auth,bool selected=true) {
 }
 int main() {
  // Withdrawn manual-key models are rejected even by an older cached panel.
- for(int model:{0x055b,0x098b}) {
+ for(int model:{0x098b}) {
   Reset();state="idle";requested_model=model;DiscoverRPC(nullptr,nullptr,nullptr,{});
   assert(rpc_error==400&&state=="idle"&&scan_stops==0&&responses==0);
   for(int slot=0;slot<6;slot++) {
@@ -227,7 +238,7 @@ int main() {
    PairRPC(nullptr,nullptr,nullptr,{});assert(rpc_error==400&&saved==0&&connections==0);
   }
  }
- for(int model:{0,3,0x01aa}) {
+ for(int model:{0,3,0x01aa,0x055b}) {
   Reset();state="idle";requested_model=model;DiscoverRPC(nullptr,nullptr,nullptr,{});
   assert(!rpc_error&&state=="scanning"&&scan_stops==1&&responses==1&&deadline==now+60);
  }
@@ -239,6 +250,33 @@ int main() {
  discovery_model=0x01aa;PairingAdvertisement(&xr);
  assert(candidates.size()==1&&candidates[0].model==0x01aa&&!candidates[0].encrypted);
  now++;PairingAdvertisement(&xr);assert(candidates.size()==1&&candidates[0].seen==now);
+ // GATT discovery accepts stock encrypted headers but never treats them as readings.
+ Reset();state="scanning";discovery_model=0x055b;
+ const char gattadv[]={7,0x16,char(0x95),char(0xfe),0x58,0x58,0x5b,0x05};
+ mgos_bt_gap_scan_result gr{peer,-55,{}, {gattadv,sizeof(gattadv)}};
+ PairingAdvertisement(&gr);assert(candidates.size()==1&&candidates[0].model==0x055b&&!candidates[0].encrypted);
+ Reset();state="scanning";discovery_model=0x055b;request.role=4;
+ candidates.push_back({peer,-45,false,0x055b,now});PairRPC(nullptr,nullptr,nullptr,{});
+ assert(!rpc_error&&state=="reading_xiaomi"&&saved==0&&probe);
+ {auto cb=probe;cb(Sensor(),-1,"read failed");} assert(state=="error"&&saved==0);
+ Reset();state="scanning";discovery_model=0x055b;request.role=4;
+ candidates.push_back({peer,-45,false,0x055b,now});PairRPC(nullptr,nullptr,nullptr,{});
+ {auto cb=probe;Sensor value;value.seen=true;cb(value,3000,"");}Drain();
+ assert(state=="done"&&saved==1&&persisted.protocol==kProtocolXiaomiGATT&&service_restarts==1);
+ for(int slot:{0,1,2,5}) {Reset();state="scanning";request.role=slot;discovery_model=0x055b;
+ candidates.push_back({peer,-45,false,0x055b,now});PairRPC(nullptr,nullptr,nullptr,{});assert(rpc_error==400&&saved==0);}
+ // A failed probe or storage operation cannot replace a previous thermometer.
+ for(int mode:{0,1,2}) {
+ Reset();state="scanning";discovery_model=0x055b;request.role=4;outdoor_mac="AA:BB:CC:DD:EE:FF";
+ candidates.push_back({peer,-45,false,0x055b,now});PairRPC(nullptr,nullptr,nullptr,{});
+ config_ok=mode!=1;record_ok=mode!=2;
+ {auto cb=probe;Sensor value;value.seen=true;cb(value,3000,mode==0?"read failed":"");}Drain();
+ assert(state=="error"&&saved==0&&outdoor_mac=="AA:BB:CC:DD:EE:FF"&&service_restarts==0);
+ }
+ // A cancelled session cannot commit through an old completion callback.
+ Reset();state="scanning";discovery_model=0x055b;request.role=4;
+ candidates.push_back({peer,-45,false,0x055b,now});PairRPC(nullptr,nullptr,nullptr,{});
+ {auto cb=probe;Finish("cancelled");cb(Sensor(),3000,"");}assert(saved==0&&state=="error");
  // Xiaomi assigns only an H&T slot without touching BLE security or any relay.
  Reset();state="scanning";discovery_model=0x01aa;request.role=3;
  candidates.push_back({peer,-45,false,0x01aa,now});
