@@ -1,6 +1,6 @@
 # Rozwiązywanie problemów Garage BLU
 
-Dla **2.16.1-blu40 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Dla **2.16.1-blu41 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](KONFIGURACJA.md) · [Historia zmian](HISTORIA_ZMIAN.md)
@@ -119,10 +119,10 @@ klik wysyłają zdarzenia HomeKit, bez bezpośredniego sterowania przekaźnikiem
 
 ### Nie widać przycisku lub obecności w aplikacji Dom
 
-1. Sprawdź, czy sterownik działa na blu40 lub nowszym i Button1 ma bezpieczne przypisanie w panelu.
+1. Zainstaluj blu41 lub nowszy i sprawdź, czy Button1 ma bezpieczne przypisanie w panelu. W blu40 występował mieszany układ usług i akcesoriów mostkowanych.
 2. Po aktualizacji uruchom sterownik ponownie i pozwól aplikacji Dom odświeżyć konfigurację.
    Już sparowanego Button1 nie trzeba parować ponownie. Nie resetuj HomeKit.
-3. Czujnik obecności używa Car name, a przycisk Name pod Button1; bez własnych nazw
+3. Otwórz ustawienia akcesorium Shelly i jego listę Akcesoria. Czujnik obecności używa Car name, a przycisk Name pod Button1; bez własnych nazw
    szukaj Car presence i Button. Dom może zachować wcześniej nadane własne nazwy.
 4. W ustawieniach przycisku w Domu przypisz akcje do pojedynczego, podwójnego i długiego
    naciśnięcia. Zdarzenia HomeKit nie wymagają gotowości krańcówek; bezpośrednie sterowanie

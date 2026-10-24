@@ -43,6 +43,12 @@ std::unique_ptr<mgos::hap::Service> CreateMotionService() {
 std::unique_ptr<mgos::hap::Service> CreateHTService(int role, bool temperature) {
  return std::unique_ptr<mgos::hap::Service>(new mgos::hap::Service{role, temperature});
 }
+std::unique_ptr<mgos::hap::Service> CreateCarPresenceService() {
+ return std::unique_ptr<mgos::hap::Service>(new mgos::hap::Service{5, false});
+}
+std::unique_ptr<mgos::hap::Service> CreateButtonService() {
+ return std::unique_ptr<mgos::hap::Service>(new mgos::hap::Service{5, true});
+}
 std::string state;
 int role = -1;
 void Finish(const char *) { state = "done"; }
@@ -71,6 +77,7 @@ int main() {
   assert(counts[2] == (blu::paired[2] ? 1 : 0));
   assert(counts[3] == (blu::paired[3] ? 2 : 0));
   assert(counts[4] == (blu::paired[4] ? 2 : 0));
+  assert(counts[5] == (blu::paired[5] ? 2 : 0));
  }
  for (int selected = 0; selected < 6; selected++) {
   blu::role = selected; blu::state = "waiting_encrypted_beacon";

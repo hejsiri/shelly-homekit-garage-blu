@@ -1,6 +1,6 @@
 author: Shelly-HomeKit contributors
 description: A HomeKit firmware for Shelly switches
-version: 2.16.1-blu40
+version: 2.16.1-blu41
 
 libs_version: latest
 modules_version: latest
@@ -839,6 +839,7 @@ conds:
         - ["blu.outdoor_name", "s", "", {title: "BLU outdoor accessory name"}]
         - ["blu.button_name", "s", "", {title: "BLU button accessory name"}]
         - ["blu.car_name", "s", "", {title: "Car presence tile name"}]
+        - ["blu.hap_layout_version", "i", 0, {title: "Internal BLU HomeKit layout revision"}]
         - ["blu.presence_timeout_s", "i", 45, {title: "Button presence timeout seconds"}]
         - ["blu.stale_after_s", "i", 180, {title: "Sensor timeout in seconds (30-3600)"}]
         - ["device.id",    "Shelly1G3-????????????"]
@@ -1379,6 +1380,7 @@ conds:
         - ["blu.outdoor_name", "s", "", {title: "BLU outdoor accessory name"}]
         - ["blu.button_name", "s", "", {title: "BLU button accessory name"}]
         - ["blu.car_name", "s", "", {title: "Car presence tile name"}]
+        - ["blu.hap_layout_version", "i", 0, {title: "Internal BLU HomeKit layout revision"}]
         - ["blu.presence_timeout_s", "i", 45, {title: "Button presence timeout seconds"}]
         - ["blu.stale_after_s", "i", 180, {title: "Sensor timeout in seconds (30-3600)"}]
         - ["device.id",    "shellyplus1-????????????"]

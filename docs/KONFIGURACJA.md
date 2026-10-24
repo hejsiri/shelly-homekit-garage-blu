@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1-blu40 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Instrukcja dla **2.16.1-blu41 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -84,11 +84,11 @@ nazw ani statusów nad grafiką garażu.
 | Motion sensor | Status Motion / No motion, kafelek Motion detected / No motion i usługa ruchu w HomeKit. |
 | Indoor H&T | Temperatura i wilgotność wewnątrz, odczyt nad garażem i usługi w HomeKit. |
 | Outdoor H&T | Temperatura i wilgotność na zewnątrz, odczyt nad garażem i usługi w HomeKit. |
-| BLU Button1 | In range / Out of range, kafelek obecności i wskaźnik naciśnięcia. Dwa akcesoria HomeKit: czujnik obecności auta i przycisk programowalny. Pojedynczy nacisk steruje także istniejącą bramą. |
+| BLU Button1 | In range / Out of range, kafelek obecności i wskaźnik naciśnięcia. Dwie usługi HomeKit w akcesorium Shelly: czujnik obecności auta i przycisk programowalny. Pojedynczy nacisk steruje także istniejącą bramą. |
 
 Usługi Motion i H&T są dodawane do HomeKit po bezpiecznym sparowaniu. Chwilowy brak
 odczytów nie usuwa ich z HomeKit; są raportowane jako niedostępne. Po sparowaniu
-Button1 pojawiają się osobne akcesoria obecności auta i przycisku programowalnego.
+Button1 pojawiają się usługi obecności auta i przycisku programowalnego w tym samym akcesorium Shelly.
 
 ## Własne nazwy
 
@@ -147,12 +147,13 @@ pozwala na sterowanie. Beacon nigdy nie uruchamia przekaźnika.
 
 ### Obecność i przycisk w aplikacji Dom
 
-Od blu40 sparowany Button1 udostępnia dwa osobne akcesoria przez ten sam mostek Shelly:
+W blu41 sparowany Button1 udostępnia dwie usługi w istniejącym akcesorium Shelly,
+razem z bramą i pozostałymi czujnikami. Są dostępne przez jego listę Akcesoria:
 
 - **Czujnik obecności auta (Occupancy Sensor)** — nazwa z Car name. Obecność oznacza
   świeży, poprawnie odszyfrowany beacon; po 45 sekundach bez pakietu zgłasza brak
   obecności. To prawidłowy stan, nie błąd czujnika. Brak Bluetooth lub nasłuchu BLE zgłasza błąd
-  zamiast wiarygodnego odczytu. Ręczny przełącznik grafiki auta nie zmienia HomeKit.
+  oraz nieaktywny status, zachowując ostatni odczyt. Ręczny przełącznik grafiki auta nie zmienia HomeKit.
 - **Przycisk programowalny (Stateless Programmable Switch)** — nazwa z Name pod
   BLU Button1. W ustawieniach tego akcesorium w aplikacji Dom przypisz akcje do
   pojedynczego, podwójnego i długiego naciśnięcia. Pojedynczy klik nadal bezpośrednio
@@ -161,8 +162,11 @@ Od blu40 sparowany Button1 udostępnia dwa osobne akcesoria przez ten sam mostek
 
 Jeśli Button1 jest już bezpiecznie sparowany, wystarczy aktualizacja i restart
 sterownika. Nie resetuj HomeKit ani nie paruj BLU ponownie. Nowe akcesoria
-pojawią się po odświeżeniu konfiguracji w Domu. Mają stałe identyfikatory; brak
-beaconów lub zmiana nazwy nie usuwa ich z HomeKit. Dom może zachować własne, ręcznie
+pojawią się po odświeżeniu konfiguracji w Domu. Blu41 wykonuje jednorazową migrację
+układu usług i zwiększa numer konfiguracji HomeKit. Identyfikatory bramy i ruchu
+pozostają zachowane. Usługi Button1 zastępują osobne akcesoria mostkowane z blu40;
+sprawdź i ewentualnie przypisz ponownie akcje przycisku ustawione w tamtej wersji.
+Brak beaconów lub zmiana nazwy nie usuwa usług. Dom może zachować własne, ręcznie
 nadane nazwy.
 
 ## Dodanie do Apple Home

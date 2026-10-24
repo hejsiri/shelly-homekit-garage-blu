@@ -1,6 +1,6 @@
 # Historia zmian Garage BLU
 
-Bieżące opisy i instrukcje dotyczą **2.16.1-blu40** (stan: 2026-10-24).
+Bieżące opisy i instrukcje dotyczą **2.16.1-blu41** (stan: 2026-10-24).
 Zobacz [instalację i aktualizacje](AKTUALIZACJA.md), [konfigurację](KONFIGURACJA.md)
 i [rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md).
 
@@ -248,3 +248,21 @@ Akcesoria mają stałe identyfikatory i pozostają w HomeKit po utracie zasięgu
 Zmiana Car name odświeża nazwę akcesorium bez usuwania kluczy i odczytów.
 
 Badge Closed ma czarne tło i biały tekst w jasnym i ciemnym motywie.
+
+## blu41 — wspólny układ usług HomeKit
+
+Obecność auta i przycisk są teraz usługami istniejącego akcesorium Shelly,
+analogicznie do ruchu i H&T. Usunięto mieszany model, w którym dwie nowe usługi
+z blu40 były mostkowane, a pozostałe były częścią bramy. Zachowano AID bramy
+oraz identyfikatory usług bramy i ruchu. Jednorazowa migracja zwiększa numer
+konfiguracji HomeKit, bez resetu parowań i kluczy BLU.
+
+Ruch i obecność zwracają wartości właściwego typu również przed pierwszym odczytem;
+Status Fault i Status Active określają dostępność. Przy utracie odbioru zachowują
+ostatni stan i zgłaszają błąd zamiast wysyłać null jako wartość czujnika.
+Przycisk programowalny zachowuje wymagany przez HomeKit IP odczyt null i trzy
+rodzaje zdarzeń. Sprawdź akcje przypisane do osobnego przycisku z blu40 po migracji.
+
+Dodano test rzeczywistych klas mgos::hap i serializacji /accessories przez Apple ADK,
+w tym unikalności identyfikatorów, jednej usługi głównej, typów odczytów,
+statusów dostępności i układu jednego akcesorium garażu.

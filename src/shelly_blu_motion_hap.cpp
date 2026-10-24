@@ -1,10 +1,8 @@
 #include "shelly_blu_motion_hap.hpp"
 #ifdef SHELLY_GARAGE_BLE
-#include "mgos_hap.hpp"
 #include "mgos_hap_chars.hpp"
 #include "mgos_timers.hpp"
 #include "shelly_blu_garage.hpp"
-#include "shelly_main.hpp"
 namespace shelly { namespace blu {
 namespace {
 // Stable instance IDs; optional services exist only for securely paired sensors.
@@ -17,9 +15,8 @@ class MotionService : public mgos::hap::Service {
     AddNameChar(0x1401, SensorName(2));
     motion_ = new mgos::hap::BoolCharacteristic(
         0x1402, &kHAPCharacteristicType_MotionDetected,
-        [](HAPAccessoryServerRef *, const HAPBoolCharacteristicReadRequest *, bool *value) {
-          if (!MotionReady()) return kHAPError_Unknown;
-          *value = MotionReading().active;
+        [this](HAPAccessoryServerRef *, const HAPBoolCharacteristicReadRequest *, bool *value) {
+          *value = MotionReady() ? MotionReading().active : active_;
           return kHAPError_None;
         }, true, nullptr, kHAPCharacteristicDebugDescription_MotionDetected);
     AddChar(motion_);
@@ -30,19 +27,27 @@ class MotionService : public mgos::hap::Service {
           return kHAPError_None;
         }, true, nullptr, kHAPCharacteristicDebugDescription_StatusFault);
     AddChar(fault_);
+    status_active_ = new mgos::hap::BoolCharacteristic(
+        0x1404, &kHAPCharacteristicType_StatusActive,
+        [](HAPAccessoryServerRef *, const HAPBoolCharacteristicReadRequest *, bool *value) {
+          *value = MotionReady();
+          return kHAPError_None;
+        }, true, nullptr, kHAPCharacteristicDebugDescription_StatusActive);
+    AddChar(status_active_);
     timer_.Reset(1000, MGOS_TIMER_REPEAT);
   }
  private:
   void Poll() {
     const bool ready = MotionReady(), active = MotionReading().active;
-    if (ready != ready_) fault_->RaiseEvent();
+    if (ready != ready_) { fault_->RaiseEvent(); status_active_->RaiseEvent(); }
     if (ready && (!ready_ || active != active_)) motion_->RaiseEvent();
     ready_ = ready;
-    active_ = active;
+    if (ready) active_ = active;
   }
   bool ready_ = false, active_ = false;
   mgos::hap::BoolCharacteristic *motion_ = nullptr;
   mgos::hap::UInt8Characteristic *fault_ = nullptr;
+  mgos::hap::BoolCharacteristic *status_active_ = nullptr;
   mgos::Timer timer_;
 };
 class HTService : public mgos::hap::Service {
@@ -94,13 +99,11 @@ class CarPresenceService : public mgos::hap::Service {
       : Service(0x1600, &kHAPServiceType_OccupancySensor,
                 kHAPServiceDebugDescription_OccupancySensor),
         timer_([this] { Poll(); }) {
-    set_primary(true);
     AddNameChar(0x1601, CarName());
     presence_ = new mgos::hap::UInt8Characteristic(
         0x1602, &kHAPCharacteristicType_OccupancyDetected, 0, 1, 1,
-        [](HAPAccessoryServerRef *, const HAPUInt8CharacteristicReadRequest *, uint8_t *value) {
-          if (!CarPresenceReady()) return kHAPError_Unknown;
-          *value = CarPresent() ? 1 : 0;
+        [this](HAPAccessoryServerRef *, const HAPUInt8CharacteristicReadRequest *, uint8_t *value) {
+          *value = (CarPresenceReady() ? CarPresent() : present_) ? 1 : 0;
           return kHAPError_None;
         }, true, nullptr, kHAPCharacteristicDebugDescription_OccupancyDetected);
     AddChar(presence_);
@@ -111,18 +114,26 @@ class CarPresenceService : public mgos::hap::Service {
           return kHAPError_None;
         }, true, nullptr, kHAPCharacteristicDebugDescription_StatusFault);
     AddChar(fault_);
+    status_active_ = new mgos::hap::BoolCharacteristic(
+        0x1604, &kHAPCharacteristicType_StatusActive,
+        [](HAPAccessoryServerRef *, const HAPBoolCharacteristicReadRequest *, bool *value) {
+          *value = CarPresenceReady();
+          return kHAPError_None;
+        }, true, nullptr, kHAPCharacteristicDebugDescription_StatusActive);
+    AddChar(status_active_);
     timer_.Reset(1000, MGOS_TIMER_REPEAT);
   }
  private:
   void Poll() {
     const bool ready = CarPresenceReady(), present = CarPresent();
-    if (ready != ready_) fault_->RaiseEvent();
+    if (ready != ready_) { fault_->RaiseEvent(); status_active_->RaiseEvent(); }
     if (ready && (!ready_ || present != present_)) presence_->RaiseEvent();
     ready_ = ready;
-    present_ = present;
+    if (ready) present_ = present;
   }
   bool ready_ = false, present_ = false;
   mgos::hap::UInt8Characteristic *presence_ = nullptr, *fault_ = nullptr;
+  mgos::hap::BoolCharacteristic *status_active_ = nullptr;
   mgos::Timer timer_;
 };
 class ButtonService : public mgos::hap::Service {
@@ -130,7 +141,6 @@ class ButtonService : public mgos::hap::Service {
   ButtonService()
       : Service(0x1700, &kHAPServiceType_StatelessProgrammableSwitch,
                 kHAPServiceDebugDescription_StatelessProgrammableSwitch) {
-    set_primary(true);
     AddNameChar(0x1701, SensorName(5));
     event_ = new mgos::hap::UInt8Characteristic(
         0x1702, &kHAPCharacteristicType_ProgrammableSwitchEvent, 0, 2, 1,
@@ -157,21 +167,11 @@ std::unique_ptr<mgos::hap::Service> CreateMotionService() {
 std::unique_ptr<mgos::hap::Service> CreateHTService(int role, bool temperature) {
   return std::unique_ptr<mgos::hap::Service>(new HTService(role, temperature));
 }
-void AddButtonAccessories(std::vector<std::unique_ptr<mgos::hap::Accessory>> *accessories,
-                          HAPAccessoryServerRef *server) {
-  if (!SensorPaired(5)) return;
-  // AIDs and IIDs remain stable across renames, missing beacons and re-pairing.
-  std::unique_ptr<mgos::hap::Accessory> presence(new mgos::hap::Accessory(
-      0x1400, kHAPAccessoryCategory_BridgedAccessory, CarName(), GetIdentifyCB(), server));
-  presence->AddHAPService(&mgos_hap_accessory_information_service);
-  presence->AddService(std::unique_ptr<mgos::hap::Service>(new CarPresenceService()));
-  std::unique_ptr<mgos::hap::Accessory> button(new mgos::hap::Accessory(
-      0x1500, kHAPAccessoryCategory_BridgedAccessory, SensorName(5), GetIdentifyCB(), server));
-  button->AddHAPService(&mgos_hap_accessory_information_service);
-  button->AddService(std::unique_ptr<mgos::hap::Service>(new ButtonService()));
-  // Preserve the primary garage accessory's category and existing service IDs.
-  accessories->push_back(std::move(presence));
-  accessories->push_back(std::move(button));
+std::unique_ptr<mgos::hap::Service> CreateCarPresenceService() {
+  return std::unique_ptr<mgos::hap::Service>(new CarPresenceService());
+}
+std::unique_ptr<mgos::hap::Service> CreateButtonService() {
+  return std::unique_ptr<mgos::hap::Service>(new ButtonService());
 }
 } }
 #endif

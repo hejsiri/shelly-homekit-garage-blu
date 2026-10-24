@@ -536,6 +536,10 @@ void GarageDoorOpener::AddBLUServices(mgos::hap::Accessory *accessory) {
     blu_sensors_.push_back(blu::CreateHTService(role, true));
     blu_sensors_.push_back(blu::CreateHTService(role, false));
   }
+  if (blu::SensorPaired(5)) {
+    blu_sensors_.push_back(blu::CreateCarPresenceService());
+    blu_sensors_.push_back(blu::CreateButtonService());
+  }
   for (auto &service : blu_sensors_) accessory->AddService(service.get());
 }
 #endif
@@ -570,7 +574,6 @@ void CreateHAPGDO(int id, Input *in_close, Input *in_open, Output *out_close,
   pri_acc->AddService(gdo2);
 #ifdef SHELLY_GARAGE_BLE
   gdo2->AddBLUServices(pri_acc);
-  blu::AddButtonAccessories(accs, svr);
 #endif
 }
 

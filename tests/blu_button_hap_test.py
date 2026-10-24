@@ -28,18 +28,17 @@ struct HAPBoolCharacteristicReadRequest {};
 struct HAPUInt8CharacteristicReadRequest {};
 struct HAPFloatCharacteristicReadRequest {};
 const int kHAPError_None=0,kHAPError_Unknown=1,kHAPError_InvalidState=2;
-const int kHAPAccessoryCategory_BridgedAccessory=0;
 const int kHAPServiceType_MotionSensor=1,kHAPServiceType_TemperatureSensor=2,
  kHAPServiceType_HumiditySensor=3,kHAPServiceType_OccupancySensor=4,kHAPServiceType_StatelessProgrammableSwitch=5;
 const int kHAPCharacteristicType_MotionDetected=1,kHAPCharacteristicType_StatusFault=2,
  kHAPCharacteristicType_CurrentTemperature=3,kHAPCharacteristicType_CurrentRelativeHumidity=4,
- kHAPCharacteristicType_OccupancyDetected=5,kHAPCharacteristicType_ProgrammableSwitchEvent=6;
+ kHAPCharacteristicType_OccupancyDetected=5,kHAPCharacteristicType_ProgrammableSwitchEvent=6,kHAPCharacteristicType_StatusActive=7;
 const char *kHAPServiceDebugDescription_MotionSensor="motion",*kHAPServiceDebugDescription_TemperatureSensor="temperature",
  *kHAPServiceDebugDescription_HumiditySensor="humidity",*kHAPServiceDebugDescription_OccupancySensor="occupancy",
  *kHAPServiceDebugDescription_StatelessProgrammableSwitch="button";
 const char *kHAPCharacteristicDebugDescription_MotionDetected="motion",*kHAPCharacteristicDebugDescription_StatusFault="fault",
  *kHAPCharacteristicDebugDescription_CurrentTemperature="temperature",*kHAPCharacteristicDebugDescription_CurrentRelativeHumidity="humidity",
- *kHAPCharacteristicDebugDescription_OccupancyDetected="occupancy",*kHAPCharacteristicDebugDescription_ProgrammableSwitchEvent="event";
+ *kHAPCharacteristicDebugDescription_StatusActive="active",*kHAPCharacteristicDebugDescription_OccupancyDetected="occupancy",*kHAPCharacteristicDebugDescription_ProgrammableSwitchEvent="event";
 const int MGOS_TIMER_REPEAT=1,MGOS_BT_STARTED=1;
 int mgos_hap_accessory_information_service=0;
 double now=10; bool bluetooth=true,scanning=true,authenticated=true,pairing=false,paired=false;
@@ -137,18 +136,15 @@ mgos::hap::UInt8Characteristic *characteristic(mgos::hap::Accessory &a,const int
 }
 void tick(){for(auto *t:mgos::Timer::timers)t->cb();}
 int main(){
- std::vector<std::unique_ptr<mgos::hap::Accessory>> accessories;
- accessories.emplace_back(new mgos::hap::Accessory(1,4,"Garage",0,nullptr));
- AddButtonAccessories(&accessories,nullptr);assert(accessories.size()==1&&!button_event_handler);
+ std::unique_ptr<mgos::hap::Accessory> accessory(new mgos::hap::Accessory(1,4,"Garage",0,nullptr));
  paired=true;known[5]=true;addresses[5].addr[5]=5;
- AddButtonAccessories(&accessories,nullptr);assert(accessories.size()==3&&accessories[0]->category==4);
- assert(accessories[1]->aid==0x1400&&accessories[2]->aid==0x1500);
- assert(accessories[1]->name=="Tesla"&&accessories[2]->name=="Remote");
- assert(accessories[1]->services[0]->type==&kHAPServiceType_OccupancySensor&&accessories[1]->services[0]->primary);
- assert(accessories[2]->services[0]->type==&kHAPServiceType_StatelessProgrammableSwitch&&accessories[2]->services[0]->primary);
- auto *presence=characteristic(*accessories[1],&kHAPCharacteristicType_OccupancyDetected);
- auto *fault=characteristic(*accessories[1],&kHAPCharacteristicType_StatusFault);
- auto *event=characteristic(*accessories[2],&kHAPCharacteristicType_ProgrammableSwitchEvent);
+ accessory->AddService(CreateCarPresenceService());accessory->AddService(CreateButtonService());
+ assert(accessory->services.size()==2&&accessory->aid==1&&accessory->category==4);
+ assert(accessory->services[0]->name=="Tesla"&&accessory->services[1]->name=="Remote");
+ assert(!accessory->services[0]->primary&&!accessory->services[1]->primary);
+ auto *presence=characteristic(*accessory,&kHAPCharacteristicType_OccupancyDetected);
+ auto *fault=characteristic(*accessory,&kHAPCharacteristicType_StatusFault);
+ auto *event=characteristic(*accessory,&kHAPCharacteristicType_ProgrammableSwitchEvent);
  assert(presence->iid==0x1602&&event->iid==0x1702);
  uint8_t value=99;assert(event->read(nullptr,nullptr,&value)==kHAPError_InvalidState);
  assert(presence->read(nullptr,nullptr,&value)==kHAPError_None&&value==0);
@@ -171,18 +167,18 @@ int main(){
  now=65;pairing=true;beacon(12,1);pairing=false;beacon(12,1);
  assert(event->values.size()==5&&!ConsumeButtonPress());
  beacon(13,2);assert(event->values.back()==1&&!ConsumeButtonPress());
- bluetooth=false;tick();assert(!CarPresent()&&presence->read(nullptr,nullptr,&value)==kHAPError_Unknown);
+ bluetooth=false;tick();assert(!CarPresent()&&presence->read(nullptr,nullptr,&value)==kHAPError_None&&value==1);
  assert(fault->read(nullptr,nullptr,&value)==kHAPError_None&&value==1);
  bluetooth=true;tick();assert(presence->values.back()==1);
- scanning=false;tick();assert(!CarPresenceReady()&&presence->read(nullptr,nullptr,&value)==kHAPError_Unknown);
+ scanning=false;tick();assert(!CarPresenceReady()&&presence->read(nullptr,nullptr,&value)==kHAPError_None&&value==1);
  scanning=true;tick();assert(CarPresenceReady()&&presence->values.back()==1);
- accessories.clear();assert(!button_event_handler&&mgos::Timer::timers.empty());
+ accessory.reset();assert(!button_event_handler&&mgos::Timer::timers.empty());
  beacon(14,4); // No callback after the accessory was destroyed.
  car_name="";assert(std::string(CarName())=="Car presence");
- accessories.emplace_back(new mgos::hap::Accessory(1,4,"Garage",0,nullptr));
- now=200;AddButtonAccessories(&accessories,nullptr);
- assert(accessories.size()==3&&accessories[1]->aid==0x1400&&accessories[2]->aid==0x1500);
- assert(accessories[1]->name=="Car presence"&&!CarPresent()); // Missing beacons do not remove accessories.
+ accessory.reset(new mgos::hap::Accessory(1,4,"Garage",0,nullptr));
+ now=200;accessory->AddService(CreateCarPresenceService());accessory->AddService(CreateButtonService());
+ assert(accessory->services.size()==2&&accessory->aid==1);
+ assert(accessory->services[0]->name=="Car presence"&&!CarPresent()); // Missing beacons do not remove accessories.
 }
 '''
 with tempfile.TemporaryDirectory(prefix='shelly-button-hap-') as temp:
@@ -190,4 +186,4 @@ with tempfile.TemporaryDirectory(prefix='shelly-button-hap-') as temp:
     subprocess.run(['clang++','-std=c++14','-DSHELLY_GARAGE_BLE','-Wall','-Wextra','-Werror',
                     '-fsanitize=address,undefined','-I',str(root/'src'),str(p/'test.cpp'),'-o',str(p/'test')],check=True)
     subprocess.run([str(p/'test')],check=True)
-print('PASS: production BLE path, independent HomeKit accessories, three press types, duplicates, pairing suppression, 45s absence and callback lifetime')
+print('PASS: production BLE path, shared HomeKit accessory, three press types, duplicates, pairing suppression, 45s absence and callback lifetime')

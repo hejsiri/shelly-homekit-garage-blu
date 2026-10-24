@@ -2,7 +2,7 @@
 
 Garage BLU adds encrypted Shelly BLU devices and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu40 for Shelly Plus 1 and Shelly 1 Gen3**,
+The current OTA release is **2.16.1-blu41 for Shelly Plus 1 and Shelly 1 Gen3**,
 with separate model-specific ZIPs and checksums. The Gen3 image targets ESP32-C3;
 its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
@@ -30,7 +30,7 @@ A preview does not demonstrate successful BLE pairing or relay operation.
 | Two BLU Door/Window, SBDW-002C | Fully closed and fully open endpoints. |
 | One BLU Motion, SBMO-003Z | Motion in the panel and an optional HomeKit Motion Sensor service. |
 | Two BLU H&T, SBHT-003C | Indoor/outdoor temperature and humidity in the panel and HomeKit. |
-| One BLU Button1 | Single press: open / stop / close. Separate HomeKit occupancy sensor and programmable button (single / double / long press). Authenticated beacons determine presence in BLE range. |
+| One BLU Button1 | Single press: open / stop / close. HomeKit occupancy and programmable button services (single / double / long press) within the garage accessory. Authenticated beacons determine presence in BLE range. |
 
 Other controller variants, including Mini, 1PM and Gen4, are not supported by
 these packages. Door/Window Outdoor ZB (SBDW-302C) and a BLU leak sensor remain
@@ -105,7 +105,7 @@ The **Continue previous direction after stop** switch chooses the direction of
 the next relay impulse after a stop. Match it to the motor controller's behavior;
 it does not reprogram the motor controller.
 
-Button1 beacons update the car picture and a separate HomeKit occupancy accessory. A new authenticated packet
+Button1 beacons update the car picture and a HomeKit occupancy service. A new authenticated packet
 shows it; exceeding the presence timeout (default 45 seconds) hides it. The
 manual show/hide button lasts until the next packet or presence transition.
 Repeated status polls of the same packet preserve that manual choice. Presence
@@ -113,7 +113,8 @@ means the button is in BLE range, not proof of an exact parking location.
 Beacons never trigger the relay. A fresh single press can trigger the normal
 open / stop / close action when the garage inputs are ready.
 
-After securely pairing Button1, HomeKit exposes two bridged accessories:
+After securely pairing Button1, HomeKit exposes two services inside the existing
+Shelly garage accessory, alongside Motion and H&T:
 
 - **Car presence** (Occupancy Sensor): uses **Car name** and the same authenticated
   presence state as the dashboard. Missing beacons for 45 seconds mean normal
@@ -123,10 +124,17 @@ After securely pairing Button1, HomeKit exposes two bridged accessories:
   also retains direct garage control. Double and long presses only send HomeKit
   events. Beacon packets and unsupported press types do not trigger button events.
 
-Already paired Button1 devices gain these accessories after updating and restarting
-the controller. No HomeKit reset or new BLU pairing is required. Accessory IDs
-remain stable when names change or the button is out of range. Apple Home may
-keep its previously assigned names.
+Already paired Button1 devices gain these services after updating and restarting
+the controller. No HomeKit reset or new BLU pairing is required. Garage and Motion
+IDs are preserved. The blu41 layout migration increments the HomeKit configuration
+number once, so controllers refresh the database. It replaces the bridged Button1
+accessories introduced in blu40; check and reassign any button actions configured
+in that version. Apple Home may keep its previously assigned names.
+
+Motion and occupancy expose typed readings, Status Fault and Status Active even
+before a fresh beacon. During a reception failure they retain their last reading
+with a fault and inactive status. They do not report a valid absence from a stopped
+scanner. The programmable button's read value remains null as required for IP HomeKit.
 
 Event mapping follows the [BTHome event definitions](https://bthome.io/format/#events)
 and [Apple programmable switch events](https://github.com/apple/HomeKitADK/blob/master/HAP/HAPCharacteristicTypes.h).

@@ -530,6 +530,18 @@ bool mgos_sys_config_get_wifi_sta_enable(void) {
 }
 #endif
 
+#ifdef SHELLY_GARAGE_BLE
+static bool MigrateBLUHAPLayout() {
+  if (mgos_sys_config_get_blu_hap_layout_version() >= 1) return false;
+  if (HAPAccessoryServerIncrementCN(&s_kvs) != kHAPError_None) {
+    LOG(LL_ERROR, ("Failed to update BLU HomeKit layout configuration number"));
+    return false;
+  }
+  mgos_sys_config_set_blu_hap_layout_version(1);
+  return true;
+}
+#endif
+
 static bool MigrateConfig(bool *reboot_required) {
   bool changed = false;
   *reboot_required = false;
@@ -612,6 +624,9 @@ static bool MigrateConfig(bool *reboot_required) {
     mgos_sys_config_set_shelly_cfg_version(6);
     changed = true;
   }
+#ifdef SHELLY_GARAGE_BLE
+  if (MigrateBLUHAPLayout()) changed = true;
+#endif
   return changed;
 }
 
