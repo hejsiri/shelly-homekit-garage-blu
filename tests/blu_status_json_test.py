@@ -54,6 +54,7 @@ int mgos_sys_config_get_blu_presence_timeout_s() { return 45; }
 int mgos_sys_config_get_blu_stale_after_s() { return 180; }
 double mgos_uptime() { return 150; }
 bool SecureFor(int role, const unsigned char *) { return role!=3; }
+bool XiaomiContactFor(int role,const unsigned char*){return role==0;}
 bool XiaomiFor(int role, const unsigned char *) { return role==3; }
 bool XiaomiSecureFor(int,const unsigned char*){return false;}
 int SensorTimeout(int){return 180;}
@@ -87,6 +88,7 @@ with tempfile.TemporaryDirectory(prefix='shelly-status-json-') as temp:
     assert result['button_name'] == ''
     assert result['car_name'] == 'Auto "garaż" <test>'
     assert result['closed']['active'] is True
+    assert result['closed']['protocol'] == 'xiaomi_contact'
     assert result['closed']['age_s'] == 6
     assert result['indoor']['paired'] is True and result['indoor']['secure'] is False
     assert result['indoor']['protocol']=='xiaomi' and result['indoor']['temperature_ready'] is True

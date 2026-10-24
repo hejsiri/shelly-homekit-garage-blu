@@ -115,7 +115,7 @@ bool AcceptSecure(int,const uint8_t*,const uint8_t *data,size_t n,uint8_t *plain
  if(!authenticated||n<2||n-2>*len)return false;
  memcpy(plain,data+2,n-2);*len=n-2;return true;
 }
-bool xiaomi=false,xiaomiEncrypted=false;
+bool xiaomi=false,xiaomiEncrypted=false,testContact=false;Reading contactReading;
 bool SensorPaired(int role){return (role==5&&paired)||(role==3&&xiaomi);}
 const char *SensorName(int){return button_name.c_str();}
 const Sensor &MotionReading(){return sensors[2];}
@@ -124,9 +124,11 @@ bool SensorReady(int role);
 bool HTReady(int role,bool temperature);
 int SensorTimeout(int role);
 bool SecureFor(int,const uint8_t*){return false;}
-bool XiaomiFor(int role,const uint8_t*){return role==3&&xiaomi;}
+bool XiaomiContactFor(int role,const uint8_t*){return testContact&&role==0;}
+bool XiaomiFor(int role,const uint8_t*){return (role==3&&xiaomi)||(testContact&&role==0);}
 bool XiaomiSecureFor(int role,const uint8_t*){return role==3&&xiaomiEncrypted;}
 bool AcceptXiaomi(int role,const uint8_t *mac,const uint8_t *data,size_t length,Reading *out){
+ if(XiaomiContactFor(role,mac)){if(!authenticated)return false;*out=contactReading;return true;}
  return XiaomiFor(role,mac)&&DecodeXiaomiAdvertisement(data,length,mac,out);
 }
 int mgos_sys_config_get_blu_stale_after_s(){return 180;}
@@ -211,6 +213,15 @@ int main(){
  assert(SensorReady(3));now=2022;assert(!SensorReady(3));xiaomiEncrypted=false;
  bluetooth=false;now=222;assert(!SensorReady(3));bluetooth=true;
  xiaomi=false;ScanResult(0,&therm,nullptr);assert(packet_sequence[3]==2); // Explicit binding is required.
+ // A Xiaomi endpoint requires a contact state, not just an authenticated battery packet.
+ testContact=true;authenticated=true;known[3]=false;known[0]=true;
+ addresses[0]=therm.addr;contactReading.window_present=true;contactReading.window_open=false;
+ now=300;ScanResult(0,&therm,nullptr);assert(SensorReady(0)&&sensors[0].active);
+ contactReading.window_open=true;now=301;ScanResult(0,&therm,nullptr);assert(!sensors[0].active);
+ contactReading={};contactReading.battery=80;now=500;ScanResult(0,&therm,nullptr);
+ assert(!SensorReady(0)&&sensors[0].last_seen==301&&sensors[0].battery==80&&!sensors[0].active);
+ authenticated=false;contactReading.window_present=true;contactReading.window_open=false;
+ ScanResult(0,&therm,nullptr);assert(!sensors[0].active);
 
 }
 '''

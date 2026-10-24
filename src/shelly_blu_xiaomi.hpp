@@ -7,7 +7,7 @@
 
 namespace shelly {
 namespace blu {
-// Xiaomi MiBeacon service data, without UUID. Supports stock thermometers only.
+// Xiaomi MiBeacon service data, without UUID. Explicit stock-device allowlist.
 struct XiaomiFrame {
   uint16_t model;
   bool encrypted;
@@ -26,9 +26,9 @@ inline bool ParseXiaomiFrame(const uint8_t *data, size_t size,
   const uint16_t model = data[2] | (uint16_t(data[3]) << 8);
   const bool encrypted = flags & 8;
   if (version < 2 || version > 5 || !(flags & 0x40) || (flags & 0x80) ||
-      (model != 0x01aa && model != 0x055b) ||
+      (model != 0x01aa && model != 0x055b && model != 0x098b) ||
       (model == 0x01aa && encrypted) ||
-      (model == 0x055b && (!encrypted || version < 4))) return false;
+      (model != 0x01aa && (!encrypted || version < 4))) return false;
   size_t offset = 5;
   if (flags & 0x10) {
     if (size - offset < 6) return false;
@@ -65,7 +65,8 @@ inline bool ParseXiaomiFrame(const uint8_t *data, size_t size,
   return true;
 }
 // Same TLV measurement objects in plaintext LYWSDCGQ and decrypted LYWSD03MMC.
-inline bool DecodeXiaomiObjects(const uint8_t *data, size_t size, Reading *out) {
+inline bool DecodeXiaomiObjects(const uint8_t *data, size_t size, Reading *out,
+                                uint16_t model = 0x055b) {
   size_t offset = 0;
   Reading reading;
   bool any = false;
@@ -78,7 +79,20 @@ inline bool DecodeXiaomiObjects(const uint8_t *data, size_t size, Reading *out) 
     if (!length || length > size - offset) return false;
     const uint8_t *value = data + offset;
     unsigned mask = 0;
-    if (type == 0x1004 || type == 0x1006 || type == 0x100d) {
+    if (model == 0x098b && type == 0x1019) {
+      if (length != 1 || value[0] > 3) return false;
+      reading.window_reset = value[0] == 3;
+      reading.window_present = !reading.window_reset;
+      reading.window_open = value[0] != 1; // 0=open, 1=closed, 2=left open.
+      mask = 8;
+    } else if (model == 0x098b && (type == 0x1018 || type == 0x1007)) {
+      if (length != (type == 0x1018 ? 1u : 3u)) return false;
+      if (type == 0x1018 && value[0] > 1) return false;
+      const unsigned raw = type == 0x1018 ? value[0] :
+          unsigned(value[0]) | (unsigned(value[1]) << 8) | (unsigned(value[2]) << 16);
+      reading.light = type == 0x1018 ? raw : raw == 100;
+      mask = 16;
+    } else if (model != 0x098b && (type == 0x1004 || type == 0x1006 || type == 0x100d)) {
       if (length != (type == 0x100d ? 4u : 2u)) return false;
       if (type != 0x1006) {
         const int raw = value[0] | (int(value[1]) << 8);

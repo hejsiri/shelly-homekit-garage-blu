@@ -87,7 +87,8 @@ void mgos_bt_addr_from_str(mg_str text,Address *out) {
  unsigned b[6];assert(sscanf(text.p,"%x:%x:%x:%x:%x:%x",b,b+1,b+2,b+3,b+4,b+5)==6);
  for(int i=0;i<6;i++)out->addr[i]=b[i];
 }
-const char *SensorMAC(int) { return ""; }
+std::string assigned[6];
+const char *SensorMAC(int role) { return assigned[role].c_str(); }
 struct mg_rpc_request_info {};
 struct mg_rpc_frame_info {};
 bool authorized=true;
@@ -135,12 +136,13 @@ bool DecryptXiaomi(const uint8_t *data,size_t size,const uint8_t mac[6],const ui
  XiaomiFrame frame;
  if(!decrypt_ok||!ParseXiaomiFrame(data,size,mac,&frame)||!frame.encrypted||key[0]!=0xe9)return false;
  Reading reading;
+ if(frame.model==0x098b){reading.window_present=frame.packet_id==0x51;reading.window_open=false;reading.battery=80;*counter=frame.counter;*out=reading;return true;}
  reading.temperature_present=frame.packet_id==0x51;
  if(reading.temperature_present)reading.temperature10=245;
  else reading.humidity=47;
  *counter=frame.counter;*out=reading;return true;
 }
-void SetThermometerReading(int,const Sensor &reading){assert(reading.temperature10==245&&reading.humidity==47);}
+void SetDeviceReading(int selected,const Sensor &reading){if(selected==3||selected==4)assert(reading.temperature10==245&&reading.humidity==47);else assert(reading.seen);}
 
 bool LoadRecord(int, SecureRecord *out) { *out = previous; return have_previous; }
 bool SaveRecord(int, const SecureRecord &record) { persisted = record; saved++; return true; }
@@ -203,7 +205,7 @@ void Tick() {
 void Reset() {
  generation++; state = "reading_key"; error.clear(); traces.clear();
  now=100;xiaomi_pending={};xiaomi_readings={};decrypt_ok=true;discovery_model=0;authorized=true;rpc_error=responses=service_restarts=0;connection_attempts=0;candidates.clear();
- request={1,"01:02:03:04:05:06",nullptr,nullptr};
+ request={1,"01:02:03:04:05:06",nullptr,nullptr};for(auto &mac:assigned)mac.clear();
  reads = writes = terminations = saved = reset_readings = 0;
  key_writes=0;written_key.clear();key_writable=key_provision_used=false;pending_key.fill(0);pin_handle=11;
  key_read_attempts = empty_key_reads = 0; key_reconnect_used = rotated = false;
@@ -266,6 +268,25 @@ int main() {
  request.bindkey="e9ea895fac7cca6d30532432a516f3a8";PairRPC(nullptr,nullptr,nullptr,{});
  decrypt_ok=false;PairingAdvertisement(&secure_adv);assert(state=="error"&&saved==0&&connections==0);
  Reset();state="scanning";discovery_model=0x055b;request.role=0;request.bindkey="e9ea895fac7cca6d30532432a516f3a8";
+ PairRPC(nullptr,nullptr,nullptr,{});assert(rpc_error==400&&saved==0);
+ // Contact setup waits for magnet data, not battery; supports both endpoint roles.
+ for(int selected:{0,1}) {
+  Reset();state="scanning";discovery_model=0x098b;request.role=selected;
+  request.bindkey="e9ea895fac7cca6d30532432a516f3a8";
+  PairRPC(nullptr,nullptr,nullptr,{});
+  assert(!rpc_error&&state=="waiting_xiaomi_beacon"&&!PairingBusy()&&saved==0);
+  auto contact=std::vector<char>(encrypted,encrypted+sizeof(encrypted));contact[6]=char(0x8b);contact[7]=9;
+  secure_adv.adv_data={contact.data(),contact.size()};secure_adv.scan_rsp={};
+  PairingAdvertisement(&secure_adv);assert(saved==0&&state=="waiting_xiaomi_beacon");
+  contact[8]=0x51;PairingAdvertisement(&secure_adv);Drain();
+  assert(saved==1&&state=="done"&&persisted.protocol==kProtocolXiaomiContact);
+ }
+ Reset();state="scanning";discovery_model=0x098b;request.role=3;
+ request.bindkey="e9ea895fac7cca6d30532432a516f3a8";PairRPC(nullptr,nullptr,nullptr,{});
+ assert(rpc_error==400&&saved==0);
+ // A contact cannot occupy both endpoint roles.
+ Reset();state="scanning";discovery_model=0x098b;request.role=1;
+ assigned[0]=request.mac;request.bindkey="e9ea895fac7cca6d30532432a516f3a8";
  PairRPC(nullptr,nullptr,nullptr,{});assert(rpc_error==400&&saved==0);
  // Pair accepts no new PIN; current PIN remains mandatory only for legacy auth.
  Reset();state="scanning";candidates.push_back({peer,-45,false,2,now});

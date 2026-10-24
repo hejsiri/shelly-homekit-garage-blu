@@ -2,7 +2,7 @@
 
 Garage BLU adds encrypted Shelly BLU devices, passive Xiaomi thermometers and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu46 for Shelly Plus 1 and Shelly 1 Gen3**,
+The current OTA release is **2.16.1-blu47 for Shelly Plus 1 and Shelly 1 Gen3**,
 with separate model-specific ZIPs and checksums. The Gen3 image targets ESP32-C3;
 its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
@@ -32,6 +32,7 @@ A preview does not demonstrate successful BLE pairing or relay operation.
 | Two BLU H&T, SBHT-003C | Indoor/outdoor temperature and humidity in the panel and HomeKit. |
 | Xiaomi LYWSDCGQ/01ZM (MJ_HT_V1) | Stock unencrypted MiBeacon temperature, humidity and battery. Replaces either Indoor or Outdoor BLU H&T; two thermometer slots total. No PIN, Xiaomi account or sensor firmware change. |
 | Xiaomi LYWSD03MMC (stock firmware) | Encrypted MiBeacon v4/v5, temperature, humidity and battery. Requires the device MAC and a 32-character hexadecimal bindkey. Uses either existing thermometer slot. |
+| Xiaomi Mi Door and Window Sensor 2, MCCGQ02HL | Stock encrypted MiBeacon. A Closing/Opening endpoint alternative; no separate HomeKit Contact Sensor. Requires a bindkey. Physical verification pending. |
 | One BLU Button1 | Single press: open / stop / close. HomeKit occupancy and programmable button services (single / double / long press) within the garage accessory. Authenticated beacons determine presence in BLE range. |
 
 Other controller variants, including Mini, 1PM and Gen4, are not supported by
@@ -113,6 +114,43 @@ Tests include a published stock LYWSD03MMC vector, real AES-CCM, wrong keys,
 modified/truncated packets, replay after restart, delayed partial readings,
 manual assignment, cancellation and existing BLU regression checks. The local
 preview uses sample data. Physical LYWSD03MMC verification remains pending.
+
+## Xiaomi Mi Door and Window Sensor 2 (MCCGQ02HL)
+
+Since blu47, select **Xiaomi MCCGQ02HL (stock)** for **Closing sensor** or
+**Opening sensor** to use it as a garage endpoint. Two endpoints require two
+distinct devices. The Xiaomi does not create a separate Contact Sensor service
+in HomeKit: its magnet state contributes to the existing garage state. Other
+Xiaomi door sensor models are not enabled by this option.
+
+Activate the device in Xiaomi Home and obtain its existing 32-character bindkey
+using the linked Xiaomi BLE instructions. Click **Pair**, enter the bindkey once,
+and optionally enter the MAC to skip discovery. Separate and rejoin the magnet
+near Shelly. No PIN, key rotation or firmware change is performed. Setup completes
+only after an authenticated contact-state object arrives; battery and light alone
+cannot finish setup or replace a working assignment. The key is not returned in
+status. Discovery/verification allows 15 minutes and keeps existing BLE controls
+operational.
+
+MiBeacon product `0x098b` uses the existing AES-CCM path with persistent replay
+protection and a distinct persisted protocol marker restricted to endpoint roles.
+Object `0x1019` values 0 and 2 mean open (2 = left-open timeout), 1 means magnet
+present, and 3 invalidates the current contact state. Unknown values and malformed
+lengths are rejected. Battery and binary light/dark objects retain the magnet
+value and never refresh its timestamp. Binary light data is not presented as
+measured lux in HomeKit.
+
+After a Shelly restart, the magnet state is unknown until a new authenticated
+contact event arrives. **Garage endpoints keep the configured Sensor timeout
+(30–3600 seconds)** and block controls when stale; it is not silently extended.
+Stock Xiaomi can sleep between events, so check its actual reporting interval
+before using it for garage feedback. A missing endpoint confirmation may require
+moving its magnet again. Battery is displayed in the web panel.
+
+Tests use the [published MCCGQ02HL vector](https://github.com/Bluetooth-Devices/xiaomi-ble/blob/main/tests/test_parser.py),
+real AES-CCM, open/closed/left-open/reset cases, tampered packets, role isolation,
+replay after restart, independent freshness and endpoint receive handling.
+Local UI tests use sample data. Physical MCCGQ02HL and garage testing remain pending.
 
 ## Pair and name devices
 

@@ -1,6 +1,6 @@
 # Rozwiązywanie problemów Garage BLU
 
-Dla **2.16.1-blu46 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Dla **2.16.1-blu47 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](KONFIGURACJA.md) · [Historia zmian](HISTORIA_ZMIAN.md)
@@ -210,3 +210,17 @@ z takimi danymi. MAC można zamaskować, zachowując możliwość rozróżnienia
   ponowna aktywacja z nowym bindkey. Samo ponowne Pair nie zeruje ochrony.
 - PVVX/ATC, pakiety nieszyfrowane i inne modele nie są obsługiwane przez opcję stock.
 - Do zgłoszenia dołącz komunikat oraz wersję firmware, bez bindkey, haseł i PIN-ów.
+
+## MCCGQ02HL: oczekiwanie na magnes lub nieaktualna krańcówka
+
+- Wybierz dokładnie Xiaomi MCCGQ02HL (stock) przy Closing sensor lub Opening sensor,
+  wpisz jego bindkey i porusz magnesem. Pakiet baterii nie potwierdza położenia.
+  Nie trzeba PIN-u ani nowego firmware Xiaomi.
+- Po restarcie Shelly odsuń/przyłóż magnes, aby dostarczyć nowy stan.
+- Krańcówki zachowują ustawiony Sensor timeout. Fabryczny Xiaomi może zasypiać
+  pomiędzy zdarzeniami; gdy nie potwierdza stanu odpowiednio często, sterowanie
+  pozostaje zablokowane. Nie traktuj samego odbioru baterii jako aktualnej krańcówki.
+- Dwie krańcówki muszą mieć różne adresy MAC. Inne role, np. Motion lub H&T,
+  odrzucają ten model. Nie powstaje osobna usługa kontaktronu w HomeKit.
+- Przy błędzie odszyfrowania sprawdź MAC i bieżący bindkey; nie publikuj klucza.
+  Zmiana klucza w Xiaomi Home wymaga ponownego dodania urządzenia w Shelly.

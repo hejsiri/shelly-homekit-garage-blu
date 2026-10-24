@@ -13,7 +13,7 @@ const deferred = () => {
 const sensor = (model = 2, encrypted = false, mac = 'AA:BB:CC:DD:EE:03') => ({mac, model, encrypted, rssi:-50});
 function fixture(candidates = [sensor()]) {
   const elements = {};
-  for (const id of ['pair_xiaomi_container','pair_bindkey','pair_xiaomi_mac','indoor_type','outdoor_type','pairing','pair_title','pair_step','pair_help','pair_selected','pair_status','pair_candidate_container',
+  for (const id of ['pair_xiaomi_container','pair_bindkey','pair_xiaomi_mac','closed_type','open_type','indoor_type','outdoor_type','pairing','pair_title','pair_step','pair_help','pair_selected','pair_status','pair_candidate_container',
     'pair_candidate','pair_new_container','pair_current_container','pair_current_summary','pair_confirm','pair_cancel','pair_pin','pair_current_pin']) {
     elements['blu_' + id] = {open:false, value:'', disabled:false, style:{display:''},
       showModal(){ this.open=true; }, close(){ this.open=false; }, focus(){ this.focused=true; },
@@ -168,6 +168,19 @@ function fixture(candidates = [sensor()]) {
   f=fixture([]);f.e.blu_indoor_type.value='xiaomi03';f.start(3);await tick();
   f.e.blu_pair_bindkey.value='e9ea895fac7cca6d30532432a516f3a8';await f.ctx.bluPairClose(f.c);
   assert.equal(f.e.blu_pair_bindkey.value,'');
+  // Xiaomi contact works in both endpoint slots.
+  for (const role of [0, 1]) {
+    f=fixture([sensor(2443)]);
+    if(role<2) f.e[role===0?'blu_closed_type':'blu_open_type'].value='xiaomicontact';
+    f.start(role);await tick();assert.equal(f.count('Pair'),0);
+    assert.equal(f.calls.find(call=>call.method==='Shelly.BLU.Discover').params.model,2443);
+    f.hidden('pair_new_container');f.hidden('pair_current_container');f.visible('pair_xiaomi_container');
+    f.e.blu_pair_bindkey.value='017e52d2684779298709b117c0a75a7b';
+    f.ctx.bluPairRefresh(f.c);await tick();assert.equal(f.count('Pair'),1);
+    await f.refresh({state:'waiting_xiaomi_beacon',candidates:[],error:''});
+    assert.match(f.e.blu_pair_status.textContent,/contact state/);
+    assert.match(f.e.blu_pair_help.textContent,/magnet/);
+  }
   // Multiple candidates require an explicit selection, with no default first sensor.
   f=fixture([sensor(),sensor(2,false,'AA:BB:CC:DD:EE:08')]);f.start();f.ctx.bluPairConfirm(f.c);await tick();
   f.visible('pair_candidate_container');f.hidden('pair_new_container');assert.equal(f.count('Pair'),0);

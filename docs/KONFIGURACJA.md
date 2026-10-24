@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1-blu46 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Instrukcja dla **2.16.1-blu47 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -144,6 +144,28 @@ Ten model nadaje pomiary rzadziej. Jego efektywny timeout wynosi minimum
 30 minut, niezależnie od krótszego **Sensor timeout** czujników bramy. Dłuższa
 ustawiona wartość jest respektowana. Bateria może przyjść później i do tego czasu
 ma „—”; pakiet baterii nie odświeża temperatury/wilgotności.
+
+## Xiaomi Mi Door and Window Sensor 2 MCCGQ02HL
+
+Czujnik zachowuje oryginalny firmware. Nie należy go mylić z wersjami Zigbee ani
+z innymi modelami Xiaomi. Potrzebny jest bindkey uzyskany z konta Xiaomi Home
+jak w instrukcji LYWSD03MMC powyżej.
+
+Przy **Closing sensor** albo **Opening sensor** wybierz **Xiaomi MCCGQ02HL
+(stock)**, a potem **Pair**. Obie krańcówki muszą być różnymi urządzeniami.
+W modalu wpisz bindkey raz; opcjonalny MAC pomija wyszukiwanie. Odsuń i przyłóż
+magnes blisko Shelly. **Waiting for encrypted contact state** kończy się po
+odebraniu zaszyfrowanego stanu magnesu, nie samej baterii lub światła. Okno próby
+wynosi 15 minut. Poprzednie przypisanie pozostaje aktywne do weryfikacji.
+
+Po restarcie Shelly stan jest nieznany do nowego zdarzenia magnesu. Krańcówki
+zachowują **Sensor timeout (30–3600 s)** i blokują sterowanie po utracie ważności.
+Fabryczny Xiaomi może długo milczeć bez zmiany stanu: przed wykorzystaniem go jako
+krańcówki sprawdź rzeczywisty rytm transmisji. Nie zwiększamy automatycznie tego
+limitu. Pakiety baterii i światła nie przedłużają ważności magnesu.
+Poziom baterii jest w WWW; światło tego modelu jest binarne i nie tworzy usługi lux.
+Stan magnesu wpływa na istniejącą bramę w HomeKit; nie powstaje osobne akcesorium
+ani usługa Contact Sensor.
 
 ## Własne nazwy
 

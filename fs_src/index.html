@@ -805,8 +805,11 @@
                 <span class="slider round"></span>
               </label>
             </div>
+            <div class="form-control"><label>Closing sensor:</label>
+              <select id="blu_closed_type" aria-label="Closing sensor type"><option value="shelly">Shelly BLU Door/Window</option><option value="xiaomicontact">Xiaomi MCCGQ02HL (stock)</option></select>
+            </div>
             <div class="form-control">
-              <label>Closing sensor:</label>
+              <label>Device:</label>
               <input type="text" id="blu_closed_mac" readonly placeholder="AA:BB:CC:DD:EE:01" maxlength="17">
               <button type="button" id="blu_pair_closed">Pair</button>
             </div>
@@ -815,8 +818,11 @@
               <input type="text" id="blu_closed_name" aria-label="Closed device name" maxlength="64">
             </div>
             <p id="blu_closed_status" class="blu-sensor"></p>
+            <div class="form-control"><label>Opening sensor:</label>
+              <select id="blu_open_type" aria-label="Opening sensor type"><option value="shelly">Shelly BLU Door/Window</option><option value="xiaomicontact">Xiaomi MCCGQ02HL (stock)</option></select>
+            </div>
             <div class="form-control">
-              <label style="white-space: nowrap;">Opening sensor:</label>
+              <label>Device:</label>
               <input type="text" id="blu_open_mac" readonly placeholder="AA:BB:CC:DD:EE:02" maxlength="17">
               <button type="button" id="blu_pair_open">Pair</button>
             </div>
@@ -878,8 +884,8 @@
               <label>Sensor timeout:</label>
               <input type="number" id="blu_stale_after_s" min="30" max="3600"> seconds
             </div>
-            <p>Pair each BLU Door/Window sensor here. Encryption and beacon mode are configured automatically.
-              A magnet at either endpoint means that position has been reached.</p>
+            <p>Pair each endpoint here. Shelly BLU encryption is configured automatically; Xiaomi requires its bindkey.
+              A magnet at either endpoint means that position has been reached. Xiaomi endpoints retain the configured Sensor timeout; battery and light packets never refresh the magnet state.</p>
             <dialog id="blu_pairing" class="blu-pair-dialog" aria-labelledby="blu_pair_title" aria-describedby="blu_pair_help">
               <p id="blu_pair_step" class="blu-pair-step"></p>
               <h3 id="blu_pair_title">Pair device</h3>

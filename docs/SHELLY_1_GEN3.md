@@ -1,6 +1,6 @@
 # Shelly 1 Gen3 — Garage BLU
 
-Dla **2.16.1-blu46**, stan: **2026-10-24**.
+Dla **2.16.1-blu47**, stan: **2026-10-24**.
 
 Od blu38 dostępna jest osobna paczka Garage BLU dla **Shelly 1 Gen3**. Korzysta
 z platformy **ESP32-C3**, ma nazwę aplikacji **S1G3**, a w kanale OTA jest
@@ -12,8 +12,8 @@ rozpoznawana jako **Shelly1Gen3**.
 
 ## Właściwa paczka
 
-- [Pobierz ZIP 2.16.1-blu46 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu46.zip)
-- [Pobierz sumę SHA-256](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu46.zip.sha256)
+- [Pobierz ZIP 2.16.1-blu47 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu47.zip)
+- [Pobierz sumę SHA-256](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu47.zip.sha256)
 - [Strona pobierania i metadane](https://hejsiri.pl/firmware/garage-blu/)
 
 | Parametr | Wartość |
@@ -21,10 +21,10 @@ rozpoznawana jako **Shelly1Gen3**.
 | Sterownik | Shelly 1 Gen3 |
 | Identyfikator OTA / aplikacja | Shelly1Gen3 / S1G3 |
 | Platforma | ESP32-C3 |
-| Wersja | 2.16.1-blu46 |
-| Build | 20261024-203220 |
-| ZIP | 2,265,580 bajtów |
-| SHA-256 | `cfc96fe6e491e89671c0815ebd5898a5e017b060bdb0f816d5f27804a219b36c` |
+| Wersja | 2.16.1-blu47 |
+| Build | 20261024-205059 |
+| ZIP | 2,266,412 bajtów |
+| SHA-256 | `65626820b2a0ed44122134802f284e1cac1cc1563c79077f44f17f75f0e4c476` |
 
 ZIP jest dla **Shelly 1 Gen3**, nie dla **Shelly 1 Mini Gen3**, **1PM Gen3**, innych
 Gen3 ani Gen4. Paczka S1G3 nie jest zamienna z paczką Plus1 dla Shelly Plus 1.
@@ -32,11 +32,12 @@ Firmware wgrywa się na sterownik; urządzenia BLU zachowują fabryczny firmware
 
 ## Co obsługuje Gen3
 
-Paczka zawiera te same funkcje Garage BLU blu46 co wersja Plus1:
+Paczka zawiera te same funkcje Garage BLU blu47 co wersja Plus1:
 
 - sterowanie bramą i odczyt stanu w Apple HomeKit przez Wi-Fi;
 - dwie szyfrowane krańcówki BLU Door/Window: Closing sensor i Opening sensor;
 - opcjonalne Motion, dwa H&T (Shelly BLU H&T, Xiaomi LYWSDCGQ/01ZM lub LYWSD03MMC stock z bindkey) oraz Button1;
+- Xiaomi MCCGQ02HL z fabrycznym firmware jako krańcówka bramy; wymaga bindkey;
 - parowanie w modalu, automatyczny wybór jednego zgodnego urządzenia i PIN tylko wtedy, gdy jest potrzebny;
 - własne nazwy urządzeń i osobną nazwę kafelka auta (Car name), angielski panel i wizualizację Day / Night / Auto;
 - obecność auta na podstawie beaconów Button1 i sterowanie pojedynczym naciśnięciem;

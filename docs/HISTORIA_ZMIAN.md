@@ -1,6 +1,6 @@
 # Historia zmian Garage BLU
 
-Bieżące opisy i instrukcje dotyczą **2.16.1-blu46** (stan: 2026-10-24).
+Bieżące opisy i instrukcje dotyczą **2.16.1-blu47** (stan: 2026-10-24).
 Zobacz [instalację i aktualizacje](AKTUALIZACJA.md), [konfigurację](KONFIGURACJA.md)
 i [rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md).
 
@@ -351,3 +351,22 @@ przed powtórzeniem po restarcie, walidację MAC/klucza, częściowe pomiary ora
 odrzucanie nieszyfrowanych danych. Bindkey nie jest zwracany w statusie.
 Sprawdzono modal w lokalnym podglądzie; fizyczna próba LYWSD03MMC jest do wykonania.
 W blu45 potwierdzono na fizycznym Plus1 odczyty LYWSDCGQ/01ZM wraz z baterią 36 %.
+
+## blu47 — Xiaomi Mi Door and Window Sensor 2 MCCGQ02HL
+
+Dodano fabryczny szyfrowany MiBeacon modelu 0x098b. Można wybrać go zamiast
+BLU Door/Window jako Closing/Opening sensor. Jego stan służy istniejącej bramie;
+nie dodaje osobnego kontaktronu ani nowej usługi HomeKit.
+
+Modal wymaga bindkey tylko raz, opcjonalnie MAC, a następnie ruchu magnesem.
+Przypisanie jest zatwierdzane dopiero po odszyfrowaniu stanu kontaktronu. Pakiet
+baterii lub światła nie zmienia ani nie odświeża tego stanu. Reset zgłoszony przez
+czujnik unieważnia odczyt. Po restarcie Shelly trzeba odebrać nowy stan magnesu.
+Timeout krańcówek pozostaje konfigurowalny; stare lub sprzeczne odczyty blokują
+sterowanie tak jak dla BLU Door/Window.
+
+Sprawdzono opublikowaną próbkę MCCGQ02HL, rzeczywiste AES-CCM, stany magnesu,
+powtórzone/uszkodzone pakiety, rozdzielenie ról i ważności danych oraz odbiór
+krańcówki bez odświeżania jej stanu przez baterię. Regresje istniejących usług
+HomeKit przeszły testy z Apple ADK. Podgląd WWW korzysta z danych przykładowych.
+Testy fizycznego Xiaomi i Gen3 są nadal do wykonania.

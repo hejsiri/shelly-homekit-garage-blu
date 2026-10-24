@@ -45,7 +45,7 @@ void ScanResult(int, void *event_data, void *) {
         !AcceptXiaomi(index, result->addr.addr,
             reinterpret_cast<const uint8_t *>(result->scan_rsp.p),
             result->scan_rsp.len, &reading)) return;
-    sensors[index].Update(reading, mgos_uptime(), result->rssi, 2);
+    sensors[index].Update(reading, mgos_uptime(), result->rssi, XiaomiContactFor(index, result->addr.addr) ? 3 : 2);
     ++packet_sequence[index];
     if (SensorReady(index)) PairingVerified(index);
     return;
@@ -158,8 +158,7 @@ void Init() {
 }
 
 bool Ready() {
-  return configured && !PairingBusy() && SecureFor(0, addresses[0].addr) &&
-         SecureFor(1, addresses[1].addr) &&
+  return configured && !PairingBusy() && SensorReady(0) && SensorReady(1) &&
          mgos_bt_get_status() == MGOS_BT_STARTED &&
          mgos_bt_gap_scan_in_progress() &&
          blu::Ready(sensors[0], sensors[1], mgos_uptime(),
@@ -218,7 +217,7 @@ bool SensorPaired(int role) {
 }
 bool SensorReady(int role) {
   if (role == 3 || role == 4) return HTReady(role, true) && HTReady(role, false);
-  return role >= 0 && role < 6 && known[role] && SecureFor(role, addresses[role].addr) &&
+  return role >= 0 && role < 6 && known[role] && (SecureFor(role, addresses[role].addr) || XiaomiContactFor(role, addresses[role].addr)) &&
          mgos_bt_get_status() == MGOS_BT_STARTED &&
          sensors[role].Fresh(mgos_uptime(), mgos_sys_config_get_blu_stale_after_s());
 }
@@ -231,11 +230,11 @@ bool HTReady(int role, bool temperature) {
 int SensorTimeout(int role) {
   const int timeout = mgos_sys_config_get_blu_stale_after_s();
   // Stock LYWSD03MMC measurements can be ten minutes apart.
-  return known[role] && XiaomiSecureFor(role, addresses[role].addr) && timeout < 1800 ?
+  return (role == 3 || role == 4) && known[role] && XiaomiSecureFor(role, addresses[role].addr) && timeout < 1800 ?
              1800 : timeout;
 }
-void SetThermometerReading(int role, const Sensor &reading) {
-  if (role != 3 && role != 4) return;
+void SetDeviceReading(int role, const Sensor &reading) {
+  if (role < 0 || role > 5) return;
   sensors[role] = reading;
   ++packet_sequence[role];
 }
@@ -282,7 +281,8 @@ std::string GetInfoJSON() {
         ",%Q:%Q,%Q:{name:%Q,packet_seq:%u,paired:%B,protocol:%Q,timeout_s:%d,ready:%B,temperature_ready:%B,humidity_ready:%B,secure:%B,seen:%B,active:%B,battery:%d,rssi:%d,age_s:%d,temperature:%.1f,humidity:%d}",
         (std::string(roles[i]) + "_mac").c_str(), SensorMAC(i) ? SensorMAC(i) : "", roles[i],
         SensorName(i), packet_sequence[i],
-        SensorPaired(i), known[i] && XiaomiSecureFor(i, addresses[i].addr) ? "xiaomi_encrypted" :
+        SensorPaired(i), known[i] && XiaomiContactFor(i, addresses[i].addr) ? "xiaomi_contact" :
+                        known[i] && XiaomiSecureFor(i, addresses[i].addr) ? "xiaomi_encrypted" :
                         known[i] && XiaomiFor(i, addresses[i].addr) ? "xiaomi" : "bthome",
         SensorTimeout(i),
         SensorReady(i), HTReady(i, true), HTReady(i, false),

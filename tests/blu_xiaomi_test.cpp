@@ -65,6 +65,7 @@ int main() {
   for(int n=0;n<100000;n++) {
     std::vector<uint8_t> bytes(random()%80);
     for(auto &v:bytes)v=random();
+    DecodeXiaomiObjects(bytes.data(),bytes.size(),&r,0x098b);
     DecodeXiaomi(bytes.data(),bytes.size(),mac,&r);
     DecodeXiaomiAdvertisement(bytes.data(),bytes.size(),mac,&r);
   }

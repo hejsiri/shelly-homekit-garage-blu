@@ -28,7 +28,7 @@ const Sensor &ReadingFor(int role);
 bool SensorReady(int role);
 bool HTReady(int role, bool temperature);
 int SensorTimeout(int role);
-void SetThermometerReading(int role, const Sensor &reading);
+void SetDeviceReading(int role, const Sensor &reading);
 bool SensorPaired(int role);
 }  // namespace blu
 }  // namespace shelly

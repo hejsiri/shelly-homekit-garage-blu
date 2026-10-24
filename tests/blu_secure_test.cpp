@@ -40,8 +40,8 @@ std::vector<uint8_t> Hex(const char *text) {
   return result;
 }
 std::vector<uint8_t> EncryptedXiaomi(const std::vector<uint8_t> &mac,
-    const std::vector<uint8_t> &key,uint32_t counter,const std::vector<uint8_t> &objects) {
-  auto data=Hex("58585b0500");data[4]=counter;
+    const std::vector<uint8_t> &key,uint32_t counter,const std::vector<uint8_t> &objects, uint16_t model=0x055b) {
+  auto data=Hex("58585b0500");data[2]=model;data[3]=model>>8;data[4]=counter;
   data.insert(data.end(),mac.rbegin(),mac.rend());
   std::vector<uint8_t> nonce(mac.rbegin(),mac.rend());
   nonce.insert(nonce.end(),data.begin()+2,data.begin()+5);
@@ -73,6 +73,8 @@ int main(int argc, char **argv) {
     auto newer=Advertisement(EncryptedXiaomi(xm,xk,0x2653,Hex("041002f600")));
     Reading xr;assert(XiaomiSecureFor(3,xm.data()));
     assert(!AcceptXiaomi(3,xm.data(),newer.data(),newer.size(),&xr));
+    auto cm=Hex("e4aaec8121ae");auto cp=Advertisement(Hex("58588b09a3ae2181ecaae40e2c553c040000d28a500c"));
+    assert(!AcceptXiaomi(0,cm.data(),cp.data(),cp.size(),&xr));
     puts("PASS: BTHome and Xiaomi replay protection survives process restart"); return 0;
   }
   SecureRecord record = {}; record.version = 1;
@@ -163,6 +165,47 @@ int main(int argc, char **argv) {
   auto plaintext=Hex("50305b0501f4830238c1a40d10041001ea01");
   auto downgrade=Advertisement(plaintext);assert(!AcceptXiaomi(3,xm.data(),downgrade.data(),downgrade.size(),&xr));
   puts("PASS: stock Xiaomi vector, authenticated objects, key/MAC validation, tampering, persistence, replay and downgrade rejection");
+  // Published stock MCCGQ02HL: authenticated door-left-open is still open.
+  auto cm=Hex("e4aaec8121ae"),ck=Hex("017e52d2684779298709b117c0a75a7b");
+  auto cp=Hex("58588b09a3ae2181ecaae40e2c553c040000d28a500c");
+  assert(DecryptXiaomi(cp.data(),cp.size(),cm.data(),ck.data(),&xr,&counter));
+  assert(xr.window_present&&xr.window_open&&counter==0x4a3);
+  SecureRecord cr={};cr.version=1;cr.protocol=kProtocolXiaomiContact;
+  memcpy(cr.mac,cm.data(),6);memcpy(cr.key,ck.data(),16);
+  for(int slot:{2,3,4,5,6}) assert(!SaveRecord(slot,cr));
+  for(int slot:{0,1}) assert(SaveRecord(slot,cr)&&XiaomiContactFor(slot,cm.data()));
+  auto ca=Advertisement(cp);
+  for(int slot:{0,1})assert(AcceptXiaomi(slot,cm.data(),ca.data(),ca.size(),&xr));
+  assert(!AcceptXiaomi(0,cm.data(),ca.data(),ca.size(),&xr));
+  Sensor contact;
+  for(int state:{1,0,2}) {
+    auto event=Advertisement(EncryptedXiaomi(cm,ck,0x4a4+state,Hex(state==1?"19100101":state==0?"19100100":"19100102"),0x098b));
+    // Reset this test record when checking the non-monotonic sample order.
+    cr.counter_seen=0;assert(SaveRecord(0,cr));
+    assert(AcceptXiaomi(0,cm.data(),event.data(),event.size(),&xr));
+    contact.Update(xr,100,-55,3);assert(contact.seen&&contact.active==(state==1));
+  }
+  auto battery=EncryptedXiaomi(cm,ck,0x4b0,Hex("0a100150"),0x098b);
+  assert(DecryptXiaomi(battery.data(),battery.size(),cm.data(),ck.data(),&xr,&counter));
+  contact.Update(xr,500,-55,3);assert(!contact.active&&contact.last_seen==100&&!contact.Fresh(500,180)&&contact.battery==80);
+  auto light=EncryptedXiaomi(cm,ck,0x4b1,Hex("18100101"),0x098b);
+  assert(DecryptXiaomi(light.data(),light.size(),cm.data(),ck.data(),&xr,&counter));
+  contact.Update(xr,501,-55,3);assert(contact.light==1&&contact.last_seen==100&&!contact.active);
+  auto reset=EncryptedXiaomi(cm,ck,0x4b2,Hex("19100103"),0x098b);
+  assert(DecryptXiaomi(reset.data(),reset.size(),cm.data(),ck.data(),&xr,&counter));
+  contact.Update(xr,502,-55,3);assert(!contact.seen&&!contact.Fresh(502,86400));
+  for(const char *invalid:{"19100104","1910020100","1910010119100100"}) {
+    auto badcontact=EncryptedXiaomi(cm,ck,0x4b3,Hex(invalid),0x098b);
+    assert(!DecryptXiaomi(badcontact.data(),badcontact.size(),cm.data(),ck.data(),&xr,&counter));
+  }
+  auto different=Advertisement(EncryptedXiaomi(cm,ck,0x4b4,Hex("041002f600")));
+  assert(!AcceptXiaomi(0,cm.data(),different.data(),different.size(),&xr));
+  auto corrupt=cp;corrupt.back()^=1;
+  assert(!DecryptXiaomi(corrupt.data(),corrupt.size(),cm.data(),ck.data(),&xr,&counter));
+  auto ckbad=ck;ckbad[0]^=1;
+  assert(!DecryptXiaomi(cp.data(),cp.size(),cm.data(),ckbad.data(),&xr,&counter));
+  for(size_t n=0;n<cp.size();n++)assert(!DecryptXiaomi(cp.data(),n,cm.data(),ck.data(),&xr,&counter));
+  puts("PASS: published MCCGQ02HL vector, contact polarity, role isolation, reset, battery/light freshness and encrypted validation");
   assert(!SaveRecord(6, record));
   puts("PASS: independent Motion key and replay counter");
   puts("PASS: real AES-CCM vector, tampering, nonce identity, truncation, plaintext, persistence failure and replay");

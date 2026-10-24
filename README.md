@@ -8,7 +8,7 @@ pełne zamknięcie i otwarcie. Sterownik komunikuje się z HomeKit przez Wi-Fi,
 a z urządzeniami BLU przez Bluetooth. Projekt bazuje na
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
 
-**Aktualne wydanie: 2.16.1-blu46 · Shelly Plus 1 i Shelly 1 Gen3 · 2026-10-24.**
+**Aktualne wydanie: 2.16.1-blu47 · Shelly Plus 1 i Shelly 1 Gen3 · 2026-10-24.**
 Dla każdego modelu jest osobny ZIP, suma SHA-256 i wpis w kanale OTA.
 Panel WWW ma angielskie teksty systemowe. Dokumentacja użytkownika jest po polsku,
 a odnośniki do przycisków i pól zachowują ich angielskie nazwy.
@@ -38,6 +38,7 @@ napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 | **BLU H&T SBHT-003C — do 2 sztuk** | Role Indoor i Outdoor; temperatura i wilgotność w WWW i HomeKit. Obsługa zaimplementowana, testy fizycznych H&T pozostają do wykonania. |
 | **Xiaomi LYWSDCGQ/01ZM (MJ_HT_V1)** | Temperatura, wilgotność i bateria z fabrycznych beaconów BLE. Do wyboru zamiast BLU H&T w roli Indoor lub Outdoor; łącznie dwa termometry. Bez PIN-u, chmury i zmiany firmware czujnika. Na Plus1/blu45 potwierdzono odczyty w panelu, w tym baterię 36 %. |
 | **Xiaomi LYWSD03MMC — fabryczny firmware** | Szyfrowane MiBeacon v4/v5, temperatura, wilgotność i bateria; zamiast H&T w Indoor lub Outdoor. Wymaga MAC i 32-znakowego bindkey. Bez zmiany firmware czujnika. Próba fizycznego LYWSD03MMC pozostaje do wykonania. |
+| **Xiaomi Mi Door and Window Sensor 2 MCCGQ02HL** | Fabryczny firmware BLE i bindkey. Zamiennik krańcówki Closing/Opening; jej stan wpływa na bramę w HomeKit, bez osobnej usługi kontaktronu. Próba fizyczna pozostaje do wykonania. |
 | **BLU Button1 — 1 sztuka** | Pojedynczy nacisk steruje bramą; beacony określają obecność przycisku w zasięgu. Dwie usługi w akcesorium Shelly: obecność i przycisk programowalny. W blu42 na Plus 1 potwierdzono ich widoczność w Domu, odczyt obecności oraz dostępność trzech rodzajów naciśnięcia. |
 
 BLU urządzenia zachowują fabryczny firmware Shelly. Paczkę Garage BLU instaluje się
@@ -59,7 +60,7 @@ do wykonania.
 
 ## Funkcje
 
-| Funkcja | Zachowanie w blu46 |
+| Funkcja | Zachowanie w blu47 |
 | --- | --- |
 | Parowanie w panelu | Pair otwiera modal i uruchamia wyszukiwanie. Jeden zgodny model jest wybierany automatycznie; PIN pojawia się tylko, gdy jest potrzebny. |
 | Szyfrowane odczyty | AES-CCM BTHome v2, sprawdzanie MAC i klucza oraz ochrona przed ponownym użyciem pakietów. |
@@ -86,6 +87,7 @@ jego zabezpieczeń.
 4. Włącz BLU sensors, ustaw czasy zgodnie z napędem i zapisz Save. Sprawdź wskazania obu krańcówek.
 5. Opcjonalnie sparuj Motion, Indoor / Outdoor H&T i Button1; wpisz własne nazwy w Name i zapisz.
    Dla Xiaomi wybierz swój model przy Indoor H&T albo Outdoor H&T, a potem **Pair**. LYWSDCGQ/01ZM działa bez klucza. LYWSD03MMC (stock) wymaga bindkey; MAC można podać ręcznie. Czujnik ma być włączony blisko Shelly; nie wymaga trybu parowania.
+   Dla MCCGQ02HL wybierz Xiaomi przy krańcówce. Wpisz bindkey w modalu i porusz magnesem. Krańcówki zachowują Sensor timeout; po restarcie wymagają nowego potwierdzenia stanu.
 6. W HomeKit Settings wybierz Setup i dodaj akcesorium w aplikacji Dom za pomocą wyświetlonego kodu.
 
 [Pełna konfiguracja krok po kroku](docs/KONFIGURACJA.md) opisuje pola,
@@ -95,17 +97,17 @@ statusy i zachowanie po zatrzymaniu. Przy problemach zacznij od
 ## Pobieranie i aktualizacja
 
 - [Paczki i opis na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/)
-- [ZIP 2.16.1-blu46 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu46.zip)
-- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu46.zip.sha256)
-- [ZIP 2.16.1-blu46 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu46.zip)
-- [SHA-256 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu46.zip.sha256)
+- [ZIP 2.16.1-blu47 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu47.zip)
+- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu47.zip.sha256)
+- [ZIP 2.16.1-blu47 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu47.zip)
+- [SHA-256 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu47.zip.sha256)
 - [Instrukcja instalacji, aktualizacji i kontroli po restarcie](docs/AKTUALIZACJA.md)
 
 Obie paczki zostały skompilowane; wspólny kod sprawdzono testami hosta i podglądem WWW;
 zweryfikowano też publiczne ZIP-y, sumy SHA-256 i kanał OTA. Wcześniejsze wydania
 potwierdziły OTA i szyfrowane odczyty na Plus 1. W blu42 potwierdzono na tym modelu
 migrację i widoczność bramy, ruchu, obecności oraz przycisku w aplikacji Dom;
-ruch był aktywny i gotowy, a obecność odpowiadała odczytowi BLE. Metadane blu46 nadal mają
+ruch był aktywny i gotowy, a obecność odpowiadała odczytowi BLE. Metadane blu47 nadal mają
 `hardware_tested: false`: pełna próba tego wydania na fizycznej bramie pozostaje
 do wykonania. Test na fizycznym Shelly 1 Gen3 nie został jeszcze wykonany.
 
@@ -114,7 +116,7 @@ do wykonania. Test na fizycznym Shelly 1 Gen3 nie został jeszcze wykonany.
 - [Repozytorium Garage BLU](https://github.com/hejsiri/shelly-homekit-garage-blu)
 - [Zgłoszenia błędów i propozycje](https://github.com/hejsiri/shelly-homekit-garage-blu/issues)
 - [Budowanie, testy i publikowanie (EN)](README-BLU.md)
-- [Historia zmian blu20–blu46](docs/HISTORIA_ZMIAN.md)
+- [Historia zmian blu20–blu47](docs/HISTORIA_ZMIAN.md)
 - [Projekt bazowy Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit)
 
 W zgłoszeniu podaj wersję sterownika, model i firmware urządzenia BLU oraz dokładny

@@ -733,8 +733,8 @@ void DiscoverRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *, mg_str ar
   }
   int model = 0;
   json_scanf(args.p, args.len, "{model:%d}", &model);
-  if (model != 0 && model != 3 && model != 0x01aa && model != 0x055b) {
-    mg_rpc_send_errorf(ri, 400, "Unsupported thermometer model");
+  if (model != 0 && model != 3 && model != 0x01aa && model != 0x055b && model != 0x098b) {
+    mg_rpc_send_errorf(ri, 400, "Unsupported device model");
     return;
   }
   discovery_model = model;
@@ -743,21 +743,21 @@ void DiscoverRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *, mg_str ar
   diagnostics.clear();
   role = -1;
   candidates.clear();
-  deadline = mgos_uptime() + (model == 0x055b ? 900 : 60);
+  deadline = mgos_uptime() + ((model == 0x055b || model == 0x098b) ? 900 : 60);
   mgos_bt_gap_scan_stop();
   mg_rpc_send_responsef(ri, "{}");
 }
 void StoreXiaomi(int selected_role, const Candidate &candidate, const uint8_t *key = nullptr) {
   role = selected_role;
   peer = candidate.addr;
-  if (candidate.model == 0x055b) {
+  if (candidate.model == 0x055b || candidate.model == 0x098b) {
     xiaomi_pending = {};
     xiaomi_pending.version = 1;
-    xiaomi_pending.protocol = kProtocolXiaomiEncrypted;
+    xiaomi_pending.protocol = candidate.model == 0x098b ? kProtocolXiaomiContact : kProtocolXiaomiEncrypted;
     memcpy(xiaomi_pending.mac, peer.addr, 6);
     memcpy(xiaomi_pending.key, key, 16);
     SecureRecord old;
-    if (LoadRecord(role, &old) && old.protocol == kProtocolXiaomiEncrypted &&
+    if (LoadRecord(role, &old) && old.protocol == xiaomi_pending.protocol &&
         memcmp(old.mac, peer.addr, 6) == 0 && memcmp(old.key, key, 16) == 0)
       xiaomi_pending = old; // Re-adding the same key preserves replay protection.
     xiaomi_readings = Sensor();
@@ -778,7 +778,7 @@ void StoreXiaomi(int selected_role, const Candidate &candidate, const uint8_t *k
   if (role == 3) mgos_sys_config_set_blu_indoor_mac(mac);
   else mgos_sys_config_set_blu_outdoor_mac(mac);
   if (!mgos_sys_config_save(&mgos_sys_config, false, nullptr)) {
-    Finish("Cannot save thermometer assignment; add it again");
+    Finish("Cannot save device assignment; add it again");
     return;
   }
   ResetReadings();
@@ -810,21 +810,23 @@ void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
   mgos_bt_addr selected;
   mgos_bt_addr_from_str(mg_mk_str(mac), &selected);
   const Candidate *candidate = nullptr;
-  Candidate manual = {selected, -127, false, 0x055b, mgos_uptime()};
+  Candidate manual = {selected, -127, false, static_cast<uint16_t>(discovery_model), mgos_uptime()};
   for (const auto &item : candidates) {
     if (memcmp(item.addr.addr, selected.addr, 6) == 0 &&
         mgos_uptime() - item.seen <= 15)
       candidate = &item;
   }
-  if (!candidate && discovery_model == 0x055b) candidate = &manual;
+  if (!candidate && (discovery_model == 0x055b || discovery_model == 0x098b)) candidate = &manual;
   if (!candidate) {
     mg_rpc_send_errorf(ri, 400, "Device expired; scan and wake it again");
     return;
   }
-  if ((discovery_model && candidate->model != discovery_model) ||
-      (selected_role == 5 ? candidate->model != 1 : selected_role >= 3 ?
-      (candidate->model != 3 && candidate->model != 0x01aa && candidate->model != 0x055b) :
-      candidate->model != (selected_role == 2 ? 5 : 2))) {
+  const bool contact = candidate->model == 0x098b;
+  const bool stock = contact || candidate->model == 0x055b;
+  const bool matches = selected_role == 5 ? candidate->model == 1 :
+      selected_role >= 3 ? (candidate->model == 3 || candidate->model == 0x01aa || candidate->model == 0x055b) :
+      selected_role == 2 ? candidate->model == 5 : (candidate->model == 2 || contact);
+  if ((discovery_model && candidate->model != discovery_model) || !matches) {
     mg_rpc_send_errorf(ri, 400, "Select the correct device model for this role");
     return;
   }
@@ -835,9 +837,9 @@ void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
       return;
     }
   }
-  if (candidate->model == 0x01aa || candidate->model == 0x055b) {
+  if (candidate->model == 0x01aa || stock) {
     std::array<uint8_t, 16> key = {};
-    if (candidate->model == 0x055b && !ParseXiaomiBindkey(bindkey, key.data())) {
+    if (stock && !ParseXiaomiBindkey(bindkey, key.data())) {
       mg_rpc_send_errorf(ri, 400, "Enter the 32-character hexadecimal Xiaomi bindkey");
       return;
     }
@@ -936,7 +938,7 @@ bool PairingConnecting() {
 bool PairingBusy() {
   // Passive stock Xiaomi discovery can take minutes and never uses GATT.
   // Keep existing endpoint monitoring and Button1 garage control operational.
-  return Active() && discovery_model != 0x055b;
+  return Active() && discovery_model != 0x055b && discovery_model != 0x098b;
 }
 void PairingVerified(int verified_role) {
   if ((state == "waiting_encrypted_beacon" || state == "waiting_beacon" ||
@@ -956,7 +958,7 @@ void ReceiveXiaomiPairing(const mgos_bt_gap_scan_result *result) {
     if (!XiaomiServiceData(reinterpret_cast<const uint8_t *>(adv.p), adv.len,
                           &service, &length) ||
         !ParseXiaomiFrame(service, length, peer.addr, &frame) ||
-        frame.model != 0x055b) continue;
+        frame.model != (xiaomi_pending.protocol == kProtocolXiaomiContact ? 0x098b : 0x055b)) continue;
     Reading reading;
     uint32_t counter;
     if (!DecryptXiaomi(service, length, peer.addr, xiaomi_pending.key, &reading, &counter)) {
@@ -966,23 +968,27 @@ void ReceiveXiaomiPairing(const mgos_bt_gap_scan_result *result) {
     if (!NewCounter(xiaomi_pending.counter_seen, xiaomi_pending.counter, counter)) continue;
     xiaomi_pending.counter_seen = true;
     xiaomi_pending.counter = counter;
-    xiaomi_readings.Update(reading, mgos_uptime(), result->rssi, 2);
-    if (!xiaomi_readings.HTFresh(true, mgos_uptime(), 1800) ||
-        !xiaomi_readings.HTFresh(false, mgos_uptime(), 1800)) continue;
+    const bool contact = xiaomi_pending.protocol == kProtocolXiaomiContact;
+    xiaomi_readings.Update(reading, mgos_uptime(), result->rssi, contact ? 3 : 2);
+    if (contact ? !reading.window_present :
+        (!xiaomi_readings.HTFresh(true, mgos_uptime(), 1800) ||
+         !xiaomi_readings.HTFresh(false, mgos_uptime(), 1800))) continue;
     if (!SaveRecord(role, xiaomi_pending)) {
       Finish("Cannot save Xiaomi bindkey");
       return;
     }
     char mac[MGOS_BT_ADDR_STR_LEN];
     mgos_bt_addr_to_str(&peer, 0, mac);
-    if (role == 3) mgos_sys_config_set_blu_indoor_mac(mac);
+    if (role == 0) mgos_sys_config_set_blu_closed_mac(mac);
+    else if (role == 1) mgos_sys_config_set_blu_open_mac(mac);
+    else if (role == 3) mgos_sys_config_set_blu_indoor_mac(mac);
     else mgos_sys_config_set_blu_outdoor_mac(mac);
     if (!mgos_sys_config_save(&mgos_sys_config, false, nullptr)) {
-      Finish("Cannot save thermometer assignment; add it again");
+      Finish("Cannot save device assignment; add it again");
       return;
     }
     ResetReadings();
-    SetThermometerReading(role, xiaomi_readings);
+    SetDeviceReading(role, xiaomi_readings);
     Finish(nullptr);
     mgos::InvokeCB([] { RestartService(); });
     return;
@@ -998,7 +1004,7 @@ void PairingAdvertisement(void *data) {
       state != "waiting_security_retry" && state != "waiting_user_pairing") return;
   bool pairing = false, encrypted = false;
   uint16_t model = 0;
-  if (state == "scanning" && (discovery_model == 0x01aa || discovery_model == 0x055b)) {
+  if (state == "scanning" && (discovery_model == 0x01aa || discovery_model == 0x055b || discovery_model == 0x098b)) {
     model = XiaomiAdvertisementModel(reinterpret_cast<const uint8_t *>(result->adv_data.p),
                                      result->adv_data.len, result->addr.addr);
     if (!model) model = XiaomiAdvertisementModel(reinterpret_cast<const uint8_t *>(result->scan_rsp.p),
@@ -1024,7 +1030,7 @@ void PairingAdvertisement(void *data) {
       i += n;
     }
   }
-  if (!pairing || (model != 1 && model != 2 && model != 5 && model != 3 && model != 0x01aa && model != 0x055b) ||
+  if (!pairing || (model != 1 && model != 2 && model != 5 && model != 3 && model != 0x01aa && model != 0x055b && model != 0x098b) ||
       (state == "scanning" && discovery_model && model != discovery_model)) return;
   if (state == "waiting_pairing_mode" || state == "waiting_security_retry" ||
       state == "waiting_user_pairing") {
@@ -1054,7 +1060,7 @@ void PairingAdvertisement(void *data) {
 }
 void PairingTimeout() {
   if (!Active() || mgos_uptime() < deadline) return;
-  if (discovery_model == 0x055b) {
+  if (discovery_model == 0x055b || discovery_model == 0x098b) {
     Finish("No verified Xiaomi measurements received; check power, BLE range, MAC and bindkey, then retry");
     return;
   }
