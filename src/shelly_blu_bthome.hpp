@@ -16,8 +16,6 @@ struct Reading {
   int humidity = -1;
   int32_t illuminance100 = -1;  // BTHome 0x05: hundredths of a lux, -1 = absent.
   bool temperature_present = false;
-  bool window_present = false, window_reset = false;
-  int light = -1;  // Xiaomi binary light/dark, not lux.
 };
 
 // BTHome v2 service payload, after UUID 0xFCD2. Only the objects used by
@@ -63,7 +61,6 @@ inline bool Decode(const uint8_t *data, size_t len, Reading *out, bool motion = 
       if (data[i] > 1) return false;
       if (motion) result.motion = data[i] != 0;
       else result.window_open = data[i] != 0;
-      result.window_present = !motion;
       have_window = true;
     }
     i += size;
@@ -180,21 +177,11 @@ struct Sensor {
   int rssi = 0;
   int temperature10 = 0;
   int humidity = -1;
-  int light = -1;
   int32_t illuminance100 = -1;
   double illuminance_last_seen = 0;
   bool temperature_seen = false, humidity_seen = false;
   double temperature_last_seen = 0, humidity_last_seen = 0;
   void Update(const Reading &reading, double now, int signal, int kind = 0) {
-    if (reading.battery >= 0) battery = reading.battery;
-    if (reading.light >= 0) light = reading.light;
-    rssi = signal;
-    // Xiaomi contact battery/light packets do not confirm the magnet state.
-    if (kind == 3) {
-      if (reading.window_reset) { seen = false; active = false; }
-      if (!reading.window_present) return;
-      kind = 0;
-    }
     seen = true;
     active = kind == 1 ? reading.motion : kind == 0 ? !reading.window_open : false;
     if (kind == 2) {
@@ -214,6 +201,8 @@ struct Sensor {
       illuminance_last_seen = now;
     }
     last_seen = now;
+    if (reading.battery >= 0) battery = reading.battery;
+    rssi = signal;
   }
   bool Fresh(double now, int timeout) const {
     return seen && now >= last_seen && now - last_seen <= timeout;

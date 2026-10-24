@@ -51,7 +51,6 @@ double now=100;
 double mgos_uptime(){ return now; }
 bool ResumeKeyAfterDisconnect() { return false; }
 bool existing=false;
-int discovery_model=0;
 std::string state="idle",error;
 struct Timer { void (*cb)(void *); void *arg; };
 std::vector<Timer> timers;

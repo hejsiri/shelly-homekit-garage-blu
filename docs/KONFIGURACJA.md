@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1-blu47 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Instrukcja dla **2.16.1-blu48 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -112,60 +112,16 @@ HomeKit wymaga zakresu 0,0001–100000 lx, więc całkowita ciemność ma warto�
 
 Odczyty pojawiają się nad garażem i jako temperatura oraz wilgotność w HomeKit,
 w tym samym akcesorium Shelly. Możesz mieszać Xiaomi i Shelly BLU H&T w dwóch
-istniejących rolach. Wybór LYWSDCGQ/01ZM obsługuje tylko ten model (MJ_HT_V1); LYWSD03MMC ma oddzielną opcję.
+istniejących rolach. Wybór LYWSDCGQ/01ZM obsługuje tylko ten model (MJ_HT_V1).
 Czujnik Xiaomi nadaje bez szyfrowania; **Pair** zapisuje odbiornik wybranego MAC,
 nie zestawia połączenia BLE. Nie zmienia to szyfrowania krańcówek ani przycisku.
 Temperatura ma rozdzielczość 0,1 °C, wilgotność jest zaokrąglana do całego procenta.
 Każdy pomiar ma własny czas ważności; sam beacon baterii nie odświeża pomiarów.
 
-## Xiaomi LYWSD03MMC — oryginalny firmware
-
-1. W aplikacji Xiaomi Home dodaj czujnik, jeśli nie był jeszcze aktywowany.
-   Pozostaw jego fabryczny firmware.
-2. Uzyskaj istniejący **bindkey** czujnika z konta Xiaomi. Metody opisuje
-   [dokumentacja Xiaomi BLE](https://www.home-assistant.io/integrations/xiaomi_ble/#encryption).
-   Bindkey ma 32 znaki szesnastkowe — nie jest to PIN ani hasło konta Xiaomi.
-3. Przy **Indoor H&T** albo **Outdoor H&T** wybierz **Xiaomi LYWSD03MMC (stock)**
-   i kliknij **Pair**. Wpisz bindkey raz w modalu.
-4. Możesz wpisać **Device MAC (optional)** i kliknąć **Add device**, aby pominąć
-   wykrywanie, albo poczekać na wykrycie czujnika. Przy kilku wybierz właściwy MAC.
-5. Zostaw włączony czujnik blisko Shelly. Nie trzeba przytrzymywać przycisku ani
-   wprowadzać go w tryb parowania. **Waiting for encrypted Xiaomi measurements**
-   może trwać do 15 minut. Po odszyfrowaniu temperatury i wilgotności modal zakończy dodawanie.
-6. Wpisz nazwę w **Name** i zapisz przez **Save**. Pomiary pojawią się w WWW i HomeKit.
-
-Klucz pozostaje na Shelly i nie jest zwracany w statusie; pole modalu jest
-czyszczone po wysłaniu lub anulowaniu. Nie wysyłaj klucza w zgłoszeniach.
-Nieprawidłowy bindkey powoduje błąd odszyfrowania. Poprzednie przypisanie pozostaje
-aktywne do potwierdzenia nowych pomiarów; długie wykrywanie Xiaomi nie blokuje
-krańcówek i Button1. Są nadal tylko dwa miejsca na termometry Indoor/Outdoor.
-
-Ten model nadaje pomiary rzadziej. Jego efektywny timeout wynosi minimum
-30 minut, niezależnie od krótszego **Sensor timeout** czujników bramy. Dłuższa
-ustawiona wartość jest respektowana. Bateria może przyjść później i do tego czasu
-ma „—”; pakiet baterii nie odświeża temperatury/wilgotności.
-
-## Xiaomi Mi Door and Window Sensor 2 MCCGQ02HL
-
-Czujnik zachowuje oryginalny firmware. Nie należy go mylić z wersjami Zigbee ani
-z innymi modelami Xiaomi. Potrzebny jest bindkey uzyskany z konta Xiaomi Home
-jak w instrukcji LYWSD03MMC powyżej.
-
-Przy **Closing sensor** albo **Opening sensor** wybierz **Xiaomi MCCGQ02HL
-(stock)**, a potem **Pair**. Obie krańcówki muszą być różnymi urządzeniami.
-W modalu wpisz bindkey raz; opcjonalny MAC pomija wyszukiwanie. Odsuń i przyłóż
-magnes blisko Shelly. **Waiting for encrypted contact state** kończy się po
-odebraniu zaszyfrowanego stanu magnesu, nie samej baterii lub światła. Okno próby
-wynosi 15 minut. Poprzednie przypisanie pozostaje aktywne do weryfikacji.
-
-Po restarcie Shelly stan jest nieznany do nowego zdarzenia magnesu. Krańcówki
-zachowują **Sensor timeout (30–3600 s)** i blokują sterowanie po utracie ważności.
-Fabryczny Xiaomi może długo milczeć bez zmiany stanu: przed wykorzystaniem go jako
-krańcówki sprawdź rzeczywisty rytm transmisji. Nie zwiększamy automatycznie tego
-limitu. Pakiety baterii i światła nie przedłużają ważności magnesu.
-Poziom baterii jest w WWW; światło tego modelu jest binarne i nie tworzy usługi lux.
-Stan magnesu wpływa na istniejącą bramę w HomeKit; nie powstaje osobne akcesorium
-ani usługa Contact Sensor.
+Od blu48 jedynym obsługiwanym modelem Xiaomi jest LYWSDCGQ/01ZM.
+Eksperymentalne LYWSD03MMC i MCCGQ02HL wymagające ręcznego klucza zostały
+wycofane z panelu i parowania. Jeśli były wcześniej przypisane, sparuj w danej
+roli obsługiwany model. Nie trzeba resetować Shelly ani parowania HomeKit.
 
 ## Własne nazwy
 

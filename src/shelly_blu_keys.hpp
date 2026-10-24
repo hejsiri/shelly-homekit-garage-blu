@@ -2,11 +2,9 @@
 #ifdef SHELLY_GARAGE_BLE
 #include <stddef.h>
 #include <stdint.h>
-#include "shelly_blu_bthome.hpp"
 namespace shelly {
 namespace blu {
-enum : uint8_t { kProtocolBTHome = 0, kProtocolXiaomi = 1,
-                 kProtocolXiaomiEncrypted = 2, kProtocolXiaomiContact = 3 };
+enum : uint8_t { kProtocolBTHome = 0, kProtocolXiaomi = 1 };
 struct SecureRecord {
   uint32_t version;
   uint8_t mac[6];
@@ -21,12 +19,6 @@ bool AcceptSecure(int role, const uint8_t mac[6], const uint8_t *service,
                   size_t size, uint8_t *plain, size_t *plain_size);
 bool SecureFor(int role, const uint8_t mac[6]);
 bool XiaomiFor(int role, const uint8_t mac[6]);
-bool XiaomiSecureFor(int role, const uint8_t mac[6]);
-bool XiaomiContactFor(int role, const uint8_t mac[6]);
-bool DecryptXiaomi(const uint8_t *data, size_t size, const uint8_t mac[6],
-                   const uint8_t key[16], Reading *out, uint32_t *counter);
-bool AcceptXiaomi(int role, const uint8_t mac[6], const uint8_t *data,
-                  size_t size, Reading *out);
 void ResetReadings();
 }  // namespace blu
 }  // namespace shelly

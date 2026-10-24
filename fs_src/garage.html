@@ -203,7 +203,7 @@ function update(data){
  const waterIcon='<svg viewBox="-1 -1 18 23" aria-hidden="true"><path d="M8 1S1 10 1 13a7 7 0 0 0 14 0C15 10 8 1 8 1Z"/></svg>';
  for(const [role,label] of [['outdoor','Outdoor'],['indoor','Indoor']]){
    const v=blu[role],node=document.getElementById('weather-'+role);node.hidden=!(v&&(v.paired??v.secure));
-   const ready=v&&(v.paired??v.secure)&&v.seen&&v.age_s>=0&&v.age_s<=(v.timeout_s||blu.stale_after_s);
+   const ready=v&&(v.paired??v.secure)&&v.seen&&v.age_s>=0&&v.age_s<=blu.stale_after_s;
    node.innerHTML='<span class="sensor-label"></span> '+tempIcon+(ready&&v.temperature_ready!==false?Number(v.temperature).toFixed(1)+' °C':'—')+' '+waterIcon+(ready&&v.humidity_ready!==false?Number(v.humidity)+'%':'—');
    node.querySelector('.sensor-label').textContent=(v&&v.name||label)+':';
  }

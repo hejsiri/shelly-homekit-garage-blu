@@ -2,7 +2,7 @@
 
 Garage BLU adds encrypted Shelly BLU devices, passive Xiaomi thermometers and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu47 for Shelly Plus 1 and Shelly 1 Gen3**,
+The current OTA release is **2.16.1-blu48 for Shelly Plus 1 and Shelly 1 Gen3**,
 with separate model-specific ZIPs and checksums. The Gen3 image targets ESP32-C3;
 its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
@@ -17,7 +17,7 @@ use **Obstruction**, **In range / Out of range**, **Ready / Pressed** and
 
 Previous versions have run on a physical Plus 1, with OTA and encrypted
 Door/Window readings confirmed. Motion and Button1 readings have also been
-observed in the panel. This release has host-side checks and a local UI preview;
+observed in the panel. This release has host-side checks, including web panel behavior;
 its changes still need verification after installation on a physical garage.
 A preview does not demonstrate successful BLE pairing or relay operation.
 
@@ -31,8 +31,6 @@ A preview does not demonstrate successful BLE pairing or relay operation.
 | One BLU Motion, SBMO-003Z | Motion in the panel and an optional HomeKit Motion Sensor service. |
 | Two BLU H&T, SBHT-003C | Indoor/outdoor temperature and humidity in the panel and HomeKit. |
 | Xiaomi LYWSDCGQ/01ZM (MJ_HT_V1) | Stock unencrypted MiBeacon temperature, humidity and battery. Replaces either Indoor or Outdoor BLU H&T; two thermometer slots total. No PIN, Xiaomi account or sensor firmware change. |
-| Xiaomi LYWSD03MMC (stock firmware) | Encrypted MiBeacon v4/v5, temperature, humidity and battery. Requires the device MAC and a 32-character hexadecimal bindkey. Uses either existing thermometer slot. |
-| Xiaomi Mi Door and Window Sensor 2, MCCGQ02HL | Stock encrypted MiBeacon. A Closing/Opening endpoint alternative; no separate HomeKit Contact Sensor. Requires a bindkey. Physical verification pending. |
 | One BLU Button1 | Single press: open / stop / close. HomeKit occupancy and programmable button services (single / double / long press) within the garage accessory. Authenticated beacons determine presence in BLE range. |
 
 Other controller variants, including Mini, 1PM and Gen4, are not supported by
@@ -62,9 +60,8 @@ hold its button or enter a PIN. A single matching device is added automatically;
 when several match, select the intended MAC. The modal finishes only after both
 temperature and humidity have arrived. Enter **Name** and save to name its readings.
 
-The sensor keeps its stock firmware. This selector uses MiBeacon product `0x01aa`;
-LYWSD03MMC has its own stock-firmware option in blu46. Other Xiaomi, BLE Mesh
-and Zigbee models are not enabled by these options. Temperature is shown at 0.1 °C and
+The sensor keeps its stock firmware. This selector uses MiBeacon product `0x01aa`.
+Other Xiaomi, BLE Mesh and Zigbee models are not enabled by this option. Temperature is shown at 0.1 °C and
 humidity is rounded to integer percent, matching the existing H&T display.
 
 A persisted protocol marker keeps passive Xiaomi assignments separate from
@@ -78,79 +75,18 @@ Parser tests use a published stock-device vector from
 [Bluetooth-Devices/xiaomi-ble](https://github.com/Bluetooth-Devices/xiaomi-ble/blob/main/tests/test_parser.py).
 A physical LYWSDCGQ/01ZM was observed on Plus1/blu45: live temperature, humidity
 and battery (36 %) appeared in the web panel. This did not test physical relay
-operation or the separate LYWSD03MMC implementation.
+operation or a full hardware test of the current release.
 
-## Xiaomi LYWSD03MMC with original firmware
-
-Since blu46, choose **Xiaomi LYWSD03MMC (stock)** under **Indoor H&T** or
-**Outdoor H&T**, then **Pair**. Enter the **Xiaomi bindkey** once (32 hexadecimal
-characters). Enter **Device MAC (optional)** to skip discovery, or wait for the
-sensor to be detected. Discovery and measurement verification allow 15 minutes.
-No PIN or BLE pairing mode is required, and the sensor keeps its original firmware.
-
-Obtain the existing bindkey from the Xiaomi Home account the device belongs to,
-using the methods documented by [Xiaomi BLE](https://www.home-assistant.io/integrations/xiaomi_ble/#encryption).
-The panel does not request Xiaomi account credentials or retrieve the key itself.
-Do not publish the bindkey or put it in an issue. A wrong key produces a decryption
-error. The key is never returned by status RPCs, and the form clears it after
-submission or cancellation. Adding the device does not rotate its Xiaomi key.
-
-Stock measurements can be ten minutes apart; battery can be less frequent.
-After receiving authenticated temperature and humidity, Shelly commits the
-assignment and adds the existing Indoor/Outdoor HomeKit services. Until then,
-any previous assignment stays in use. Passive discovery does not block endpoint
-monitoring or Button1 garage commands. Battery percentage is displayed in the web panel; HomeKit exposes temperature
-and humidity. The effective measurement timeout for this model is at least 1800 seconds; configured longer values are respected.
-Other sensor timeouts do not change. Each measurement keeps its own timestamp.
-
-AES-CCM verifies MiBeacon v4/v5 with the MAC, product and packet/extended counter
-nonce and `0x11` associated data. The persistent counter rejects repeats across
-restart. Re-adding the same MAC/key preserves its counter. If the device resets
-its counter with the same key (for example after battery replacement), older
-packets stay rejected; reactivation with a new bindkey may be needed. Unencrypted
-LYWSD03MMC and PVVX/ATC firmware are not supported by this stock option.
-
-Tests include a published stock LYWSD03MMC vector, real AES-CCM, wrong keys,
-modified/truncated packets, replay after restart, delayed partial readings,
-manual assignment, cancellation and existing BLU regression checks. The local
-preview uses sample data. Physical LYWSD03MMC verification remains pending.
-
-## Xiaomi Mi Door and Window Sensor 2 (MCCGQ02HL)
-
-Since blu47, select **Xiaomi MCCGQ02HL (stock)** for **Closing sensor** or
-**Opening sensor** to use it as a garage endpoint. Two endpoints require two
-distinct devices. The Xiaomi does not create a separate Contact Sensor service
-in HomeKit: its magnet state contributes to the existing garage state. Other
-Xiaomi door sensor models are not enabled by this option.
-
-Activate the device in Xiaomi Home and obtain its existing 32-character bindkey
-using the linked Xiaomi BLE instructions. Click **Pair**, enter the bindkey once,
-and optionally enter the MAC to skip discovery. Separate and rejoin the magnet
-near Shelly. No PIN, key rotation or firmware change is performed. Setup completes
-only after an authenticated contact-state object arrives; battery and light alone
-cannot finish setup or replace a working assignment. The key is not returned in
-status. Discovery/verification allows 15 minutes and keeps existing BLE controls
-operational.
-
-MiBeacon product `0x098b` uses the existing AES-CCM path with persistent replay
-protection and a distinct persisted protocol marker restricted to endpoint roles.
-Object `0x1019` values 0 and 2 mean open (2 = left-open timeout), 1 means magnet
-present, and 3 invalidates the current contact state. Unknown values and malformed
-lengths are rejected. Battery and binary light/dark objects retain the magnet
-value and never refresh its timestamp. Binary light data is not presented as
-measured lux in HomeKit.
-
-After a Shelly restart, the magnet state is unknown until a new authenticated
-contact event arrives. **Garage endpoints keep the configured Sensor timeout
-(30–3600 seconds)** and block controls when stale; it is not silently extended.
-Stock Xiaomi can sleep between events, so check its actual reporting interval
-before using it for garage feedback. A missing endpoint confirmation may require
-moving its magnet again. Battery is displayed in the web panel.
-
-Tests use the [published MCCGQ02HL vector](https://github.com/Bluetooth-Devices/xiaomi-ble/blob/main/tests/test_parser.py),
-real AES-CCM, open/closed/left-open/reset cases, tampered packets, role isolation,
-replay after restart, independent freshness and endpoint receive handling.
-Local UI tests use sample data. Physical MCCGQ02HL and garage testing remain pending.
+Since blu48, Xiaomi support is limited to LYWSDCGQ/01ZM, which can be added
+using normal broadcasts without a manual key or Xiaomi account. Experimental
+LYWSD03MMC and MCCGQ02HL support from blu46/47 has been withdrawn. The panel no
+longer offers those models or a bindkey form; their discovery requests are rejected.
+They are not replaced by insecure plaintext modes. Existing Shelly BLU encryption
+and the passive LYWSDCGQ protocol remain separate. If one of the withdrawn models
+was previously assigned, pair a supported device in that role; this update does
+not erase stored sensor records or reset HomeKit pairings.
+Future device integrations should support registration without asking users to
+extract secret keys from cloud accounts.
 
 ## Pair and name devices
 

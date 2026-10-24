@@ -1,6 +1,6 @@
 # Historia zmian Garage BLU
 
-Bieżące opisy i instrukcje dotyczą **2.16.1-blu47** (stan: 2026-10-24).
+Bieżące opisy i instrukcje dotyczą **2.16.1-blu48** (stan: 2026-10-24).
 Zobacz [instalację i aktualizacje](AKTUALIZACJA.md), [konfigurację](KONFIGURACJA.md)
 i [rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md).
 
@@ -336,6 +336,8 @@ oraz lokalny podgląd modalu. Fizyczna próba Xiaomi i Gen3 pozostaje do wykonan
 
 ## blu46 — Xiaomi LYWSD03MMC na fabrycznym firmware
 
+Historyczne wydanie: obsługa tego modelu została wycofana w blu48.
+
 Dodano szyfrowany MiBeacon v4/v5 modelu 0x055b. Indoor/Outdoor H&T mają opcję
 Xiaomi LYWSD03MMC (stock); modal przyjmuje jeden bindkey i opcjonalny ręczny MAC.
 Nie zmienia firmware ani klucza czujnika. Odszyfrowana temperatura i wilgotność trafiają do panelu i istniejących usług
@@ -354,6 +356,8 @@ W blu45 potwierdzono na fizycznym Plus1 odczyty LYWSDCGQ/01ZM wraz z baterią 36
 
 ## blu47 — Xiaomi Mi Door and Window Sensor 2 MCCGQ02HL
 
+Historyczne wydanie: obsługa tego modelu została wycofana w blu48.
+
 Dodano fabryczny szyfrowany MiBeacon modelu 0x098b. Można wybrać go zamiast
 BLU Door/Window jako Closing/Opening sensor. Jego stan służy istniejącej bramie;
 nie dodaje osobnego kontaktronu ani nowej usługi HomeKit.
@@ -370,3 +374,20 @@ powtórzone/uszkodzone pakiety, rozdzielenie ról i ważności danych oraz odbi�
 krańcówki bez odświeżania jej stanu przez baterię. Regresje istniejących usług
 HomeKit przeszły testy z Apple ADK. Podgląd WWW korzysta z danych przykładowych.
 Testy fizycznego Xiaomi i Gen3 są nadal do wykonania.
+
+## blu48 — parowanie bez ręcznego klucza Xiaomi
+
+Wycofano eksperymentalne LYWSD03MMC i MCCGQ02HL z panelu i parowania przez RPC.
+Usunięto formularz bindkey oraz instrukcje pozyskiwania klucza z aktualnej
+konfiguracji. Xiaomi LYWSDCGQ/01ZM pozostaje dostępny w Indoor/Outdoor H&T:
+wykrywanie i odbiór z fabrycznych beaconów, bez PIN-u i konta Xiaomi.
+
+Zachowano szyfrowane parowanie Shelly BLU, HomeKit, nazwy, wizualizację i odczyt
+baterii. Nie obniżono szyfrowania wycofanych modeli do trybu nieszyfrowanego.
+Zapisane rekordy urządzeń nie są kasowane; wycofane modele trzeba zastąpić
+obsługiwanymi. Panel respektuje również zgłoszoną przez firmware niegotowość
+urządzenia przy wyświetlaniu nieaktualnego statusu.
+
+Testy obejmują odrzucanie wycofanych modeli we wszystkich rolach, zachowanie
+obsługiwanych trybów discovery, odczyty LYWSDCGQ, szyfrowanie BLU i istniejące
+usługi HomeKit. Pełny test tej wersji na fizycznej bramie i Gen3 pozostaje do wykonania.

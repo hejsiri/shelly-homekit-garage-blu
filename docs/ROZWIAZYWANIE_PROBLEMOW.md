@@ -1,6 +1,6 @@
 # Rozwiązywanie problemów Garage BLU
 
-Dla **2.16.1-blu47 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Dla **2.16.1-blu48 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](KONFIGURACJA.md) · [Historia zmian](HISTORIA_ZMIAN.md)
@@ -186,8 +186,8 @@ z takimi danymi. MAC można zamaskować, zachowując możliwość rozróżnienia
   **Indoor H&T** albo **Outdoor H&T**, zanim klikniesz **Pair**.
 - Włącz czujnik i zbliż go do Shelly. Odbiór jest pasywny: nie uruchamiaj trybu
   parowania i nie wpisuj PIN-u. Poczekaj na zwykłe beacony z pomiarami.
-- Przy kilku czujnikach wybierz właściwy MAC. LYWSD03MMC wymaga osobnej opcji **Xiaomi LYWSD03MMC (stock)**; modele Zigbee/Mesh
-  nie są obsługiwane przez te opcje.
+- Przy kilku czujnikach wybierz właściwy MAC. Inne Xiaomi oraz modele Zigbee/Mesh
+  nie są obsługiwane przez tę opcję.
 - Sprawdź baterię i czy inna aplikacja nie utrzymuje aktywnego połączenia z czujnikiem;
   zamknij podgląd czujnika w aplikacji Xiaomi na czas próby.
 - **Waiting for temperature and humidity** wymaga obu pomiarów, nie samej baterii.
@@ -195,32 +195,9 @@ z takimi danymi. MAC można zamaskować, zachowując możliwość rozróżnienia
 - W zgłoszeniu podaj Version, rolę Indoor/Outdoor i tekst modalu. Debug Info zawiera
   dla obu ról stan przypisania i osobną gotowość temperatury/wilgotności.
 
-## Xiaomi LYWSD03MMC (stock): oczekiwanie albo błąd bindkey
+## Wycofane modele Xiaomi z blu46/47
 
-- Wybierz **Xiaomi LYWSD03MMC (stock)**, nie LYWSDCGQ. Potrzebny jest aktualny
-  32-znakowy bindkey urządzenia aktywowanego w Xiaomi Home.
-- Odszyfrowanie weryfikuje MAC i klucz. **Cannot decrypt Xiaomi readings** zwykle
-  oznacza bindkey innego urządzenia lub klucz zmieniony po ponownym dodaniu do Xiaomi.
-- Możesz wpisać MAC ręcznie, aby pominąć wykrywanie. Nadal trzeba poczekać na
-  zaszyfrowane pomiary: okno wynosi 15 minut, pakiety mogą być oddalone o kilka minut.
-- Zbliż czujnik, sprawdź baterię i zamknij aktywne połączenie z nim w aplikacji Xiaomi.
-  Nie resetuj czujnika tylko po to, aby rozpocząć odbiór na Shelly.
-- Po wymianie baterii lub resecie licznika stare pakiety z tym samym kluczem mogą
-  być odrzucane przez ochronę przed powtórzeniami. Wtedy potrzebna może być
-  ponowna aktywacja z nowym bindkey. Samo ponowne Pair nie zeruje ochrony.
-- PVVX/ATC, pakiety nieszyfrowane i inne modele nie są obsługiwane przez opcję stock.
-- Do zgłoszenia dołącz komunikat oraz wersję firmware, bez bindkey, haseł i PIN-ów.
-
-## MCCGQ02HL: oczekiwanie na magnes lub nieaktualna krańcówka
-
-- Wybierz dokładnie Xiaomi MCCGQ02HL (stock) przy Closing sensor lub Opening sensor,
-  wpisz jego bindkey i porusz magnesem. Pakiet baterii nie potwierdza położenia.
-  Nie trzeba PIN-u ani nowego firmware Xiaomi.
-- Po restarcie Shelly odsuń/przyłóż magnes, aby dostarczyć nowy stan.
-- Krańcówki zachowują ustawiony Sensor timeout. Fabryczny Xiaomi może zasypiać
-  pomiędzy zdarzeniami; gdy nie potwierdza stanu odpowiednio często, sterowanie
-  pozostaje zablokowane. Nie traktuj samego odbioru baterii jako aktualnej krańcówki.
-- Dwie krańcówki muszą mieć różne adresy MAC. Inne role, np. Motion lub H&T,
-  odrzucają ten model. Nie powstaje osobna usługa kontaktronu w HomeKit.
-- Przy błędzie odszyfrowania sprawdź MAC i bieżący bindkey; nie publikuj klucza.
-  Zmiana klucza w Xiaomi Home wymaga ponownego dodania urządzenia w Shelly.
+LYWSD03MMC i MCCGQ02HL nie są obsługiwane od blu48, ponieważ wymagały ręcznego
+pozyskania klucza. Nie ma już formularza bindkey. W danej roli sparuj Shelly BLU
+lub — wyłącznie dla Indoor/Outdoor H&T — Xiaomi LYWSDCGQ/01ZM. Istniejące
+parowanie Shelly z HomeKit nie wymaga resetowania.

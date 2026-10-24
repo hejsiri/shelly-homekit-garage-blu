@@ -60,10 +60,9 @@ pozostaje do wykonania; metadane mają <code>hardware_tested: false</code>.</p>
 <tr><th scope="row">BLU Motion SBMO-003Z</th><td>Ruch w panelu i opcjonalna usługa Motion Sensor w HomeKit.</td></tr>
 <tr><th scope="row">Do 2 × BLU H&amp;T SBHT-003C</th><td>Indoor i Outdoor: temperatura i wilgotność w WWW i HomeKit. Testy fizycznych H&amp;T pozostają do wykonania.</td></tr>
 <tr><th scope="row">Xiaomi LYWSDCGQ/01ZM</th><td>Fabryczne beacony Bluetooth: temperatura, wilgotność i bateria. Wybierz typ Xiaomi przy Indoor H&amp;T lub Outdoor H&amp;T, następnie Pair. Bez PIN-u i zmiany firmware czujnika; łącznie dwa termometry. Na Plus1/blu45 potwierdzono odczyty w panelu, w tym baterię 36 %.</td></tr>
-<tr><th scope="row">Xiaomi LYWSD03MMC (stock)</th><td>Oryginalny firmware Xiaomi, szyfrowane pomiary temperatury, wilgotności i baterii. Wybierz model przy Indoor/Outdoor H&amp;T i wpisz bindkey w modalu. MAC można podać ręcznie. Próba fizycznego LYWSD03MMC pozostaje do wykonania.</td></tr>
-<tr><th scope="row">Xiaomi MCCGQ02HL (stock)</th><td>Mi Door and Window Sensor 2 przez BLE i bindkey: zamiennik Closing/Opening sensor. Stan trafia do istniejącej bramy w HomeKit, bez osobnej usługi kontaktronu. Krańcówki zachowują Sensor timeout; po restarcie wymagają nowego stanu magnesu. Test fizyczny pozostaje do wykonania.</td></tr>
 <tr><th scope="row">BLU Button1</th><td>Pojedynczy nacisk steruje bramą; beacony wskazują obecność przycisku w zasięgu BLE.</td></tr>
 </tbody></table></div>
+<p>Od blu48 obsługiwany Xiaomi to LYWSDCGQ/01ZM — bez ręcznego klucza i konta Xiaomi. Eksperymentalne LYWSD03MMC i MCCGQ02HL z blu46/47 zostały wycofane.</p>
 <p>Urządzenia BLU zachowują oryginalny firmware Shelly. Door/Window Outdoor ZB
 (SBDW-302C) i czujnik wycieku pozostają w planach. H&amp;T Gen3 z ekranem e-ink jest
 urządzeniem Wi-Fi, a nie obsługiwanym tu BLU H&amp;T.</p>
@@ -127,7 +126,7 @@ zapisu. Zwykła aktualizacja nie wymaga resetu sterownika, HomeKit ani urządze�
 </section>
 
 <section id="funkcje">
-<h2>Obsługa w blu47</h2>
+<h2>Obsługa w blu48</h2>
 <p>Ikona auta zmienia teraz równocześnie grafikę i kafelek <strong>Car presence</strong>.
 Ukrycie wygasza kafelek i pokazuje Not detected do kolejnego beacona Button1.
 Ręczny wybór dotyczy panelu WWW; obecność w HomeKit nadal jest odczytywana z BLE.</p>
@@ -185,7 +184,7 @@ napędu już będącego w ruchu ani nie zastępuje jego zabezpieczeń.</p>
 <li><a href="$repo/blob/master/docs/AKTUALIZACJA.md">Instalacja i aktualizacje</a> · <a href="AKTUALIZACJA.md">plik Markdown</a></li>
 <li><a href="$repo/blob/master/docs/KONFIGURACJA.md">Konfiguracja i obsługa</a> · <a href="KONFIGURACJA.md">plik Markdown</a></li>
 <li><a href="$repo/blob/master/docs/ROZWIAZYWANIE_PROBLEMOW.md">Rozwiązywanie problemów</a> · <a href="ROZWIAZYWANIE_PROBLEMOW.md">plik Markdown</a></li>
-<li><a href="$repo/blob/master/docs/HISTORIA_ZMIAN.md">Historia zmian blu20–blu47</a> · <a href="HISTORIA_ZMIAN.md">plik Markdown</a></li>
+<li><a href="$repo/blob/master/docs/HISTORIA_ZMIAN.md">Historia zmian blu20–blu48</a> · <a href="HISTORIA_ZMIAN.md">plik Markdown</a></li>
 <li><a href="$repo/blob/master/README-BLU.md">Dokumentacja techniczna i budowanie (EN)</a></li>
 <li><a href="$repo">Repozytorium Garage BLU</a> · <a href="$repo/issues">Zgłoszenia błędów i propozycje</a></li>
 </ul>
