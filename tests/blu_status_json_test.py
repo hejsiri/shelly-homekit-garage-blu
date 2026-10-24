@@ -53,7 +53,11 @@ const char *mgos_sys_config_get_blu_car_name() { return "Auto \"garaż\" <test>"
 int mgos_sys_config_get_blu_presence_timeout_s() { return 45; }
 int mgos_sys_config_get_blu_stale_after_s() { return 180; }
 double mgos_uptime() { return 150; }
-bool SecureFor(int, const unsigned char *) { return true; }
+bool SecureFor(int role, const unsigned char *) { return role!=3; }
+bool XiaomiFor(int role, const unsigned char *) { return role==3; }
+bool SensorPaired(int role) { return role!=4; }
+bool SensorReady(int role) { return role!=4; }
+bool HTReady(int role,bool) { return role==3; }
 const char *SensorName(int) { return "Czujnik \"garaż\" <test>"; }
 const char *SensorMAC(int role) { return role == 4 ? "" : "AA:BB:CC:DD:EE:FF"; }
 '''
@@ -82,6 +86,8 @@ with tempfile.TemporaryDirectory(prefix='shelly-status-json-') as temp:
     assert result['car_name'] == 'Auto "garaż" <test>'
     assert result['closed']['active'] is True
     assert result['closed']['age_s'] == 6
+    assert result['indoor']['paired'] is True and result['indoor']['secure'] is False
+    assert result['indoor']['protocol']=='xiaomi' and result['indoor']['temperature_ready'] is True
     assert result['indoor']['temperature'] == -5.2
     assert result['indoor']['humidity'] == 65
     assert result['outdoor']['seen'] is False

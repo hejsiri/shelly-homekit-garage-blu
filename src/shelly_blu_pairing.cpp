@@ -22,6 +22,7 @@ extern "C" {
 }
 #include "shelly_blu_garage.hpp"
 #include "shelly_blu_keys.hpp"
+#include "shelly_blu_xiaomi.hpp"
 #include "shelly_main.hpp"
 
 namespace shelly {
@@ -38,6 +39,7 @@ std::vector<Candidate> candidates;
 std::string state = "idle", error;
 double deadline = 0;
 int role = -1;
+int discovery_model = 0;
 mgos_bt_addr peer = {};
 ble_addr_t native_peer = {};
 std::atomic<uint32_t> passkey(0);
@@ -409,7 +411,8 @@ void StoreKey(const std::array<uint8_t, 16> &key) {
   memcpy(record.key, key.data(), 16);
   SecureRecord old;
   // Re-pairing the same key must never reset replay protection.
-  if (LoadRecord(role, &old) && memcmp(old.mac, record.mac, 6) == 0 &&
+  if (LoadRecord(role, &old) && old.protocol == kProtocolBTHome &&
+      memcmp(old.mac, record.mac, 6) == 0 &&
       memcmp(old.key, record.key, 16) == 0)
     record = old;
   if (!SaveRecord(role, record)) {
@@ -712,7 +715,7 @@ void StatusRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *, mg_str) {
       state.c_str(), error.c_str(), role,
       Active() ? int(deadline - mgos_uptime()) : 0, list.c_str());
 }
-void DiscoverRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *, mg_str) {
+void DiscoverRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *, mg_str args) {
   if (!Authorized(ri)) return;
   if (mgos_bt_get_status() != MGOS_BT_STARTED) {
     mg_rpc_send_errorf(
@@ -723,6 +726,13 @@ void DiscoverRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *, mg_str) {
     mg_rpc_send_errorf(ri, 409, "Pairing already active");
     return;
   }
+  int model = 0;
+  json_scanf(args.p, args.len, "{model:%d}", &model);
+  if (model != 0 && model != 3 && model != 0x01aa) {
+    mg_rpc_send_errorf(ri, 400, "Unsupported thermometer model");
+    return;
+  }
+  discovery_model = model;
   state = "scanning";
   error.clear();
   diagnostics.clear();
@@ -731,6 +741,29 @@ void DiscoverRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *, mg_str) {
   deadline = mgos_uptime() + 60;
   mgos_bt_gap_scan_stop();
   mg_rpc_send_responsef(ri, "{}");
+}
+void StoreXiaomi(int selected_role, const Candidate &candidate) {
+  role = selected_role;
+  peer = candidate.addr;
+  SecureRecord record = {};
+  record.version = 1;
+  record.protocol = kProtocolXiaomi;
+  memcpy(record.mac, peer.addr, 6);
+  if (!SaveRecord(role, record)) {
+    Finish("Cannot save thermometer assignment");
+    return;
+  }
+  char mac[MGOS_BT_ADDR_STR_LEN];
+  mgos_bt_addr_to_str(&peer, 0, mac);
+  if (role == 3) mgos_sys_config_set_blu_indoor_mac(mac);
+  else mgos_sys_config_set_blu_outdoor_mac(mac);
+  if (!mgos_sys_config_save(&mgos_sys_config, false, nullptr)) {
+    Finish("Cannot save thermometer assignment; add it again");
+    return;
+  }
+  ResetReadings();
+  state = "waiting_beacon";
+  deadline = mgos_uptime() + 60;
 }
 void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
              mg_str args) {
@@ -766,8 +799,10 @@ void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
     mg_rpc_send_errorf(ri, 400, "Device expired; scan and wake it again");
     return;
   }
-  if (selected_role == 5 ? candidate->model != 1 : selected_role >= 3 ? candidate->model != 3 :
-      candidate->model != (selected_role == 2 ? 5 : 2)) {
+  if ((discovery_model && candidate->model != discovery_model) ||
+      (selected_role == 5 ? candidate->model != 1 : selected_role >= 3 ?
+      (candidate->model != 3 && candidate->model != 0x01aa) :
+      candidate->model != (selected_role == 2 ? 5 : 2))) {
     mg_rpc_send_errorf(ri, 400, "Select the correct device model for this role");
     return;
   }
@@ -777,6 +812,11 @@ void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
       mg_rpc_send_errorf(ri, 400, "Device is already assigned to another role");
       return;
     }
+  }
+  if (candidate->model == 0x01aa) {
+    StoreXiaomi(selected_role, *candidate);
+    mg_rpc_send_responsef(ri, "{}");
+    return;
   }
   uint32_t old_value = 0;
   if (candidate->encrypted) {
@@ -840,7 +880,8 @@ void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
   deadline = mgos_uptime() + 90;
   generation++;
   SecureRecord saved;
-  if (!new_pin && LoadRecord(role, &saved) && memcmp(saved.mac, peer.addr, 6) == 0) {
+  if (!new_pin && LoadRecord(role, &saved) && saved.protocol == kProtocolBTHome &&
+      memcmp(saved.mac, peer.addr, 6) == 0) {
     state = "verifying_existing_key";
     deadline = mgos_uptime() + 3;
     Trace("Checking existing encrypted readings before BLE connection");
@@ -857,7 +898,7 @@ void CancelRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *, mg_str) {
 }  // namespace
 
 bool PairingScan() {
-  return state == "scanning" || state == "waiting_encrypted_beacon" ||
+  return state == "scanning" || state == "waiting_encrypted_beacon" || state == "waiting_beacon" ||
          state == "waiting_pairing_mode" || state == "waiting_security_retry" ||
          state == "waiting_user_pairing" || state == "verifying_existing_key";
 }
@@ -868,7 +909,8 @@ bool PairingBusy() {
   return Active();
 }
 void PairingVerified(int verified_role) {
-  if ((state == "waiting_encrypted_beacon" || state == "verifying_existing_key") && verified_role == role) {
+  if ((state == "waiting_encrypted_beacon" || state == "waiting_beacon" ||
+       state == "verifying_existing_key") && verified_role == role) {
     Finish(nullptr);
     // A newly verified optional sensor changes the HomeKit service list.
     // Rebuild outside the scan callback and increment HomeKit's config number.
@@ -879,26 +921,39 @@ void PairingAdvertisement(void *data) {
   if (state != "scanning" && state != "waiting_pairing_mode" &&
       state != "waiting_security_retry" && state != "waiting_user_pairing") return;
   auto *result = static_cast<mgos_bt_gap_scan_result *>(data);
-  mg_str manufacturer = mgos_bt_gap_parse_adv_data(
-      result->scan_rsp, MGOS_BT_GAP_EIR_MANUFACTURER_SPECIFIC_DATA);
-  if (manufacturer.len < 2 || uint8_t(manufacturer.p[0]) != 0xa9 ||
-      uint8_t(manufacturer.p[1]) != 0x0b)
-    return;
   bool pairing = false, encrypted = false;
   uint16_t model = 0;
-  for (size_t i = 2; i < manufacturer.len;) {
-    uint8_t type = manufacturer.p[i++];
-    size_t n = type == 1 || type == 0x0b ? 2 : type == 0x0a ? 6 : 0;
-    if (!n || n > manufacturer.len - i) return;
-    if (type == 1) {
-      pairing = manufacturer.p[i] & 0x10;
-      encrypted = manufacturer.p[i] & 2;
+  Reading reading;
+  if (state == "scanning" && discovery_model == 0x01aa &&
+      (DecodeXiaomiAdvertisement(
+           reinterpret_cast<const uint8_t *>(result->adv_data.p),
+           result->adv_data.len, result->addr.addr, &reading) ||
+       DecodeXiaomiAdvertisement(
+           reinterpret_cast<const uint8_t *>(result->scan_rsp.p),
+           result->scan_rsp.len, result->addr.addr, &reading))) {
+    model = 0x01aa;
+    pairing = true;
+  } else {
+  mg_str manufacturer = mgos_bt_gap_parse_adv_data(
+        result->scan_rsp, MGOS_BT_GAP_EIR_MANUFACTURER_SPECIFIC_DATA);
+    if (manufacturer.len < 2 || uint8_t(manufacturer.p[0]) != 0xa9 ||
+        uint8_t(manufacturer.p[1]) != 0x0b)
+      return;
+    for (size_t i = 2; i < manufacturer.len;) {
+      uint8_t type = manufacturer.p[i++];
+      size_t n = type == 1 || type == 0x0b ? 2 : type == 0x0a ? 6 : 0;
+      if (!n || n > manufacturer.len - i) return;
+      if (type == 1) {
+        pairing = manufacturer.p[i] & 0x10;
+        encrypted = manufacturer.p[i] & 2;
+      }
+      if (type == 0x0b)
+        model = uint8_t(manufacturer.p[i]) | (uint16_t(uint8_t(manufacturer.p[i + 1])) << 8);
+      i += n;
     }
-    if (type == 0x0b)
-      model = uint8_t(manufacturer.p[i]) | (uint16_t(uint8_t(manufacturer.p[i + 1])) << 8);
-    i += n;
   }
-  if (!pairing || (model != 1 && model != 2 && model != 5 && model != 3)) return;
+  if (!pairing || (model != 1 && model != 2 && model != 5 && model != 3 && model != 0x01aa) ||
+      (state == "scanning" && discovery_model && model != discovery_model)) return;
   if (state == "waiting_pairing_mode" || state == "waiting_security_retry" ||
       state == "waiting_user_pairing") {
     if (memcmp(peer.addr, result->addr.addr, 6) == 0) {
@@ -940,7 +995,7 @@ void PairingTimeout() {
 }
 void PairingInit() {
   auto *rpc = mgos_rpc_get_global();
-  mg_rpc_add_handler(rpc, "Shelly.BLU.Discover", "", DiscoverRPC, nullptr);
+  mg_rpc_add_handler(rpc, "Shelly.BLU.Discover", "{model:%d}", DiscoverRPC, nullptr);
   mg_rpc_add_handler(rpc, "Shelly.BLU.Pair",
                      "{role:%d,mac:%Q,pin:%Q,current_pin:%Q}", PairRPC,
                      nullptr);

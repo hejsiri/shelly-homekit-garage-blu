@@ -129,6 +129,13 @@ void shelly_debug_write_nc(struct mg_connection *nc) {
               blu::CarPresenceReady(), blu::CarPresent());
   mg_printf(nc, "BLU Motion light: ready %d lux100 %d\r\n",
               blu::MotionLightReady(), int(blu::MotionReading().illuminance100));
+  for (int role : {3, 4}) {
+    const auto &reading = blu::ReadingFor(role);
+    mg_printf(nc, "BLE H&T role %d: paired %d temperature_ready %d "
+                  "humidity_ready %d temperature10 %d humidity %d\r\n",
+                role, blu::SensorPaired(role), blu::HTReady(role, true),
+                blu::HTReady(role, false), reading.temperature10, reading.humidity);
+  }
 #endif
   mg_printf(nc, "HAP connections:\r\n");
   time_t now_wall = mg_time();

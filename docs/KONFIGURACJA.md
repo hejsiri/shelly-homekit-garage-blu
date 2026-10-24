@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1-blu44 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Instrukcja dla **2.16.1-blu45 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -86,7 +86,8 @@ nazw ani statusów nad grafiką garażu.
 | Outdoor H&T | Temperatura i wilgotność na zewnątrz, odczyt nad garażem i usługi w HomeKit. |
 | BLU Button1 | In range / Out of range, kafelek obecności i wskaźnik naciśnięcia. Dwie usługi HomeKit w akcesorium Shelly: czujnik obecności auta i przycisk programowalny. Pojedynczy nacisk steruje także istniejącą bramą. |
 
-Usługi Motion i H&T są dodawane do HomeKit po bezpiecznym sparowaniu. Chwilowy brak
+Usługi Motion i Shelly BLU H&T są dodawane do HomeKit po bezpiecznym sparowaniu.
+Xiaomi dodaje te same usługi temperatury i wilgotności po zapisaniu przypisania i potwierdzeniu pomiarów. Chwilowy brak
 odczytów nie usuwa ich z HomeKit; są raportowane jako niedostępne. Po sparowaniu
 Button1 pojawiają się usługi obecności auta i przycisku programowalnego w tym samym akcesorium Shelly.
 
@@ -100,9 +101,26 @@ Oświetlenie ma własny czas ważności równy Sensor timeout. Pakiet bez pomiar
 nie przedłuża tego czasu; brak świeżego pomiaru zgłasza błąd i nieaktywny status.
 HomeKit wymaga zakresu 0,0001–100000 lx, więc całkowita ciemność ma wartość minimalną.
 
+## Xiaomi Bluetooth LYWSDCGQ/01ZM
+
+1. Przy **Indoor H&T** lub **Outdoor H&T** wybierz **Xiaomi LYWSDCGQ/01ZM**.
+2. Kliknij **Pair**. Zostaw włączony czujnik blisko Shelly; nie przytrzymuj przycisku.
+3. Jeden wykryty czujnik jest dodawany automatycznie. Jeśli są dwa lub więcej,
+   wybierz właściwy adres MAC. Nie jest potrzebny PIN, konto Xiaomi ani zmiana firmware czujnika.
+4. Modal pokaże **Waiting for temperature and humidity**, a po odebraniu obu
+   pomiarów zakończy dodawanie. Nazwę wpisz w **Name** i zapisz przez **Save**.
+
+Odczyty pojawiają się nad garażem i jako temperatura oraz wilgotność w HomeKit,
+w tym samym akcesorium Shelly. Możesz mieszać Xiaomi i Shelly BLU H&T w dwóch
+istniejących rolach. Ten wybór obsługuje tylko LYWSDCGQ/01ZM (MJ_HT_V1), nie dowolny Xiaomi.
+Czujnik Xiaomi nadaje bez szyfrowania; **Pair** zapisuje odbiornik wybranego MAC,
+nie zestawia połączenia BLE. Nie zmienia to szyfrowania krańcówek ani przycisku.
+Temperatura ma rozdzielczość 0,1 °C, wilgotność jest zaokrąglana do całego procenta.
+Każdy pomiar ma własny czas ważności; sam beacon baterii nie odświeża pomiarów.
+
 ## Własne nazwy
 
-Pole Name urządzenia pojawia się po bezpiecznym przypisaniu, w nowym wierszu po
+Pole Name urządzenia pojawia się po przypisaniu, w nowym wierszu po
 Pair i przed jego statusem. Wpisz nazwę, a następnie użyj Save w sekcji bramy.
 Zapis na Shelly przetrwa ponowne otwarcie strony. Zmiana nazwy nie wymaga parowania.
 

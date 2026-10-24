@@ -46,7 +46,8 @@ int main(int argc, char **argv) {
   uint8_t plain[32] = {}; size_t length = sizeof(plain);
   if (argc == 3) {
     assert(!AcceptSecure(0, mac.data(), packet.data(), packet.size(), plain, &length));
-    puts("PASS: replay rejected after process restart"); return 0;
+    assert(XiaomiFor(4,mac.data())&&!SecureFor(4,mac.data()));
+    puts("PASS: replay rejected and Xiaomi binding retained after process restart"); return 0;
   }
   SecureRecord record = {}; record.version = 1;
   memcpy(record.mac, mac.data(), 6); memcpy(record.key, key.data(), 16);
@@ -91,6 +92,16 @@ int main(int argc, char **argv) {
     length = sizeof(plain);
     assert(!AcceptSecure(role, mac.data(), packet.data(), packet.size(), plain, &length));
   }
+  // A passive thermometer cannot authorize door, motion or button data.
+  record.protocol=kProtocolXiaomi;
+  for(int slot:{0,1,2,5})assert(!SaveRecord(slot,record));
+  assert(SaveRecord(3,record)&&XiaomiFor(3,mac.data())&&!SecureFor(3,mac.data()));
+  length=sizeof(plain);
+  assert(!AcceptSecure(3,mac.data(),packet.data(),packet.size(),plain,&length));
+  assert(!XiaomiFor(3,wrong_mac.data()));
+  assert(SaveRecord(4,record));
+  record.protocol=kProtocolBTHome;
+  assert(SaveRecord(3,record)&&SecureFor(3,mac.data())&&!XiaomiFor(3,mac.data()));
   assert(!SaveRecord(6, record));
   puts("PASS: independent Motion key and replay counter");
   puts("PASS: real AES-CCM vector, tampering, nonce identity, truncation, plaintext, persistence failure and replay");

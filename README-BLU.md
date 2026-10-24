@@ -1,8 +1,8 @@
 # Garage BLU — configuration and development
 
-Garage BLU adds encrypted Shelly BLU devices and a garage dashboard to
+Garage BLU adds encrypted Shelly BLU devices, passive Xiaomi thermometers and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu44 for Shelly Plus 1 and Shelly 1 Gen3**,
+The current OTA release is **2.16.1-blu45 for Shelly Plus 1 and Shelly 1 Gen3**,
 with separate model-specific ZIPs and checksums. The Gen3 image targets ESP32-C3;
 its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
@@ -30,6 +30,7 @@ A preview does not demonstrate successful BLE pairing or relay operation.
 | Two BLU Door/Window, SBDW-002C | Fully closed and fully open endpoints. |
 | One BLU Motion, SBMO-003Z | Motion in the panel and an optional HomeKit Motion Sensor service. |
 | Two BLU H&T, SBHT-003C | Indoor/outdoor temperature and humidity in the panel and HomeKit. |
+| Xiaomi LYWSDCGQ/01ZM (MJ_HT_V1) | Stock unencrypted MiBeacon temperature, humidity and battery. Replaces either Indoor or Outdoor BLU H&T; two thermometer slots total. No PIN, Xiaomi account or sensor firmware change. |
 | One BLU Button1 | Single press: open / stop / close. HomeKit occupancy and programmable button services (single / double / long press) within the garage accessory. Authenticated beacons determine presence in BLE range. |
 
 Other controller variants, including Mini, 1PM and Gen4, are not supported by
@@ -49,6 +50,32 @@ before uploading, waits for the device response and reports failures/timeouts.
 The garage dashboard is hidden during an update. With device authentication
 enabled, it loads only after access to the protected full-status RPC succeeds;
 logout or loss of the connection unloads it and clears cached dashboard data.
+
+## Xiaomi LYWSDCGQ/01ZM
+
+Since blu45, choose **Xiaomi LYWSDCGQ/01ZM** in the **Indoor H&T** or
+**Outdoor H&T** type selector, then click **Pair**. Leave the thermometer powered
+on near Shelly. Discovery and registration use its normal broadcasts; do not
+hold its button or enter a PIN. A single matching device is added automatically;
+when several match, select the intended MAC. The modal finishes only after both
+temperature and humidity have arrived. Enter **Name** and save to name its readings.
+
+The sensor keeps its stock firmware. Only MiBeacon product `0x01aa` is supported
+in this first Xiaomi implementation; other Xiaomi, BLE Mesh and Zigbee models
+are not enabled by selecting this option. Temperature is shown at 0.1 °C and
+humidity is rounded to integer percent, matching the existing H&T display.
+
+A persisted protocol marker keeps passive Xiaomi assignments separate from
+encrypted BTHome keys. RPC reports `paired: true`, `secure: false` and
+`protocol: "xiaomi"`. Unencrypted packets cannot control the garage or substitute
+for paired endpoints, Motion or Button1. Each measurement has its own timestamp;
+battery-only packets do not refresh old temperature/humidity. HomeKit keeps the
+existing Indoor/Outdoor service IDs and reports Status Fault for stale values.
+
+Parser tests use a published stock-device vector from
+[Bluetooth-Devices/xiaomi-ble](https://github.com/Bluetooth-Devices/xiaomi-ble/blob/main/tests/test_parser.py).
+Host checks and the local mock preview pass; the user's physical LYWSDCGQ/01ZM
+still needs verification after installing blu45. No physical pairing is claimed.
 
 ## Pair and name devices
 

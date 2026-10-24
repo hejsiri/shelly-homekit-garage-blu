@@ -74,13 +74,15 @@ extern "C" void HAPAccessoryServerRaiseEvent(HAPAccessoryServerRef*,const HAPCha
 }
 namespace shelly { namespace blu {
 Sensor sensor;
-bool SensorPaired(int role){return role==2||role==5;}
-const char *SensorName(int role){return role==2?"Motion sensor":"Button";}
+bool ht=false;
+bool SensorPaired(int role){return role==2||role==5||(ht&&role==3);}
+const char *SensorName(int role){return role==2?"Motion sensor":role==3?"Indoor":"Button";}
 const char *CarName(){return "Car presence";}
 bool ready=true;
 bool CarPresenceReady(){return ready;}
 bool CarPresent(){return true;}
 bool SensorReady(int){return true;}
+bool HTReady(int,bool temperature){return ready&&sensor.HTFresh(temperature,100,180);}
 bool MotionReady(){return ready;}
 bool MotionLightReady(){return ready&&sensor.IlluminanceFresh(100,180);}
 const Sensor &MotionReading(){return sensor;}
@@ -106,10 +108,16 @@ extern "C" bool HAPSessionControllerIsAdmin(const HAPSessionRef*){return true;}
 extern "C" bool TestFindCharacteristic(HAPAccessoryServerRef*,uint64_t,uint64_t,const HAPCharacteristic**,const HAPService**,const HAPAccessory**);
 int main(int argc,char **argv){
  const std::string mode=argc==1?"ready":argv[1];
+ shelly::blu::ht=mode.rfind("ht",0)==0;
  shelly::blu::ready=mode!="not-ready";
  auto &sensor=shelly::blu::sensor;sensor.seen=true;sensor.illuminance_last_seen=100;
  sensor.illuminance100=mode=="missing"?-1:mode=="dark"?0:mode=="bright"?16777215:12345;
  if(mode=="stale")sensor.illuminance_last_seen=-100;
+ if(shelly::blu::ht){
+  sensor.temperature10=-52;sensor.humidity=66;
+  sensor.temperature_seen=sensor.humidity_seen=true;
+  sensor.temperature_last_seen=mode=="ht-stale"?-100:100;sensor.humidity_last_seen=100;
+ }
  std::vector<std::unique_ptr<mgos::hap::Accessory>> accs;
  accs.emplace_back(new mgos::hap::Accessory(1,kHAPAccessoryCategory_GarageDoorOpeners,"Garage",nullptr,nullptr));
  accs[0]->AddHAPService(&mgos_hap_accessory_information_service);
@@ -135,7 +143,9 @@ int main(int argc,char **argv){
  for (const char *expected : {"AID 1 service 6144 type 85 name Motion sensor", "AID 1 service 6400 type 86 name Car presence", "AID 1 service 6656 type 89 name Button", "characteristic 6146 type 22", "characteristic 6402 type 71", "characteristic 6658 type 73", "AID 1 service 6912 type 84 name Light sensor", "characteristic 6914 type 6B"})
   assert(diagnostics.text.find(expected)!=std::string::npos);
  HAPIPSessionDescriptorRef session={};auto *descriptor=reinterpret_cast<HAPIPSessionDescriptor*>(&session);descriptor->server=reinterpret_cast<HAPAccessoryServerRef*>(&server);HAPIPAccessorySerializationContext ctx;HAPIPAccessoryCreateSerializationContext(&ctx);
- for (uint64_t iid : {0x1802,0x1902,0x1a02,0x1b02}) {
+ std::vector<uint64_t> reads={0x1802,0x1902,0x1a02,0x1b02};
+ if(shelly::blu::ht){reads.push_back(0x1502);reads.push_back(0x1512);}
+ for (uint64_t iid : reads) {
   const HAPCharacteristic *ch=nullptr;const HAPService *svc=nullptr;const HAPAccessory *acc=nullptr;
   assert(TestFindCharacteristic(reinterpret_cast<HAPAccessoryServerRef*>(&server),1,iid,&ch,&svc,&acc));
   assert(svc->iid==(iid-2)&&acc->aid==1);
@@ -166,14 +176,14 @@ for f in [sdk/'HomeKitADK/HAP/HAPCharacteristicTypes.c',sdk/'HomeKitADK/HAP/HAPS
  *[sdk/'HomeKitADK/PAL'/('HAPBase+'+name+'.c') for name in ['RawBuffer','String','Int','Float','Double','UTF8']],p/'db.c']:
  out=p/(f.stem+'.o');subprocess.run(['clang',*flags,'-c',str(f),'-o',str(out)],check=True);objs.append(str(out))
 subprocess.run(['clang++','-std=c++14',*flags,str(p/'test.cpp'),str(p/'motion.cpp'),str(sdk/'src/mgos_hap_chars.cpp'),str(sdk/'src/mgos_hap_service.cpp'),str(sdk/'src/mgos_hap_accessory.cpp'),*objs,('-Wl,-dead_strip' if sys.platform=='darwin' else '-Wl,--gc-sections'),'-o',str(p/'test')],check=True)
-for mode in ['ready','not-ready','missing','dark','bright','stale','lost']:
+for mode in ['ready','not-ready','missing','dark','bright','stale','lost','ht','ht-stale']:
  ready=mode not in ['not-ready','lost']
  args=[str(p/'test')]+([] if mode=='ready' else [mode])
  db=json.loads(subprocess.check_output(args))
  assert len(db['accessories'])==1
  accessory=db['accessories'][0];assert accessory['aid']==1
  services={v['type']:v for v in accessory['services']}
- assert set(services)=={'3E','41','85','86','89','84'}
+ assert set(services)==({'3E','41','85','86','89','84','8A','82'} if mode.startswith('ht') else {'3E','41','85','86','89','84'})
  assert [v['type'] for v in services.values() if v['primary']]==['41']
  assert services['85']['iid']==0x1800 and services['86']['iid']==0x1900 and services['89']['iid']==0x1a00
  ids=[]
@@ -200,7 +210,7 @@ for mode in ['ready','not-ready','missing','dark','bright','stale','lost']:
  assert next(c['value'] for c in services['86']['characteristics'] if c['type']=='23')=='Car presence'
  assert services['84']['iid']==0x1b00
  light={c['type']:c for c in services['84']['characteristics']}
- expected=100000 if mode=='bright' else 123.45 if mode in ['ready','lost'] else 0.0001
+ expected=100000 if mode=='bright' else 123.45 if mode in ['ready','lost','ht','ht-stale'] else 0.0001
  assert abs(light['6B']['value']-expected)<0.00001,(mode,light)
  assert light['6B']['format']=='float' and light['6B']['unit']=='lux'
  assert light['6B']['minValue']==0.0001 and light['6B']['maxValue']==100000
@@ -208,5 +218,14 @@ for mode in ['ready','not-ready','missing','dark','bright','stale','lost']:
  light_ready=ready and mode not in ['missing','stale']
  assert light['77']['value']==(0 if light_ready else 1)
  assert light['75']['value']==(1 if light_ready else 0)
+ if mode.startswith('ht'):
+  temp={c['type']:c for c in services['8A']['characteristics']}
+  hum={c['type']:c for c in services['82']['characteristics']}
+  assert services['8A']['iid']==0x1500 and services['82']['iid']==0x1510
+  assert temp['11']['value']==(-5.2 if mode=='ht' else 0)
+  assert temp['77']['value']==(0 if mode=='ht' else 1)
+  assert hum['10']['value']==66 and hum['77']['value']==0
+  assert temp['11']['format']=='float' and hum['10']['format']=='float'
+
 work.cleanup()
 print('PASS: real Apple SDK routing, reads and serialization; stable services, light units/range, missing/stale readings, notifications, receiver loss and event semantics')

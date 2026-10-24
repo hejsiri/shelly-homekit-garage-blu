@@ -1,6 +1,6 @@
 # Rozwiązywanie problemów Garage BLU
 
-Dla **2.16.1-blu44 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Dla **2.16.1-blu45 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](KONFIGURACJA.md) · [Historia zmian](HISTORIA_ZMIAN.md)
@@ -179,3 +179,18 @@ urządzenie działało wcześniej i czy problem dotyczy ponownego parowania.
 
 Nie publikuj haseł, PIN-ów, kluczy BTHome, kodu HomeKit ani kopii konfiguracji
 z takimi danymi. MAC można zamaskować, zachowując możliwość rozróżnienia urządzeń.
+
+## Xiaomi LYWSDCGQ/01ZM nie pojawia się lub brakuje pomiarów
+
+- Zainstaluj co najmniej blu45 i wybierz **Xiaomi LYWSDCGQ/01ZM** przy właściwym
+  **Indoor H&T** albo **Outdoor H&T**, zanim klikniesz **Pair**.
+- Włącz czujnik i zbliż go do Shelly. Odbiór jest pasywny: nie uruchamiaj trybu
+  parowania i nie wpisuj PIN-u. Poczekaj na zwykłe beacony z pomiarami.
+- Przy kilku czujnikach wybierz właściwy MAC. LYWSD03MMC i modele Zigbee/Mesh
+  nie są obsługiwane przez tę opcję.
+- Sprawdź baterię i czy inna aplikacja nie utrzymuje aktywnego połączenia z czujnikiem;
+  zamknij podgląd czujnika w aplikacji Xiaomi na czas próby.
+- **Waiting for temperature and humidity** wymaga obu pomiarów, nie samej baterii.
+  Pakiet baterii nie odświeża ważności temperatury ani wilgotności.
+- W zgłoszeniu podaj Version, rolę Indoor/Outdoor i tekst modalu. Debug Info zawiera
+  dla obu ról stan przypisania i osobną gotowość temperatury/wilgotności.

@@ -22,12 +22,13 @@ harness = r'''
 #include <utility>
 #include <vector>
 #include "shelly_blu_bthome.hpp"
+#include "shelly_blu_xiaomi.hpp"
 using HAPError = int;
 struct HAPAccessoryServerRef {};
 struct HAPBoolCharacteristicReadRequest {};
 struct HAPUInt8CharacteristicReadRequest {};
 struct HAPFloatCharacteristicReadRequest {};
-const int kHAPError_None=0,kHAPError_Unknown=1,kHAPError_InvalidState=2;
+const int kHAPError_None=0,kHAPError_InvalidState=2;
 const int kHAPServiceType_MotionSensor=1,kHAPServiceType_TemperatureSensor=2,
  kHAPServiceType_HumiditySensor=3,kHAPServiceType_OccupancySensor=4,kHAPServiceType_StatelessProgrammableSwitch=5,kHAPServiceType_LightSensor=6;
 const int kHAPCharacteristicType_MotionDetected=1,kHAPCharacteristicType_StatusFault=2,
@@ -99,7 +100,7 @@ struct Accessory {
 }}
 struct Address {unsigned char addr[6];};
 struct Buffer {const char *p;size_t len;};
-struct mgos_bt_gap_scan_result {Address addr;Buffer adv_data;int rssi;};
+struct mgos_bt_gap_scan_result {Address addr;Buffer adv_data;int rssi;Buffer scan_rsp={};};
 namespace shelly {
 int GetIdentifyCB(){return 0;}
 namespace blu {
@@ -114,15 +115,20 @@ bool AcceptSecure(int,const uint8_t*,const uint8_t *data,size_t n,uint8_t *plain
  if(!authenticated||n<2||n-2>*len)return false;
  memcpy(plain,data+2,n-2);*len=n-2;return true;
 }
-bool SensorPaired(int role){return role==5&&paired;}
+bool xiaomi=false;
+bool SensorPaired(int role){return (role==5&&paired)||(role==3&&xiaomi);}
 const char *SensorName(int){return button_name.c_str();}
 const Sensor &MotionReading(){return sensors[2];}
 const Sensor &ReadingFor(int role){return sensors[role];}
-bool SensorReady(int){return false;}
+bool SensorReady(int role);
+bool HTReady(int role,bool temperature);
+bool SecureFor(int,const uint8_t*){return false;}
+bool XiaomiFor(int role,const uint8_t*){return role==3&&xiaomi;}
+int mgos_sys_config_get_blu_stale_after_s(){return 180;}
 bool MotionReady(){return false;}
 bool MotionLightReady(){return false;}
 '''
-for signature in ['void ScanResult(', 'bool ConsumeButtonPress(', 'void SetButtonEventHandler(',
+for signature in ['bool SensorReady(', 'bool HTReady(', 'void ScanResult(', 'bool ConsumeButtonPress(', 'void SetButtonEventHandler(',
                   'const char *CarName(', 'bool CarPresenceReady(', 'bool CarPresent(']:
     harness += extract(signature) + '\n'
 harness += '\n}}\n'
@@ -184,6 +190,21 @@ int main(){
  now=200;accessory->AddService(CreateCarPresenceService());accessory->AddService(CreateButtonService());
  assert(accessory->services.size()==2&&accessory->aid==1);
  assert(accessory->services[0]->name=="Car presence"&&!CarPresent()); // Missing beacons do not remove accessories.
+ // Exercise the same production receive path with a stock Xiaomi advertisement.
+ xiaomi=true;known[3]=true;authenticated=false; // No fake authenticated BLE path.
+ const uint8_t mac[]={0x58,0x2d,0x34,0x3b,0x2e,0xbf};memcpy(addresses[3].addr,mac,6);
+ uint8_t adv[]={25,0x16,0x95,0xfe,0x50,0x20,0xaa,1,0xa3,0xbf,0x2e,0x3b,0x34,0x2d,0x58,0x0d,0x10,4,0xb4,0,0x95,2,0x0a,0x10,1,59};
+ mgos_bt_gap_scan_result therm={addresses[3],{reinterpret_cast<const char*>(adv),sizeof(adv)},-55,{}};
+ const auto presses=button_press_sequence;now=220;ScanResult(0,&therm,nullptr);
+ assert(SensorReady(3)&&sensors[3].temperature10==180&&sensors[3].humidity==66);
+ assert(packet_sequence[3]==1&&button_press_sequence==presses&&!ConsumeButtonPress());
+ therm.addr.addr[5]^=1;ScanResult(0,&therm,nullptr);assert(packet_sequence[3]==1);
+ therm.addr=addresses[3];therm.scan_rsp=therm.adv_data;therm.adv_data={};now=221;
+ ScanResult(0,&therm,nullptr);assert(packet_sequence[3]==2); // Scan-response path.
+ now=402;assert(!SensorReady(3));
+ bluetooth=false;now=222;assert(!SensorReady(3));bluetooth=true;
+ xiaomi=false;ScanResult(0,&therm,nullptr);assert(packet_sequence[3]==2); // Explicit binding is required.
+
 }
 '''
 with tempfile.TemporaryDirectory(prefix='shelly-button-hap-') as temp:

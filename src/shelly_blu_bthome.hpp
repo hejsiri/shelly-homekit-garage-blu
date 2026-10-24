@@ -15,6 +15,7 @@ struct Reading {
   int temperature10 = 0;
   int humidity = -1;
   int32_t illuminance100 = -1;  // BTHome 0x05: hundredths of a lux, -1 = absent.
+  bool temperature_present = false;
 };
 
 // BTHome v2 service payload, after UUID 0xFCD2. Only the objects used by
@@ -89,6 +90,7 @@ inline bool DecodeHT(const uint8_t *data, size_t len, Reading *out) {
       result.temperature10 = value >= 32768 ? value - 65536 : value;
       if (result.temperature10 < -1000 || result.temperature10 > 1000) return false;
       temperature = true;
+      result.temperature_present = true;
     }
     i += n;
   }
@@ -177,10 +179,23 @@ struct Sensor {
   int humidity = -1;
   int32_t illuminance100 = -1;
   double illuminance_last_seen = 0;
+  bool temperature_seen = false, humidity_seen = false;
+  double temperature_last_seen = 0, humidity_last_seen = 0;
   void Update(const Reading &reading, double now, int signal, int kind = 0) {
     seen = true;
     active = kind == 1 ? reading.motion : kind == 0 ? !reading.window_open : false;
-    if (kind == 2) { temperature10 = reading.temperature10; humidity = reading.humidity; }
+    if (kind == 2) {
+      if (reading.temperature_present) {
+        temperature10 = reading.temperature10;
+        temperature_seen = true;
+        temperature_last_seen = now;
+      }
+      if (reading.humidity >= 0) {
+        humidity = reading.humidity;
+        humidity_seen = true;
+        humidity_last_seen = now;
+      }
+    }
     if (reading.illuminance100 >= 0) {
       illuminance100 = reading.illuminance100;
       illuminance_last_seen = now;
@@ -195,6 +210,11 @@ struct Sensor {
   bool IlluminanceFresh(double now, int timeout) const {
     return seen && illuminance100 >= 0 && now >= illuminance_last_seen &&
            now - illuminance_last_seen <= timeout;
+  }
+  bool HTFresh(bool temperature, double now, int timeout) const {
+    const double at = temperature ? temperature_last_seen : humidity_last_seen;
+    return (temperature ? temperature_seen : humidity_seen) && now >= at &&
+           now - at <= timeout;
   }
 };
 

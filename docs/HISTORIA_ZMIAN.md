@@ -1,6 +1,6 @@
 # Historia zmian Garage BLU
 
-Bieżące opisy i instrukcje dotyczą **2.16.1-blu44** (stan: 2026-10-24).
+Bieżące opisy i instrukcje dotyczą **2.16.1-blu45** (stan: 2026-10-24).
 Zobacz [instalację i aktualizacje](AKTUALIZACJA.md), [konfigurację](KONFIGURACJA.md)
 i [rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md).
 
@@ -316,3 +316,20 @@ obecności. Odczyt obecności w HomeKit nadal pochodzi z BLE.
 
 Zachowanie sprawdzono w istniejących testach panelu i lokalnym podglądzie:
 ukrycie, odświeżenia tego samego pakietu oraz powrót po nowym beaconie.
+
+## blu45 — termometr Xiaomi LYWSDCGQ/01ZM
+
+Dodano pasywny odbiór fabrycznego MiBeacon 0x01aa: temperatura, wilgotność i bateria.
+W Indoor H&T oraz Outdoor H&T można wybrać Shelly BLU H&T lub Xiaomi LYWSDCGQ/01ZM.
+Xiaomi nie wymaga PIN-u, zmiany firmware ani ponownego wprowadzania w tryb parowania.
+Modal wykrywa urządzenie i kończy po potwierdzeniu temperatury oraz wilgotności.
+
+Przypisanie Xiaomi jest trwałe i oddzielone od kluczy BTHome. Działa wyłącznie
+w dwóch rolach H&T; nie autoryzuje sterowania bramą ani innych ról. Każdy pomiar
+ma własny czas ważności, niezależny od beaconów baterii. WWW oraz HomeKit pokazują
+te same odczyty. H&T zachowują identyfikatory usług, a brak świeżych danych zgłasza
+Status Fault z poprawnie typowaną wartością HomeKit.
+
+Sprawdzono opublikowaną próbkę LYWSDCGQ, pakiety częściowe i uszkodzone, restart,
+izolację od chronionych ról, regresje BLU, prawdziwy odczyt/serializację Apple ADK
+oraz lokalny podgląd modalu. Fizyczna próba Xiaomi i Gen3 pozostaje do wykonania.

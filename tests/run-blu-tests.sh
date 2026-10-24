@@ -17,6 +17,8 @@ trap 'rm -rf "$test_dir"' EXIT
 cd "$project_root"
 clang++ -std=c++14 -Wall -Wextra -Werror -fsanitize=address,undefined \
   -I src tests/blu_bthome_test.cpp -o "$test_dir/decoder"
+clang++ -std=c++14 -Wall -Wextra -Werror -fsanitize=address,undefined -I src tests/blu_xiaomi_test.cpp -o "$test_dir/xiaomi"
+"$test_dir/xiaomi"
 "$test_dir/decoder"
 clang++ -std=c++14 -Wall -Wextra -Werror -fsanitize=address,undefined -I src tests/blu_button_test.cpp -o "$test_dir/button"
 "$test_dir/button"

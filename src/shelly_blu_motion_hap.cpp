@@ -122,16 +122,17 @@ class HTService : public mgos::hap::Service {
         temperature ? &kHAPCharacteristicType_CurrentTemperature : &kHAPCharacteristicType_CurrentRelativeHumidity,
         temperature ? -100 : 0, 100, temperature ? .1 : 1,
         [this](HAPAccessoryServerRef *, const HAPFloatCharacteristicReadRequest *, float *value) {
-          if (!SensorReady(role_)) return kHAPError_Unknown;
           const auto &reading = ReadingFor(role_);
-          *value = temperature_ ? reading.temperature10 / 10.0f : reading.humidity;
+          const int raw = HTReady(role_, temperature_) ?
+              (temperature_ ? reading.temperature10 : reading.humidity) : last_value_;
+          *value = temperature_ ? raw / 10.0f : raw;
           return kHAPError_None;
         }, true, nullptr, temperature ? kHAPCharacteristicDebugDescription_CurrentTemperature :
                                       kHAPCharacteristicDebugDescription_CurrentRelativeHumidity);
     AddChar(value_);
     fault_ = new mgos::hap::UInt8Characteristic(base + 3, &kHAPCharacteristicType_StatusFault, 0, 1, 1,
         [this](HAPAccessoryServerRef *, const HAPUInt8CharacteristicReadRequest *, uint8_t *value) {
-          *value = SensorReady(role_) ? 0 : 1;
+          *value = HTReady(role_, temperature_) ? 0 : 1;
           return kHAPError_None;
         }, true, nullptr, kHAPCharacteristicDebugDescription_StatusFault);
     AddChar(fault_);
@@ -139,12 +140,13 @@ class HTService : public mgos::hap::Service {
   }
  private:
   void Poll() {
-    const bool ready = SensorReady(role_);
+    const bool ready = HTReady(role_, temperature_);
     const auto &reading = ReadingFor(role_);
     const int value = temperature_ ? reading.temperature10 : reading.humidity;
     if (ready != ready_) fault_->RaiseEvent();
     if (ready && (!ready_ || value != last_value_)) value_->RaiseEvent();
-    ready_ = ready; last_value_ = value;
+    ready_ = ready;
+    if (ready) last_value_ = value;
   }
   int role_, last_value_ = 0;
   bool temperature_, ready_ = false;

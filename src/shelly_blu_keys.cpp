@@ -24,7 +24,8 @@ bool LoadRecord(int role, SecureRecord *record) {
     esp_err_t err = nvs_get_blob(handle, Name(role), &cache[role], &length);
     nvs_close(handle);
     if (err != ESP_OK || length != sizeof(SecureRecord) ||
-        cache[role].version != 1)
+        cache[role].version != 1 || cache[role].protocol > kProtocolXiaomi ||
+        (cache[role].protocol == kProtocolXiaomi && role != 3 && role != 4))
       return false;
     loaded[role] = true;
   }
@@ -32,7 +33,9 @@ bool LoadRecord(int role, SecureRecord *record) {
   return true;
 }
 bool SaveRecord(int role, const SecureRecord &record) {
-  if (role < 0 || role > 5) return false;
+  if (role < 0 || role > 5 || record.version != 1 ||
+      record.protocol > kProtocolXiaomi ||
+      (record.protocol == kProtocolXiaomi && role != 3 && role != 4)) return false;
   nvs_handle_t handle;
   if (nvs_open("blu_secure", NVS_READWRITE, &handle) != ESP_OK) return false;
   esp_err_t err = nvs_set_blob(handle, Name(role), &record, sizeof(record));
@@ -45,13 +48,20 @@ bool SaveRecord(int role, const SecureRecord &record) {
 }
 bool SecureFor(int role, const uint8_t mac[6]) {
   SecureRecord record;
-  return LoadRecord(role, &record) && memcmp(record.mac, mac, 6) == 0;
+  return LoadRecord(role, &record) && record.protocol == kProtocolBTHome &&
+         memcmp(record.mac, mac, 6) == 0;
+}
+bool XiaomiFor(int role, const uint8_t mac[6]) {
+  SecureRecord record;
+  return (role == 3 || role == 4) && LoadRecord(role, &record) &&
+         record.protocol == kProtocolXiaomi && memcmp(record.mac, mac, 6) == 0;
 }
 bool AcceptSecure(int role, const uint8_t mac[6], const uint8_t *service,
                   size_t size, uint8_t *plain, size_t *plain_size) {
   SecureRecord record;
   Envelope envelope;
-  if (!LoadRecord(role, &record) || memcmp(record.mac, mac, 6) != 0 ||
+  if (!LoadRecord(role, &record) || record.protocol != kProtocolBTHome ||
+      memcmp(record.mac, mac, 6) != 0 ||
       !ParseEnvelope(service, size, mac, &envelope) ||
       !NewCounter(record.counter_seen, record.counter, envelope.counter) ||
       *plain_size < envelope.length + 1)

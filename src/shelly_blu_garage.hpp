@@ -26,6 +26,7 @@ bool CarPresenceReady();
 bool CarPresent();
 const Sensor &ReadingFor(int role);
 bool SensorReady(int role);
+bool HTReady(int role, bool temperature);
 bool SensorPaired(int role);
 }  // namespace blu
 }  // namespace shelly

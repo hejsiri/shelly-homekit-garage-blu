@@ -28,6 +28,7 @@ harness = r'''
 #include <vector>
 #define SHELLY_GARAGE_BLE
 #include "shelly_blu_keys.hpp"
+#include "shelly_blu_xiaomi.hpp"
 #define BLE_HS_ATT_ERR(x) (0x100 + (x))
 #define BLE_ATT_ERR_INSUFFICIENT_AUTHEN 5
 #define BLE_ATT_ERR_INSUFFICIENT_ENC 15
@@ -106,7 +107,7 @@ void json_scanf(const char *,size_t,const char *fmt,...) {
  }
  va_end(args);
 }
-struct mgos_bt_gap_scan_result { Address addr; int rssi; mg_str scan_rsp; };
+struct mgos_bt_gap_scan_result { Address addr; int rssi; mg_str scan_rsp; mg_str adv_data={}; };
 #define MGOS_BT_GAP_EIR_MANUFACTURER_SPECIFIC_DATA 0xff
 mg_str mgos_bt_gap_parse_adv_data(mg_str response,int) { return response; }
 void mgos_bt_addr_to_esp32(Address *addr,Address *out) { *out=*addr; }
@@ -157,6 +158,7 @@ bool key_writable=false,key_provision_used=false;
 std::array<uint8_t,16> pending_key={};
 uint32_t new_pin = 123456;
 int role = 2;
+int discovery_model=0;
 uint16_t conn = 1, key_handle = 10, pin_handle=11,beacon_handle=0;
 double deadline = 0;
 bool Active() { return state != "idle" && state != "done" && state != "error"; }
@@ -171,7 +173,7 @@ void QueueKeyRead();
 void StoreKey(const std::array<uint8_t,16> &key);
 '''
 harness += '\n'.join(extract(sig) for sig in [
-    'bool ResumeSecurityAfterDisconnect(', 'void WaitForSecurityRetryWake() {', 'bool ResumeKeyAfterDisconnect() {', 'void ConfigureReconnectAuthentication(', 'bool ResumePairingWindow() {', 'void WaitForUserPairing() {', 'int WriteResult(', 'int KeyWriteResult(', 'void ConfigureEncryption() {', 'int KeyResult(', 'void StoreKey(const std::array<uint8_t, 16> &key) {', 'void QueueKeyRead() {', 'void ReadKey() {', 'int Characteristic(', 'bool ParsePIN(', 'void EncryptionPINRPC(', 'void PairRPC(', 'void PairingAdvertisement(', 'bool PairingScan() {', 'void PairingVerified(', 'void PairingTimeout() {'])
+    'bool ResumeSecurityAfterDisconnect(', 'void WaitForSecurityRetryWake() {', 'bool ResumeKeyAfterDisconnect() {', 'void ConfigureReconnectAuthentication(', 'bool ResumePairingWindow() {', 'void WaitForUserPairing() {', 'int WriteResult(', 'int KeyWriteResult(', 'void ConfigureEncryption() {', 'int KeyResult(', 'void StoreKey(const std::array<uint8_t, 16> &key) {', 'void QueueKeyRead() {', 'void ReadKey() {', 'int Characteristic(', 'bool ParsePIN(', 'void EncryptionPINRPC(', 'void StoreXiaomi(', 'void PairRPC(', 'void PairingAdvertisement(', 'bool PairingScan() {', 'void PairingVerified(', 'void PairingTimeout() {'])
 harness += r'''
 void Drain() {
  while (!mgos::callbacks.empty()) {
@@ -186,7 +188,7 @@ void Tick() {
 }
 void Reset() {
  generation++; state = "reading_key"; error.clear(); traces.clear();
- now=100;authorized=true;rpc_error=responses=service_restarts=0;connection_attempts=0;candidates.clear();
+ now=100;discovery_model=0;authorized=true;rpc_error=responses=service_restarts=0;connection_attempts=0;candidates.clear();
  request={1,"01:02:03:04:05:06",nullptr,nullptr};
  reads = writes = terminations = saved = reset_readings = 0;
  key_writes=0;written_key.clear();key_writable=key_provision_used=false;pending_key.fill(0);pin_handle=11;
@@ -210,6 +212,30 @@ void Advertise(bool pairing,bool auth,bool selected=true) {
  PairingAdvertisement(&result);
 }
 int main() {
+ // Discovery accepts real MiBeacon data only in the explicitly selected Xiaomi mode.
+ Reset();state="scanning";
+ const char xadv[]={25,0x16,char(0x95),char(0xfe),0x50,0x20,char(0xaa),1,3,6,5,4,3,2,1,0x0d,0x10,4,char(0xb4),0,char(0x95),2,0x0a,0x10,1,59};
+ mgos_bt_gap_scan_result xr{peer,-55,{}, {xadv,sizeof(xadv)}};
+ PairingAdvertisement(&xr);assert(candidates.empty());
+ discovery_model=0x01aa;PairingAdvertisement(&xr);
+ assert(candidates.size()==1&&candidates[0].model==0x01aa&&!candidates[0].encrypted);
+ now++;PairingAdvertisement(&xr);assert(candidates.size()==1&&candidates[0].seen==now);
+ // Xiaomi assigns only an H&T slot without touching BLE security or any relay.
+ Reset();state="scanning";discovery_model=0x01aa;request.role=3;
+ candidates.push_back({peer,-45,false,0x01aa,now});
+ PairRPC(nullptr,nullptr,nullptr,{});
+ assert(!rpc_error&&responses==1&&connections==0&&saved==1&&state=="waiting_beacon");
+ assert(persisted.protocol==kProtocolXiaomi&&role==3);
+ PairingVerified(4);assert(state=="waiting_beacon");
+ PairingVerified(3);Drain();assert(state=="done"&&service_restarts==1);
+ for(int slot:{0,1,2,5}) {
+  Reset();state="scanning";request.role=slot;discovery_model=0x01aa;
+  candidates.push_back({peer,-45,false,0x01aa,now});PairRPC(nullptr,nullptr,nullptr,{});
+  assert(rpc_error==400&&saved==0&&connections==0);
+ }
+ Reset();state="scanning";request.role=3;discovery_model=3;
+ candidates.push_back({peer,-45,false,0x01aa,now});PairRPC(nullptr,nullptr,nullptr,{});
+ assert(rpc_error==400&&saved==0);
  // Pair accepts no new PIN; current PIN remains mandatory only for legacy auth.
  Reset();state="scanning";candidates.push_back({peer,-45,false,2,now});
  PairRPC(nullptr,nullptr,nullptr,{});

@@ -13,7 +13,7 @@ const deferred = () => {
 const sensor = (model = 2, encrypted = false, mac = 'AA:BB:CC:DD:EE:03') => ({mac, model, encrypted, rssi:-50});
 function fixture(candidates = [sensor()]) {
   const elements = {};
-  for (const id of ['pairing','pair_title','pair_step','pair_help','pair_selected','pair_status','pair_candidate_container',
+  for (const id of ['indoor_type','outdoor_type','pairing','pair_title','pair_step','pair_help','pair_selected','pair_status','pair_candidate_container',
     'pair_candidate','pair_new_container','pair_current_container','pair_current_summary','pair_confirm','pair_cancel','pair_pin','pair_current_pin']) {
     elements['blu_' + id] = {open:false, value:'', disabled:false, style:{display:''},
       showModal(){ this.open=true; }, close(){ this.open=false; }, focus(){ this.focused=true; },
@@ -130,6 +130,20 @@ function fixture(candidates = [sensor()]) {
     f.ctx.bluPairConfirm(f.c);await tick();
     assert.equal(f.count('Pair'),1);assert.equal(f.calls.find(call=>call.method==='Shelly.BLU.Pair').params.mac,'AA:BB:CC:DD:EE:03');
   }
+  // Stock Xiaomi is discovered by its selected model, with no PIN or wake instruction.
+  f=fixture([sensor(426),sensor(3,false,'AA:BB:CC:DD:EE:08')]);
+  f.e.blu_indoor_type.value='xiaomi';f.start(3);
+  assert.match(f.e.blu_pair_help.textContent,/no pairing mode or PIN/);
+  assert.doesNotMatch(f.e.blu_pair_help.textContent,/10 seconds/);
+  await tick();assert.equal(f.count('Pair'),1);
+  assert.equal(f.calls.find(call=>call.method==='Shelly.BLU.Discover').params.model,426);
+  await f.refresh({state:'waiting_beacon',candidates:[],error:''});
+  assert.match(f.e.blu_pair_status.textContent,/temperature and humidity/);
+  assert.match(f.e.blu_pair_status.className,/waiting/);
+  f.hidden('pair_current_container');f.hidden('pair_new_container');
+  f=fixture([sensor(426)]);f.e.blu_outdoor_type.value='xiaomi';f.start(4);await tick();
+  assert.equal(f.count('Pair'),1);
+  f=fixture([sensor(426)]);f.start(3);await tick();assert.equal(f.count('Pair'),0);
   // Multiple candidates require an explicit selection, with no default first sensor.
   f=fixture([sensor(),sensor(2,false,'AA:BB:CC:DD:EE:08')]);f.start();f.ctx.bluPairConfirm(f.c);await tick();
   f.visible('pair_candidate_container');f.hidden('pair_new_container');assert.equal(f.count('Pair'),0);

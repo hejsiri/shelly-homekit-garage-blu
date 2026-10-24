@@ -11,6 +11,7 @@
 #include "shelly_blu_bthome.hpp"
 #include "shelly_blu_keys.hpp"
 #include "shelly_blu_pairing.hpp"
+#include "shelly_blu_xiaomi.hpp"
 
 namespace shelly {
 namespace blu {
@@ -36,6 +37,19 @@ void ScanResult(int, void *event_data, void *) {
       index = i;
   }
   if (index < 0) return;
+  if (XiaomiFor(index, result->addr.addr)) {
+    Reading reading;
+    if (!DecodeXiaomiAdvertisement(
+            reinterpret_cast<const uint8_t *>(result->adv_data.p),
+            result->adv_data.len, result->addr.addr, &reading) &&
+        !DecodeXiaomiAdvertisement(
+            reinterpret_cast<const uint8_t *>(result->scan_rsp.p),
+            result->scan_rsp.len, result->addr.addr, &reading)) return;
+    sensors[index].Update(reading, mgos_uptime(), result->rssi, 2);
+    ++packet_sequence[index];
+    if (SensorReady(index)) PairingVerified(index);
+    return;
+  }
   const auto *data = reinterpret_cast<const uint8_t *>(result->adv_data.p);
   size_t length = result->adv_data.len;
   const uint8_t *service = nullptr;
@@ -82,7 +96,7 @@ void Scan(void *) {
   // as the garage's control inputs, including while only one role is paired.
   bool paired = false;
   for (int i = 0; i < 6; i++)
-    paired = paired || (known[i] && SecureFor(i, addresses[i].addr));
+    paired = paired || SensorPaired(i);
   if ((!Enabled() && !paired && !PairingScan()) || PairingConnecting() ||
       mgos_bt_get_status() != MGOS_BT_STARTED || mgos_bt_gap_scan_in_progress())
     return;
@@ -200,12 +214,19 @@ bool SensorPaired(int role) {
   const char *mac = SensorMAC(role);
   return role >= 0 && role < 6 && ValidMAC(mac) &&
          mgos_bt_addr_from_str(mg_mk_str(mac), &address) &&
-         SecureFor(role, address.addr);
+         (SecureFor(role, address.addr) || XiaomiFor(role, address.addr));
 }
 bool SensorReady(int role) {
+  if (role == 3 || role == 4) return HTReady(role, true) && HTReady(role, false);
   return role >= 0 && role < 6 && known[role] && SecureFor(role, addresses[role].addr) &&
          mgos_bt_get_status() == MGOS_BT_STARTED &&
          sensors[role].Fresh(mgos_uptime(), mgos_sys_config_get_blu_stale_after_s());
+}
+bool HTReady(int role, bool temperature) {
+  return (role == 3 || role == 4) && SensorPaired(role) &&
+         mgos_bt_get_status() == MGOS_BT_STARTED &&
+         sensors[role].HTFresh(temperature, mgos_uptime(),
+                              mgos_sys_config_get_blu_stale_after_s());
 }
 bool ConsumeButtonPress() {
   bool result = button_pending && mgos_uptime() - button_press_time <= 1;
@@ -247,9 +268,11 @@ std::string GetInfoJSON() {
   for (int i = 0; i < 6; i++) {
     const auto &sensor = sensors[i];
     result += mgos::JSONPrintStringf(
-        ",%Q:%Q,%Q:{name:%Q,packet_seq:%u,secure:%B,seen:%B,active:%B,battery:%d,rssi:%d,age_s:%d,temperature:%.1f,humidity:%d}",
+        ",%Q:%Q,%Q:{name:%Q,packet_seq:%u,paired:%B,protocol:%Q,ready:%B,temperature_ready:%B,humidity_ready:%B,secure:%B,seen:%B,active:%B,battery:%d,rssi:%d,age_s:%d,temperature:%.1f,humidity:%d}",
         (std::string(roles[i]) + "_mac").c_str(), SensorMAC(i) ? SensorMAC(i) : "", roles[i],
         SensorName(i), packet_sequence[i],
+        SensorPaired(i), known[i] && XiaomiFor(i, addresses[i].addr) ? "xiaomi" : "bthome",
+        SensorReady(i), HTReady(i, true), HTReady(i, false),
         known[i] && SecureFor(i, addresses[i].addr), sensor.seen, sensor.active,
         sensor.battery, sensor.rssi, sensor.seen ? int(mgos_uptime() - sensor.last_seen) : -1,
         sensor.temperature10 / 10.0, sensor.humidity);
