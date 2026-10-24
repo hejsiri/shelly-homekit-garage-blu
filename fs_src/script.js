@@ -479,82 +479,322 @@ function wcSetConfig(c, cfg, spinner) {
   setComponentConfig(c, cfg, spinner);
 }
 
+function bluHTValues(sensor) {
+  return Number.isFinite(sensor.temperature) && Number.isFinite(sensor.humidity) && sensor.humidity >= 0 ?
+    `${sensor.temperature.toFixed(1)} °C · ${sensor.humidity}%` : "Waiting for measurement";
+}
+// Animation is only a time-based estimate; endpoint states come from firmware.
+function garageRefresh(c, cd) {
+  const view = c.garageMotionState || (c.garageMotionState = {});
+  const now = performance.now(), old = view.motion;
+  const blocked = cd.blu && cd.blu.enable && !cd.blu.ready;
+  const state = blocked ? "unavailable" : cd.cur_state_str;
+  const moving = state === "opening" || state === "closing";
+  const signature = state + ":" + cd.move_time;
+  if (view.signature === signature) return;
+  const seconds = Math.max(1, Number(cd.move_time) || 30);
+  const age = blocked ? 0 : Math.max(0, Number(cd.state_age_ms) || 0) / 1000;
+  const transition = now - age * 1000;
+  const fraction = old && old.duration > 0 ? Math.max(0, Math.min(1, (transition - old.start) / old.duration)) : 1;
+  let from = old ? old.from + (old.to - old.from) * fraction : .5;
+  if (view.state === 'opening') from = Math.min(.96, from);
+  if (view.state === 'closing') from = Math.max(.04, from);
+  let to = from, duration = 0;
+  if (moving) {
+    if (!old || view.state === 'unavailable') from = state === 'opening' ? 0 : 1;
+    from = Math.max(0, Math.min(1, from + (state === 'opening' ? 1 : -1) * age / seconds));
+    from = state === 'opening' ? Math.min(.96, from) : Math.max(.04, from);
+    to = state === 'opening' ? 1 : 0;
+    // Same full-travel speed in either direction, including after a stop.
+    duration = Math.abs(to - from) * seconds * 1000;
+  } else if (state === 'open' || state === 'closed') from = to = state === 'open' ? 1 : 0;
+  view.signature = signature;
+  view.state = state;
+  view.motion = {from, to, duration, start: now};
+
+}
+
+// Fixed markup and numeric telemetry only; no icon assets or libraries.
+function bluSensorStatus(node, sensor, timeout, kind = false) {
+  let html = "Not paired securely";
+  if (sensor.secure && !sensor.seen) html = '<span class="blu-badge blu-waiting">Waiting for encrypted beacon</span>';
+  if (sensor.secure && sensor.seen) {
+    const battery = Number.isFinite(sensor.battery) && sensor.battery >= 0 ? Math.min(100, Math.round(sensor.battery)) : -1;
+    const rssi = Number.isFinite(sensor.rssi) ? sensor.rssi : null;
+    const bars = rssi === null ? 0 : rssi >= -60 ? 4 : rssi >= -70 ? 3 : rssi >= -80 ? 2 : 1;
+    const age = Math.max(0, Math.floor(Number(sensor.age_s) || 0));
+    const stale = age > timeout;
+    const state = kind === "button" ? (stale ? "Poza zasięgiem" : "W zasięgu") : kind === "ht" ? bluHTValues(sensor) : kind ? (sensor.active ? "Motion" : "No motion") : sensor.active ? "Closed" : "Open";
+    html = `<span class="blu-badge ${stale ? "blu-stale" : sensor.active ? "blu-closed" : "blu-open"}" title="${kind === 'ht' ? 'Temperature and humidity' : kind ? 'Motion sensor' : 'Sensor contact'}${stale ? ' — stale reading' : ''}">${state}${stale ? ' · stale' : ''}</span>` +
+      `<span class="blu-power" title="Battery" aria-label="Battery ${battery < 0 ? 'unknown' : battery + '%'}"><span class="blu-battery" aria-hidden="true"><i style="width:${Math.max(0, battery)}%"></i></span>${battery < 0 ? '—' : battery + '%'}</span>` +
+      `<span class="blu-signal" title="${rssi === null ? 'Signal unknown' : rssi + ' dBm'}" role="img" aria-label="Signal ${bars} of 4 bars">${[1,2,3,4].map(n => `<i class="${n <= bars ? 'filled' : ''}"></i>`).join('')}</span>` +
+      `<span class="blu-age">${age}s ago</span>`;
+  }
+  if (node.bluHTML !== html) { node.innerHTML = html; node.bluHTML = html; }
+}
+
 function bluPairStatus(c, message, state) {
   const status = el(c, "blu_pair_status");
   updateInnerText(status, message);
   status.className = "blu-pair-status blu-pair-" + state;
 }
 
-function bluPairStart(c, role) {
-  if (!lastInfo || !lastInfo.auth_en) {
-    alert("Set a web panel password in Security Settings before pairing sensors.");
-    return;
-  }
-  c.bluPairRole = role;
-  el(c, "blu_pairing").style.display = "block";
-  updateInnerText(el(c, "blu_pair_title"), role === 0 ? "Pair closing sensor" : "Pair opening sensor");
+function bluPairClearPINs(c) {
+  c.bluPairCredentials = null;
   el(c, "blu_pair_pin").value = "";
   el(c, "blu_pair_current_pin").value = "";
-  callDevice("Shelly.BLU.Discover", {}).then(() => bluPairRefresh(c)).catch(e => {
-    bluPairStatus(c, e.message || String(e), "error");
+}
+
+function bluPairNeedsCurrentPIN(c) {
+  const credentials = c.bluPairCredentials;
+  return c.bluPairSelected && c.bluPairSelected.encrypted && credentials &&
+    !/^[1-9][0-9]{5}$/.test(credentials.current);
+}
+
+function bluPairHasRecentReadings(c) {
+  const blu = c.bluPairTelemetry || (c.data && c.data.blu);
+  const role = ["closed", "open", "motion", "indoor", "outdoor", "button"][c.bluPairRole];
+  const sensor = blu && blu[role];
+  const selected = c.bluPairSelected && c.bluPairSelected.mac;
+  return !!(sensor && selected && String(blu[role + "_mac"] || "").toUpperCase() === selected.toUpperCase() &&
+    sensor.secure && sensor.seen && Number.isFinite(sensor.age_s) && sensor.age_s >= 0 &&
+    sensor.age_s <= Math.min(15, blu.stale_after_s || 180));
+}
+
+function bluPairRender(c) {
+  const state = c.bluPairState;
+  const needsSetup = state === "waiting_encryption_pin";
+  const scanning = state === "scanning";
+  const needsCurrent = scanning && bluPairNeedsCurrentPIN(c);
+  const choosing = scanning && c.bluPairCandidates.length > 1;
+  const finished = ["done", "error", "idle"].includes(state);
+  const show = (id, visible) => { el(c, id).style.display = visible ? "" : "none"; };
+  show("blu_pair_new_container", needsSetup && !c.bluPairClosing);
+  show("blu_pair_current_container", needsCurrent && !c.bluPairClosing);
+  show("blu_pair_candidate_container", choosing && !c.bluPairClosing);
+  show("blu_pair_selected", !!c.bluPairSelected);
+  el(c, "blu_pair_pin").disabled = !needsSetup || !!c.bluPairAction;
+  el(c, "blu_pair_current_pin").disabled = !needsCurrent || !!c.bluPairAction;
+  if (needsCurrent) el(c, "blu_pair_current_container").open = true;
+  updateInnerText(el(c, "blu_pair_current_summary"), needsCurrent ? "Current PIN required" : "Device already has a PIN?");
+  updateInnerText(el(c, "blu_pair_selected"), c.bluPairSelected ? `Device detected: ${c.bluPairSelected.mac}` : "");
+  const finding = ["starting", "scanning"].includes(state);
+  updateInnerText(el(c, "blu_pair_step"), finding ? "Step 1 of 2 · Find device" : state === "done" ? "Pairing complete" :
+    finished ? "Pairing stopped" : "Step 2 of 2 · Set up device");
+  let help = needsSetup ? "This device needs a six-digit PIN to enable encrypted readings. Enter a new PIN to finish setup." :
+    needsCurrent ? "This device requires its existing PIN to connect. Enter it once to continue." :
+    choosing ? "More than one matching device is nearby. Select the one you want to pair." :
+    finding ? "Hold the device button for more than 10 seconds, then release it. Keep it near Shelly. Pairing continues automatically when one matching device is detected." :
+    state === "waiting_user_pairing" ? "Hold the same device's button for more than 10 seconds, then release it. Pairing resumes automatically when it is detected again." :
+    state === "waiting_security_retry" ? "Keep the device near Shelly. The connection will resume automatically if the device is still in pairing mode." :
+    state === "waiting_pairing_mode" ? "Keep the device near Shelly. Pairing will continue when it is detected again." :
+    state === "waiting_encrypted_beacon" ? "Wake the device or trigger a reading to confirm that encrypted data is received." :
+    state === "done" ? "The device is ready to use. You can close this window." :
+    state === "error" && bluPairHasRecentReadings(c) ? "Recent encrypted readings are available from this device using its saved key. This new pairing attempt did not finish. Close this window and check the device status before retrying." :
+    finished ? "Pairing did not finish. Close this window before starting a new attempt." :
+    "Keep the device near Shelly while pairing finishes.";
+  if (c.bluPairClosing) help = "Stopping the pairing attempt…";
+  updateInnerText(el(c, "blu_pair_help"), help);
+  const labels = {
+    starting: "Starting discovery…", scanning: needsCurrent ? "Enter the current device PIN to continue." : choosing ? "Choose a device to continue." : "Searching for your device…",
+    connecting: "Connecting to device…", connecting_secure: "Connecting to device…",
+    securing_link: "Securing the connection…", discovering_services: "Checking device…",
+    enabling_beacon: "Configuring device…", setting_pin: "Configuring encryption…", setting_key: "Configuring encryption automatically…",
+    verifying_existing_key: "Checking existing encrypted readings…", waiting_encryption_pin: "Encryption PIN required by this device.",
+    waiting_key_ready: "Waiting for the encryption key…", reading_key: "Saving the encryption key…",
+    reconnecting: "Restoring the connection…", reconnecting_secure: "Restoring the connection…",
+    waiting_security_retry: "Device closed the connection. Waiting to reconnect…",
+    waiting_user_pairing: "Hold the device button again for more than 10 seconds, then release it.", waiting_pairing_mode: "Waiting for the same device…",
+    waiting_encrypted_beacon: "Waiting for encrypted beacon", done: "Device paired successfully.", idle: "Ready",
+  };
+  const message = c.bluPairClosing ? "Cancelling…" : c.bluPairValidationError || c.bluPairError || (state in labels ? labels[state] : state);
+  const tone = c.bluPairValidationError || c.bluPairError || state === "error" ? "error" : state === "done" ? "success" :
+    ["scanning", "waiting_encryption_pin", "waiting_user_pairing", "waiting_pairing_mode", "waiting_security_retry", "waiting_encrypted_beacon"].includes(state) ? "waiting" : "progress";
+  bluPairStatus(c, message, tone);
+  show("blu_pair_status", !!message);
+  const action = needsSetup ? "Enable encryption" : needsCurrent ? "Continue pairing" : choosing ? "Pair selected device" : "";
+  show("blu_pair_confirm", !!action && !c.bluPairClosing);
+  updateInnerText(el(c, "blu_pair_confirm"), action);
+  el(c, "blu_pair_confirm").disabled = !!c.bluPairAction || (choosing && !c.bluPairSelected);
+  updateInnerText(el(c, "blu_pair_cancel"), c.bluPairClosing ? "Cancelling…" : c.bluPairCancelFailed ? "Retry cancel" : finished ? "Close" : "Cancel");
+  el(c, "blu_pair_cancel").disabled = !!c.bluPairClosing;
+}
+
+function bluPairStart(c, role) {
+  if (!lastInfo || !lastInfo.auth_en) {
+    alert("Set a web panel password in Security Settings before pairing devices.");
+    return;
+  }
+  const dialog = el(c, "blu_pairing");
+  if (dialog.open || c.bluPairClosing) return;
+  c.bluPairSession = (c.bluPairSession || 0) + 1;
+  c.bluPairRevision = 0;
+  c.bluPairRole = role;
+  c.bluPairState = "starting";
+  c.bluPairCandidates = [];
+  c.bluPairListSignature = "";
+  c.bluPairSelected = null;
+  c.bluPairAction = null;
+  c.bluPairPending = c.bluPairClosing = c.bluPairFailed = c.bluPairNeedsCancel = c.bluPairCancelFailed = false;
+  c.bluPairError = "";
+  c.bluPairValidationError = "";
+  bluPairClearPINs(c);
+  c.bluPairCredentials = {current: ""};
+  for (const id of ["blu_pair_pin", "blu_pair_current_pin"]) {
+    el(c, id).oninput = () => { c.bluPairValidationError = ""; bluPairRender(c); };
+  }
+  el(c, "blu_pair_current_container").open = false;
+  el(c, "blu_pair_candidate").replaceChildren();
+  updateInnerText(el(c, "blu_pair_title"), ["Pair closing sensor", "Pair opening sensor", "Pair motion sensor", "Pair indoor H&T", "Pair outdoor H&T", "Pair BLU Button1"][role]);
+  bluPairRender(c);
+  dialog.showModal();
+  bluPairRun(c, "Shelly.BLU.Discover", {}, () => { c.bluPairState = "scanning"; });
+}
+
+function bluPairRun(c, method, params, success) {
+  if (c.bluPairAction || c.bluPairClosing) return;
+  const session = c.bluPairSession;
+  c.bluPairRevision++;
+  c.bluPairPending = false;
+  c.bluPairNeedsCancel = true;
+  c.bluPairError = "";
+  c.bluPairValidationError = "";
+  const request = Promise.resolve().then(() => callDevice(method, params));
+  c.bluPairAction = request;
+  bluPairRender(c);
+  request.then(() => {
+    if (session === c.bluPairSession && !c.bluPairClosing) success();
+  }).catch(e => {
+    if (session !== c.bluPairSession || c.bluPairClosing) return;
+    c.bluPairState = "error";
+    c.bluPairFailed = true;
+    c.bluPairError = e.message || String(e);
+  }).finally(() => {
+    if (session !== c.bluPairSession || c.bluPairClosing) return;
+    c.bluPairAction = null;
+    bluPairRender(c);
+    bluPairRefresh(c);
   });
+}
+
+function bluPairSubmit(c) {
+  if (c.bluPairState !== "scanning" || c.bluPairAction || c.bluPairClosing || !c.bluPairSelected ||
+      !c.bluPairCredentials || bluPairNeedsCurrentPIN(c)) return;
+  const params = {role: c.bluPairRole, mac: c.bluPairSelected.mac,
+    current_pin: c.bluPairCredentials.current};
+  c.bluPairState = "connecting";
+  bluPairRun(c, "Shelly.BLU.Pair", params, () => { bluPairClearPINs(c); });
 }
 
 function bluPairRefresh(c) {
-  if (c.bluPairPending || el(c, "blu_pairing").style.display === "none") return;
+  if (["preparing", "done", "error", "idle"].includes(c.bluPairState) || c.bluPairAction ||
+      c.bluPairClosing || c.bluPairFailed || c.bluPairPending || !el(c, "blu_pairing").open) return;
+  const session = c.bluPairSession, revision = c.bluPairRevision;
+  const current = () => session === c.bluPairSession && revision === c.bluPairRevision &&
+    !c.bluPairClosing && el(c, "blu_pairing").open;
   c.bluPairPending = true;
   callDevice("Shelly.BLU.Status", {}).then(status => {
-    const labels = {
-      scanning: "Searching — put your sensor in pairing mode",
-      connecting: "Connecting to new sensor", connecting_secure: "Connecting to secured sensor",
-      securing_link: "Authenticating BLE connection", discovering_services: "Checking sensor services",
-      enabling_beacon: "Enabling beacon mode", setting_pin: "Configuring sensor encryption",
-      waiting_pairing_mode: "Hold the sensor button for 10 seconds again to finish secure reconnection",
-      reconnecting: "Reconnecting using the new PIN", reading_key: "Saving encryption key on Shelly",
-      waiting_encrypted_beacon: "Waiting for a verified encrypted state — wake the sensor if needed",
-      done: "Sensor paired and encrypted state verified", idle: "Ready",
-    };
-    const tone = status.error || status.state === "error" ? "error" :
-      status.state === "done" ? "success" :
-      ["scanning", "waiting_pairing_mode", "waiting_encrypted_beacon"].includes(status.state) ? "waiting" : "progress";
-    bluPairStatus(c, status.error || labels[status.state] || status.state, tone);
-    const select = el(c, "blu_pair_candidate");
-    const selected = select.value;
-    const entries = status.candidates || [];
-    select.replaceChildren(...entries.map(candidate => {
-      const option = document.createElement("option");
-      option.value = candidate.mac;
-      option.textContent = `${candidate.mac} · ${candidate.rssi} dBm · ${candidate.encrypted ? "secured — existing PIN" : "new — choose PIN"}`;
-      return option;
-    }));
-    if (entries.some(candidate => candidate.mac === selected)) select.value = selected;
-    const updateCurrentPIN = () => {
-      const candidate = entries.find(item => item.mac === select.value);
-      el(c, "blu_pair_current_container").style.display = candidate && candidate.encrypted ? "" : "none";
-    };
-    select.onchange = updateCurrentPIN;
-    updateCurrentPIN();
-    el(c, "blu_pair_confirm").disabled = status.state !== "scanning" || entries.length === 0;
-  }).catch(e => bluPairStatus(c, e.message || String(e), "error"))
-    .finally(() => { c.bluPairPending = false; });
+    if (!current()) return;
+    // An accepted Pair request must never return to the credential form because
+    // a delayed poll still reports scanning.
+    if (status.state === "scanning" && !c.bluPairCredentials) return;
+    c.bluPairState = status.state;
+    c.bluPairError = status.error || "";
+    if (["done", "error", "idle"].includes(status.state)) {
+      c.bluPairNeedsCancel = false;
+      c.bluPairValidationError = "";
+      bluPairClearPINs(c);
+    }
+    if (status.state === "scanning") {
+      const entries = (status.candidates || []).filter(candidate => !candidate.model ||
+        (c.bluPairRole === 5 ? candidate.model === 1 : c.bluPairRole >= 3 ? candidate.model === 3 : candidate.model === (c.bluPairRole === 2 ? 5 : 2)))
+        .sort((a, b) => a.mac.localeCompare(b.mac));
+      c.bluPairCandidates = entries;
+      const selected = c.bluPairSelected && c.bluPairSelected.mac;
+      c.bluPairSelected = entries.length === 1 ? entries[0] : entries.find(item => item.mac === selected) || null;
+      const select = el(c, "blu_pair_candidate");
+      const signature = entries.map(candidate => candidate.mac).join(",");
+      // Polling RSSI must not rebuild an open sensor dropdown under the user.
+      if (signature !== c.bluPairListSignature) {
+        c.bluPairListSignature = signature;
+        const placeholder = document.createElement("option");
+        placeholder.value = ""; placeholder.textContent = "Choose a device";
+        select.replaceChildren(placeholder, ...entries.map(candidate => {
+          const option = document.createElement("option");
+          option.value = candidate.mac;
+          option.textContent = `${candidate.mac} · ${candidate.rssi} dBm`;
+          return option;
+        }));
+      }
+      const selectedValue = c.bluPairSelected ? c.bluPairSelected.mac : "";
+      if (select.value !== selectedValue) select.value = selectedValue;
+      select.onchange = () => {
+        if (c.bluPairState !== "scanning" || c.bluPairAction || c.bluPairClosing) return;
+        c.bluPairSelected = c.bluPairCandidates.find(item => item.mac === select.value) || null;
+        c.bluPairError = "";
+        c.bluPairValidationError = "";
+        bluPairRender(c);
+      };
+      if (entries.length === 1 && !bluPairNeedsCurrentPIN(c)) {
+        bluPairSubmit(c);
+        return;
+      }
+    }
+    bluPairRender(c);
+  }).catch(e => {
+    if (current()) { c.bluPairError = e.message || String(e); bluPairRender(c); }
+  }).finally(() => { if (current()) c.bluPairPending = false; });
+}
+
+async function bluPairClose(c) {
+  if (c.bluPairClosing) return;
+  c.bluPairClosing = true;
+  c.bluPairSession++;
+  bluPairRender(c);
+  // Finish an in-flight Discover/Pair before cancelling it. Otherwise a late
+  // RPC could start pairing after the modal has already closed.
+  if (c.bluPairAction) await c.bluPairAction.catch(() => {});
+  c.bluPairAction = null;
+  try {
+    if (c.bluPairNeedsCancel) await callDevice("Shelly.BLU.Cancel", {});
+    bluPairClearPINs(c);
+    el(c, "blu_pairing").close();
+    c.bluPairState = "idle";
+    c.bluPairClosing = false;
+    c.bluPairPending = false;
+  } catch (e) {
+    c.bluPairClosing = false;
+    c.bluPairFailed = c.bluPairCancelFailed = true;
+    c.bluPairState = "error";
+    c.bluPairError = "Could not cancel pairing. " + (e.message || String(e));
+    bluPairRender(c);
+  }
 }
 
 function bluPairConfirm(c) {
-  const pin = el(c, "blu_pair_pin").value;
-  if (!/^[1-9][0-9]{5}$/.test(pin)) {
-    alert("Enter a six-digit PIN from 100000 to 999999.");
-    return;
+  if (c.bluPairAction || c.bluPairClosing) return;
+  const invalid = (message, id) => {
+    c.bluPairValidationError = message;
+    bluPairRender(c);
+    el(c, id).focus();
+  };
+  if (c.bluPairState === "waiting_encryption_pin") {
+    const pin = el(c, "blu_pair_pin").value;
+    if (!/^[1-9][0-9]{5}$/.test(pin)) {
+      invalid("Enter a six-digit encryption PIN from 100000 to 999999.", "blu_pair_pin"); return;
+    }
+    c.bluPairState = "setting_pin";
+    bluPairRun(c, "Shelly.BLU.SetPIN", {pin}, () => { bluPairClearPINs(c); });
+  } else if (c.bluPairState === "scanning") {
+    if (bluPairNeedsCurrentPIN(c)) {
+      const current = el(c, "blu_pair_current_pin").value;
+      if (!/^[1-9][0-9]{5}$/.test(current)) {
+        invalid("Enter the current six-digit device PIN.", "blu_pair_current_pin"); return;
+      }
+      c.bluPairCredentials.current = current;
+    }
+    bluPairSubmit(c);
   }
-  const request = callDevice("Shelly.BLU.Pair", {
-    role: c.bluPairRole, mac: el(c, "blu_pair_candidate").value, pin, current_pin: el(c, "blu_pair_current_pin").value,
-  });
-  request.then(() => {
-    el(c, "blu_pair_pin").value = "";
-    el(c, "blu_pair_current_pin").value = "";
-    bluPairRefresh(c);
-  }).catch(e => {
-    bluPairStatus(c, e.message || String(e), "error");
-  });
 }
 
 function gdoSetConfig(c, cfg, spinner) {
@@ -580,6 +820,7 @@ function gdoSetConfig(c, cfg, spinner) {
       pulse_time_ms: pulseTimeMs,
       close_sensor_mode: parseInt(el(c, "close_sensor_mode").value),
       sensor_swap: el(c, "sensor_swap").checked,
+      resume_after_stop: el(c, "resume_after_stop").checked,
     };
     if (c.data.open_sensor_mode >= 0) {
       cfg.open_sensor_mode = parseInt(el(c, "open_sensor_mode").value);
@@ -595,6 +836,15 @@ function gdoSetConfig(c, cfg, spinner) {
       open_mac: el(c, "blu_open_mac").value.trim().toUpperCase(),
       stale_after_s: Number(el(c, "blu_stale_after_s").value),
     };
+    for (const role of ["closed", "open", "motion", "indoor", "outdoor", "button"]) {
+      if (!c.data.blu[role] || !c.data.blu[role].secure) continue;
+      const name = el(c, "blu_" + role + "_name").value.trim();
+      if (new TextEncoder().encode(name).length > 64) {
+        alert("Device name is too long. Please use a shorter name.");
+        return;
+      }
+      cfg.blu[role + "_name"] = name;
+    }
     const mac = /^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$/;
     if (cfg.blu.enable && (!mac.test(cfg.blu.closed_mac) || !mac.test(cfg.blu.open_mac) ||
         cfg.blu.closed_mac === cfg.blu.open_mac ||
@@ -687,13 +937,15 @@ function findOrAddContainer(cd) {
       c.id = elId;
       el(c, "blu_pair_closed").onclick = () => bluPairStart(c, 0);
       el(c, "blu_pair_open").onclick = () => bluPairStart(c, 1);
+      el(c, "blu_pair_motion").onclick = () => bluPairStart(c, 2);
+      el(c, "blu_pair_indoor").onclick = () => bluPairStart(c, 3);
+      el(c, "blu_pair_outdoor").onclick = () => bluPairStart(c, 4);
+      el(c, "blu_pair_button").onclick = () => bluPairStart(c, 5);
       el(c, "blu_pair_confirm").onclick = () => bluPairConfirm(c);
-      el(c, "blu_pair_cancel").onclick = () => {
-        el(c, "blu_pair_pin").value = "";
-        el(c, "blu_pair_current_pin").value = "";
-        callDevice("Shelly.BLU.Cancel", {}).then(() => bluPairRefresh(c)).catch(e => {
-          bluPairStatus(c, e.message || String(e), "error");
-        });
+      el(c, "blu_pair_cancel").onclick = () => bluPairClose(c);
+      el(c, "blu_pairing").oncancel = event => {
+        event.preventDefault();
+        bluPairClose(c);
       };
       el(c, "save_btn").onclick = function() {
         gdoSetConfig(c, null, el(c, "save_spinner"));
@@ -975,19 +1227,27 @@ function updateComponent(cd) {
       break;
     }
     case Component_Type.kGarageDoorOpener: {
+      garageRefresh(c, cd);
+      garageDashboardRefresh(c, cd);
       if (cd.blu) {
+        c.bluPairTelemetry = cd.blu;
+        if (c.bluPairState === "error" && el(c, "blu_pairing").open) bluPairRender(c);
         bluPairRefresh(c);
         el(c, "blu_config").style.display = "";
         checkIfNotModified(el(c, "blu_enable"), cd.blu.enable);
         setValueIfNotModified(el(c, "blu_closed_mac"), cd.blu.closed_mac);
         setValueIfNotModified(el(c, "blu_open_mac"), cd.blu.open_mac);
+        for (const role of ["motion", "indoor", "outdoor", "button"])
+          setValueIfNotModified(el(c, "blu_" + role + "_mac"), cd.blu[role + "_mac"] || "");
         setValueIfNotModified(el(c, "blu_stale_after_s"), cd.blu.stale_after_s);
         updateInnerText(el(c, "blu_status"), !cd.blu.enable ? "Wired sensors selected" :
           (cd.blu.ready ? "BLU sensors ready" : "BLU sensors missing, stale or conflicting — controls blocked"));
-        for (const role of ["closed", "open"]) {
+        for (const role of ["closed", "open", "motion", "indoor", "outdoor", "button"]) {
           const sensor = cd.blu[role];
-          updateInnerText(el(c, "blu_" + role + "_status"), role + ": " + (!sensor.secure ? "not paired securely" : !sensor.seen ? "waiting for encrypted beacon" :
-            `${sensor.active ? "magnet detected" : "magnet absent"}, battery ${sensor.battery < 0 ? "unknown" : sensor.battery + "%"}, RSSI ${sensor.rssi} dBm, ${sensor.age_s}s ago`));
+          el(c, "blu_" + role + "_name_row").style.display = sensor && sensor.secure ? "" : "none";
+          if (!sensor) continue;
+          setValueIfNotModified(el(c, "blu_" + role + "_name"), sensor.name || "");
+          bluSensorStatus(el(c, "blu_" + role + "_status"), sensor, role === "button" ? cd.blu.presence_timeout_s || 45 : cd.blu.stale_after_s, role === "button" ? "button" : role === "motion" ? true : ["indoor", "outdoor"].includes(role) ? "ht" : false);
         }
         el(c, "toggle_btn").disabled = cd.blu.enable && !cd.blu.ready;
       }
@@ -998,6 +1258,7 @@ function updateComponent(cd) {
       setValueIfNotModified(el(c, "move_time"), cd.move_time);
       setValueIfNotModified(el(c, "pulse_time_ms"), cd.pulse_time_ms);
       checkIfNotModified(el(c, "sensor_swap"), cd.sensor_swap);
+      checkIfNotModified(el(c, "resume_after_stop"), !!cd.resume_after_stop);
       if (cd.open_sensor_mode >= 0) {
         selectIfNotModified(el(c, "open_sensor_mode"), cd.open_sensor_mode);
       } else {
@@ -1229,11 +1490,11 @@ function updateElement(key, value, info) {
       el("notify_overheat").style.display = (value ? "inline" : "none");
       break;
     case "ota_progress":
-      if (value !== undefined && (value >= 0 && value < 100)) {
+      if (value !== undefined && (value >= 0 && value <= 100)) {
         updateInnerText(
             el("version"), `${info.version} -> ${info.ota_version}`);
         updateInnerText(el("fw_build"), info.ota_build);
-        updateInnerText(el("update_status"), `${value}%`);
+        updateInnerText(el("update_status"), value === 100 ? "Update complete; restarting..." : `${value}%`);
         setTimeout(() => setUpdateInProgress(true), 0);
       }
       break;
@@ -1256,10 +1517,16 @@ function getInfo() {
       return;
     }
     pendingGetInfo = true;
+    const accessEpoch = garageDashboardAccessEpoch;
     let method = (infoLevel == 1 ? "Shelly.GetInfoExt" : "Shelly.GetInfo");
     callDevice(method)
         .then(function(info) {
           pendingGetInfo = false;
+
+          if (accessEpoch !== garageDashboardAccessEpoch) {
+            reject(new Error("Panel session changed"));
+            return;
+          }
 
           if (!info) {
             reject();
@@ -1280,14 +1547,16 @@ function getInfo() {
             return;
           }
 
-          if (infoLevel == 0) {
+          if (method === "Shelly.GetInfo") {
             infoLevel = 1;
             // Get extended info.
-            getInfo();
+            getInfo().then(resolve, reject);
             return;
           }
 
           lastInfo = info;
+          // GetInfoExt is protected by the device ACL when authentication is enabled.
+          garageDashboardSetAccess(true);
 
           el("sec_old_pass_container").style.display =
               (info.auth_en ? "block" : "none");
@@ -1374,6 +1643,7 @@ function connectWebSocket() {
     socket = new WebSocket(url);
 
     socket.onclose = function(event) {
+      garageDashboardSetAccess(false);
       let error = `[close] Connection died (code ${event.code})`;
       if (isConnected) {
         console.log(error);
@@ -1427,6 +1697,7 @@ function connectWebSocket() {
               .catch((err) => ri.reject(err))
               .finally(() => el("auth_log_in_spinner").className = "");
         } else {
+          garageDashboardSetAccess(false);
           if (lastInfo !== null) {
             // Locked out, reload UI.
             reloadPage();
@@ -1583,6 +1854,9 @@ el("auth_pass").onkeyup = function(e) {
 };
 
 el("sec_log_out_btn").onclick = function() {
+  garageDashboardSetAccess(false);
+  rpcAuth = null;
+  pauseAutoRefresh = true;
   setVar(authInfoKey, undefined);
   reloadPage();
   return true;
@@ -1601,6 +1875,7 @@ el("sec_save_btn").onclick = function() {
       alert("Invalid old password!");
       setVar(authInfoKey, undefined);
       rpcAuth = null;
+      garageDashboardSetAccess(false);
       return;
     }
   }
@@ -1617,6 +1892,7 @@ el("sec_save_btn").onclick = function() {
   el("sec_save_spinner").className = "spin";
   callDevice("Shelly.SetAuth", {user: authUser, realm: realm, ha1: newHA1})
       .then(function() {
+        garageDashboardSetAccess(false);
         setVar(authInfoKey, undefined);
         reloadPage();
       })
@@ -1757,6 +2033,7 @@ function updateCommonVisibility(visible) {
 
 function setUpdateInProgress(val) {
   updateInProgress = !!val;
+  garageDashboardSyncVisibility();
   if (val) {
     el("components").innerHTML = "";
     el("update_btn").style.display = "none";
@@ -1781,13 +2058,12 @@ async function downloadUpdate(fwURL, spinner, status) {
   spinner.className = "spin";
   status.innerText = "Downloading...";
   console.log("Downloading", fwURL);
-  fetch(fwURL, {mode: "cors"})
+  return fetch(fwURL, {mode: "cors"})
       .then(async (resp) => {
         console.log(resp);
         let blob = await resp.blob();
         if (!resp.ok || blob.type != "application/zip") {
-          status.innerText = "Failed, try manually.";
-          return;
+          throw new Error("Invalid firmware download; try the ZIP file manually");
         }
         return uploadFW(blob, spinner, status);
       })
@@ -1802,42 +2078,44 @@ async function downloadUpdate(fwURL, spinner, status) {
 async function uploadFW(blob, spinner, status, ar) {
   setUpdateInProgress(true);
   spinner.className = "spin";
-  status.innerText = "Uploading...";
-  let fd = new FormData();
-  fd.append("file", blob);
-  let hd = new Headers();
-  if (ar) {
-    hd.append("Authorization", ar.httpAuth);
+  status.innerText = "Authenticating update...";
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 120000);
+  try {
+    // Get a Digest challenge with no body. Sending the ZIP before a 401 can
+    // stall the browser's second large upload on the embedded HTTP server.
+    if (!ar) {
+      const probe = await fetch("/update", {cache: "no-store", signal: controller.signal});
+      if (probe.status === 401) {
+        const challenge = probe.headers.get("www-authenticate");
+        if (!challenge) throw new Error("Missing update authentication challenge");
+        ar = getAuthResp(authHeaderToReq("POST", "/update", challenge, "00000001"));
+      } else if (!probe.ok && probe.status !== 404 && probe.status !== 405) {
+        throw new Error(`Update authentication failed (HTTP ${probe.status})`);
+      }
+    }
+    const fd = new FormData();
+    fd.append("file", blob);
+    const headers = new Headers();
+    if (ar) headers.append("Authorization", ar.httpAuth);
+    status.innerText = "Uploading...";
+    const resp = await fetch("/update", {
+      method: "POST", headers, body: fd, cache: "no-cache", signal: controller.signal,
+    });
+    const text = (await resp.text()).trim();
+    if (!resp.ok) throw new Error(text || `HTTP ${resp.status}`);
+    status.innerText = text || "Firmware uploaded; waiting for restart...";
+    setVar("update_available", false);
+  } catch (error) {
+    status.innerText = error.name === "AbortError" ?
+      "Update request timed out. Check the device version and update progress before retrying." :
+      `Error uploading: ${error.message || error}`;
+    // A timeout or disconnect can happen after the device began writing.
+    // Keep controls blocked; polling still detects progress and a new build.
+  } finally {
+    clearTimeout(timeout);
+    spinner.className = "";
   }
-  fetch("/update", {
-    method: "POST",
-    mode: "cors",
-    headers: hd,
-    body: fd,
-    cache: "no-cache",
-  })
-      .then(async (resp) => {
-        let respText = await resp.text();
-        if (resp.status == 401 && !ar) {
-          let authHdr = resp.headers.get("www-authenticate");
-          if (authHdr !== null) {
-            let authReq =
-                authHeaderToReq("POST", "/update", authHdr, "00000001");
-            let authResp = getAuthResp(authReq);
-            console.log("Retrying with auth...");
-            return uploadFW(blob, spinner, status, authResp);
-          }
-        }
-        spinner.className = "";
-        status.innerText = (respText ? respText : resp.statusText).trim();
-        setVar("update_available", false);
-      })
-      .catch((error) => {
-        console.log("Fetch erorr:", error);
-        status.innerText = `Error uploading: ${error}`;
-        spinner.className = "";
-        // Do not reset updateInProgress to make failure more prominent.
-      });
 }
 
 // major.minor.patch-variantN
@@ -2065,3 +2343,54 @@ function hsv2rgb(h, s, v) {
 function cel2far(v) {
   return Math.round((v * 1.8 + 32.0) * 10) / 10;
 }
+
+// The dashboard shares the authenticated parent RPC client; it never stores credentials.
+let garageDashboardComponent = null, garageDashboardTelemetry = null;
+let garageDashboardAccess = false, garageDashboardAccessEpoch = 0;
+function garageDashboardSyncVisibility() {
+  const visible = garageDashboardAccess && !updateInProgress;
+  el("header_container").style.display = visible ? "block" : "none";
+  const frame = el("garage_dashboard");
+  if (!frame) return;
+  if (visible) {
+    if (!frame.getAttribute("src")) frame.setAttribute("src", frame.getAttribute("data-src"));
+  } else if (frame.getAttribute("src")) {
+    frame.removeAttribute("src");
+  }
+}
+function garageDashboardSetAccess(allowed) {
+  garageDashboardAccess = !!allowed;
+  if (!allowed) {
+    garageDashboardAccessEpoch++;
+    garageDashboardComponent = garageDashboardTelemetry = null;
+  }
+  garageDashboardSyncVisibility();
+}
+function garageDashboardRefresh(c, cd) {
+  if (!garageDashboardAccess || updateInProgress) return;
+  garageDashboardComponent = c;
+  const motion = c.garageMotionState && c.garageMotionState.motion;
+  garageDashboardTelemetry = {status: cd, motion: motion ? {
+    from:motion.from,to:motion.to,duration:motion.duration,
+    elapsed:Math.max(0,performance.now()-motion.start)
+  } : null};
+  const frame = el("garage_dashboard");
+  if (frame && frame.contentWindow)
+    frame.contentWindow.postMessage({garageTelemetry:garageDashboardTelemetry},location.origin);
+}
+window.addEventListener("message", function(event) {
+  if (!garageDashboardAccess || updateInProgress) return;
+  const frame = el("garage_dashboard");
+  if (!frame || event.source !== frame.contentWindow || event.origin !== location.origin) return;
+  if (event.data && event.data.garageAction === "theme" &&
+      ["day", "night"].includes(event.data.theme)) {
+    document.documentElement.dataset.theme = event.data.theme;
+    return;
+  }
+  if (event.data && event.data.garageAction === "ready" && garageDashboardComponent)
+    garageDashboardRefresh(garageDashboardComponent, garageDashboardTelemetry.status);
+  if (!event.data || event.data.garageAction !== "toggle" || !garageDashboardComponent) return;
+  // Reuse the existing control, including its blocked-state check and error handling.
+  const button = el(garageDashboardComponent, "toggle_btn");
+  if (!button.disabled) button.click();
+});

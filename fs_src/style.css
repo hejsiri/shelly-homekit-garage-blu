@@ -229,8 +229,8 @@ a.badge {
 .switch {
   position: relative;
   display: inline-block;
-  width: 57px;
-  height: 32px;
+  width: 40px;
+  height: 24px;
   min-width: 0.5em !important;
   vertical-align: middle;
 }
@@ -255,10 +255,10 @@ a.badge {
 .slider:before {
   position: absolute;
   content: "";
-  height: 24px;
-  width: 24px;
-  left: 4px;
-  bottom: 4px;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
   background-color: white;
   transition: .4s;
 }
@@ -272,12 +272,12 @@ input:focus + .slider {
 }
 
 input:checked + .slider:before {
-  transform: translateX(24px);
+  transform: translateX(16px);
 }
 
 /* Rounded sliders */
 .slider.round {
-  border-radius: 32px;
+  border-radius: 24px;
 }
 
 .slider.round:before {
@@ -408,3 +408,60 @@ input:checked + .slider:before {
   .blu-pair-waiting { color: #ffc369; }
   .blu-pair-progress { color: #86b7ff; }
 }
+
+.blu-sensor { display:flex; align-items:center; flex-wrap:wrap; gap:.65em; font-size:.85em; }
+.blu-badge { border-radius:1em; padding:.2em .65em; font-weight:600; }
+.blu-closed { color:#fff; background:#263c32; }
+.blu-open { color:#555; background:#eee; }
+.blu-stale { color:#555; background:#eee; }
+.blu-power { display:inline-flex; align-items:center; gap:.35em; }
+.blu-battery { display:inline-block; width:1.3em; height:.65em; border:1px solid; border-radius:2px; padding:1px; position:relative; }
+.blu-battery:after { content:""; position:absolute; right:-3px; top:25%; width:2px; height:50%; background:currentColor; }
+.blu-battery i { display:block; height:100%; background:currentColor; }
+.blu-signal { display:inline-flex; align-items:flex-end; gap:2px; height:1em; }
+.blu-signal i { width:3px; height:25%; background:currentColor; opacity:.2; }
+.blu-signal i:nth-child(2) { height:50%; }
+.blu-signal i:nth-child(3) { height:75%; }
+.blu-signal i:nth-child(4) { height:100%; }
+.blu-signal .filled { opacity:1; }
+.blu-age { opacity:.7; }
+@media (prefers-color-scheme: dark) {
+  .blu-closed { color:#fff; background:#315d42; }
+  .blu-open { color:#ccc; background:#383838; }
+  .blu-stale { color:#ccc; background:#383838; }
+}
+
+
+
+#header_container{padding:0;background:transparent;overflow:hidden}#header_container #badges_container:empty{display:none}
+
+.container{box-sizing:border-box;width:calc(100% - 16px);max-width:468px}
+#header_container{padding:0;background:var(--background)}
+:root[data-theme="day"]{color-scheme:light;--foreground:#454955;--background:#fff;--background-alt:#f2f1f6;--inputs-background:#fefefe}
+:root[data-theme="night"]{color-scheme:dark;--foreground:#fff;--background:#222;--background-alt:#111;--inputs-background:#3f3f3f}
+
+/* Keep status notices on the dashboard without adding a footer strip. */
+#header_container{position:relative;background:transparent}
+#header_container #badges_container{position:absolute;top:80px;left:14px;right:14px;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none}
+#header_container .badge{height:auto;line-height:1.35;padding:6px 10px;border:0;border-radius:12px;box-shadow:0 2px 8px #0002;pointer-events:auto}
+#header_container #notify_update{background:#fff3cd;color:#704d00;text-decoration:none}
+#header_container #notify_update:focus-visible{outline:3px solid #704d00;outline-offset:2px}
+
+.blu-waiting{color:#855000;background:#fff0cc}
+.blu-pair-dialog{box-sizing:border-box;width:calc(100% - 32px);max-width:520px;max-height:calc(100dvh - 32px);overflow:auto;padding:24px;border:0;border-radius:20px;background:var(--background);color:var(--foreground);box-shadow:0 16px 64px #0005}
+.blu-pair-dialog::backdrop{background:#0007}
+.blu-pair-dialog h3{margin-top:0}
+.blu-pair-dialog .form-control{flex-wrap:wrap;gap:8px}
+.blu-pair-dialog select{max-width:100%}
+:root[data-theme="day"] .blu-open{color:#555;background:#eee}
+:root[data-theme="night"] .blu-open{color:#ccc;background:#383838}
+:root[data-theme="night"] .blu-waiting{color:#ffda85;background:#493714}
+@media(prefers-color-scheme:dark){:root:not([data-theme="day"]) .blu-waiting{color:#ffda85;background:#493714}}
+
+.blu-pair-step{font-size:13px;font-weight:600;opacity:.7;margin:0 0 8px}
+.blu-pair-device{padding:12px;border-radius:10px;background:var(--background-alt);font-size:14px;overflow-wrap:anywhere}
+.blu-pair-existing{margin:16px 0}
+.blu-pair-existing summary{cursor:pointer;font-size:14px}
+.blu-pair-existing .form-control{margin-top:12px}
+.blu-pair-dialog .blu-pair-status{overflow-wrap:anywhere}
+.blu-pair-dialog .button-container{margin-top:20px}

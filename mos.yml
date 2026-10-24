@@ -1,6 +1,6 @@
 author: Shelly-HomeKit contributors
 description: A HomeKit firmware for Shelly switches
-version: 2.16.1-blu3
+version: 2.16.1-blu35
 
 libs_version: latest
 modules_version: latest
@@ -88,6 +88,7 @@ config_schema:
 
   - ["gdo", "o", {title: "Garage door settings", abstract: true}]
   - ["gdo.name", "s", "Garage Door", {title: "Accessory name"}]
+  - ["gdo.resume_after_stop", "b", false, {title: "Continue previous direction after stop instead of reversing"}]
   - ["gdo.sensor_swap", "b", false, {title: "Whether to swap the two input sensors"}]
   - ["gdo.close_sensor_mode", "i", 0, {title: "Close sensor mode: 0 - normally closed, 1 - normally open"}]
   - ["gdo.open_sensor_mode", "i", 0, {title: "Close sensor mode: 0 - normally closed, 1 - normally open, 2 - disabled"}]
@@ -827,6 +828,17 @@ conds:
         - ["blu.enable", "b", false, {title: "Use two BLU Door/Window endpoint sensors"}]
         - ["blu.closed_mac", "s", "", {title: "Closed endpoint sensor MAC"}]
         - ["blu.open_mac", "s", "", {title: "Open endpoint sensor MAC"}]
+        - ["blu.motion_mac", "s", "", {title: "BLU Motion sensor MAC"}]
+        - ["blu.indoor_mac", "s", "", {title: "Indoor BLU H&T sensor MAC"}]
+        - ["blu.outdoor_mac", "s", "", {title: "Outdoor BLU H&T sensor MAC"}]
+        - ["blu.button_mac", "s", "", {title: "BLU Button1 MAC"}]
+        - ["blu.closed_name", "s", "", {title: "BLU closed accessory name"}]
+        - ["blu.open_name", "s", "", {title: "BLU open accessory name"}]
+        - ["blu.motion_name", "s", "", {title: "BLU motion accessory name"}]
+        - ["blu.indoor_name", "s", "", {title: "BLU indoor accessory name"}]
+        - ["blu.outdoor_name", "s", "", {title: "BLU outdoor accessory name"}]
+        - ["blu.button_name", "s", "", {title: "BLU button accessory name"}]
+        - ["blu.presence_timeout_s", "i", 45, {title: "Button presence timeout seconds"}]
         - ["blu.stale_after_s", "i", 180, {title: "Sensor timeout in seconds (30-3600)"}]
         - ["device.id",    "Shelly1G3-????????????"]
         - ["shelly.name",  "Shelly1G3-????????????"]
@@ -1355,6 +1367,17 @@ conds:
         - ["blu.enable", "b", false, {title: "Use two BLU Door/Window endpoint sensors"}]
         - ["blu.closed_mac", "s", "", {title: "Closed endpoint sensor MAC"}]
         - ["blu.open_mac", "s", "", {title: "Open endpoint sensor MAC"}]
+        - ["blu.motion_mac", "s", "", {title: "BLU Motion sensor MAC"}]
+        - ["blu.indoor_mac", "s", "", {title: "Indoor BLU H&T sensor MAC"}]
+        - ["blu.outdoor_mac", "s", "", {title: "Outdoor BLU H&T sensor MAC"}]
+        - ["blu.button_mac", "s", "", {title: "BLU Button1 MAC"}]
+        - ["blu.closed_name", "s", "", {title: "BLU closed accessory name"}]
+        - ["blu.open_name", "s", "", {title: "BLU open accessory name"}]
+        - ["blu.motion_name", "s", "", {title: "BLU motion accessory name"}]
+        - ["blu.indoor_name", "s", "", {title: "BLU indoor accessory name"}]
+        - ["blu.outdoor_name", "s", "", {title: "BLU outdoor accessory name"}]
+        - ["blu.button_name", "s", "", {title: "BLU button accessory name"}]
+        - ["blu.presence_timeout_s", "i", 45, {title: "Button presence timeout seconds"}]
         - ["blu.stale_after_s", "i", 180, {title: "Sensor timeout in seconds (30-3600)"}]
         - ["device.id",    "shellyplus1-????????????"]
         - ["shelly.name",  "ShellyPlus1-????????????"]

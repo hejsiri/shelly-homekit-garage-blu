@@ -54,6 +54,34 @@ int main() {
   open.Update({true, 90}, 186, -70);
   assert(Ready(closed, open, 186, 180));  // Recovery.
 
+  // BLU Motion uses 0x21, never the inverted window-contact interpretation.
+  const uint8_t motion_on[] = {0x40,0x00,1,0x01,85,0x05,0x10,0x27,0,0x21,1};
+  assert(Decode(motion_on, sizeof(motion_on), &r, true));
+  assert(r.motion && r.battery == 85);
+  assert(!Decode(motion_on, sizeof(motion_on), &r));
+  Sensor motion_sensor;
+  motion_sensor.Update(r, 200, -55, true);
+  assert(motion_sensor.active);
+  auto motion_off = std::vector<uint8_t>(motion_on, motion_on + sizeof(motion_on));
+  motion_off.back() = 0;
+  assert(Decode(motion_off.data(), motion_off.size(), &r, true));
+  motion_sensor.Update(r, 201, -56, true);
+  assert(!motion_sensor.active);
+  motion_off.back() = 2;
+  assert(!Decode(motion_off.data(), motion_off.size(), &r, true));
+  assert(!Decode(motion_on, sizeof(motion_on)-1, &r, true));
+
+  const uint8_t ht[] = {0x40,0x00,1,0x01,90,0x2e,65,0x45,0xcc,0xff}; // -5.2 C
+  assert(DecodeHT(ht, sizeof(ht), &r));
+  assert(r.temperature10 == -52 && r.humidity == 65 && r.battery == 90);
+  assert(!Decode(ht, sizeof(ht), &r));
+  assert(!DecodeHT(ht, sizeof(ht)-1, &r));
+  auto invalid_ht = std::vector<uint8_t>(ht, ht + sizeof(ht));
+  invalid_ht[6] = 101;
+  assert(!DecodeHT(invalid_ht.data(), invalid_ht.size(), &r));
+  const uint8_t incomplete_ht[] = {0x40,0x2e,50};
+  assert(!DecodeHT(incomplete_ht, sizeof(incomplete_ht), &r));
+
   // Exercise arbitrary AD lengths and truncated objects under sanitizers.
   std::mt19937 random(42);
   for (int n = 0; n < 100000; n++) {
@@ -61,5 +89,7 @@ int main() {
     for (auto &byte : bytes) byte = random();
     DecodeAdvertisement(bytes.data(), bytes.size(), &r);
     Decode(bytes.data(), bytes.size(), &r);
+    Decode(bytes.data(), bytes.size(), &r, true);
+    DecodeHT(bytes.data(), bytes.size(), &r);
   }
 }

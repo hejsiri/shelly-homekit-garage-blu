@@ -14,16 +14,21 @@
 namespace shelly {
 namespace blu {
 namespace {
-Sensor sensors[2];
-mgos_bt_addr addresses[2];
+Sensor sensors[6];
+mgos_bt_addr addresses[6];
 bool configured = false;
-bool known[2] = {};
+ButtonEvents button_events;
+bool button_pending = false;
+double button_press_time = 0;
+uint32_t button_press_sequence = 0;
+uint32_t packet_sequence[6] = {};
+bool known[6] = {};
 
 void ScanResult(int, void *event_data, void *) {
   PairingAdvertisement(event_data);
   auto *result = static_cast<mgos_bt_gap_scan_result *>(event_data);
   int index = -1;
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 6; i++) {
     if (known[i] && memcmp(addresses[i].addr, result->addr.addr, 6) == 0)
       index = i;
   }
@@ -51,14 +56,27 @@ void ScanResult(int, void *event_data, void *) {
   if (service == nullptr ||
       !AcceptSecure(index, result->addr.addr, service, service_size, plain,
                     &plain_size) ||
-      !Decode(plain, plain_size, &reading))
+      !(index == 5 ? DecodeButton(plain, plain_size, &reading) : index >= 3 ? DecodeHT(plain, plain_size, &reading) :
+                       Decode(plain, plain_size, &reading, index == 2)))
     return;
-  sensors[index].Update(reading, mgos_uptime(), result->rssi);
+  const bool button_event = index == 5 && button_events.Accept(reading, mgos_uptime());
+  if (button_event && !PairingBusy()) {
+    ++button_press_sequence;
+    button_pending = true;
+    button_press_time = mgos_uptime();
+  }
+  sensors[index].Update(reading, mgos_uptime(), result->rssi, index == 2 ? 1 : index >= 3 ? 2 : 0);
+  ++packet_sequence[index];
   PairingVerified(index);
 }
 
 void Scan(void *) {
-  if ((!Enabled() && !PairingScan()) || PairingConnecting() ||
+  // Monitoring a securely paired sensor is independent of selecting BLU
+  // as the garage's control inputs, including while only one role is paired.
+  bool paired = false;
+  for (int i = 0; i < 6; i++)
+    paired = paired || (known[i] && SecureFor(i, addresses[i].addr));
+  if ((!Enabled() && !paired && !PairingScan()) || PairingConnecting() ||
       mgos_bt_get_status() != MGOS_BT_STARTED || mgos_bt_gap_scan_in_progress())
     return;
   mgos_bt_gap_scan_opts opts = {};
@@ -94,11 +112,11 @@ bool Enabled() {
 }
 
 void ResetReadings() {
-  sensors[0] = Sensor();
-  sensors[1] = Sensor();
-  const char *macs[2] = {mgos_sys_config_get_blu_closed_mac(),
-                         mgos_sys_config_get_blu_open_mac()};
-  for (int i = 0; i < 2; i++) {
+  for (auto &sensor : sensors) sensor = Sensor();
+  button_events = ButtonEvents();
+  button_pending = false;
+  const char *macs[6] = {SensorMAC(0), SensorMAC(1), SensorMAC(2), SensorMAC(3), SensorMAC(4), SensorMAC(5)};
+  for (int i = 0; i < 6; i++) {
     known[i] = ValidMAC(macs[i]) &&
                mgos_bt_addr_from_str(mg_mk_str(macs[i]), &addresses[i]);
   }
@@ -131,22 +149,80 @@ void GetInputs(int *closed, int *open) {
   *open = sensors[1].active;
 }
 
+const char *SensorMAC(int role) {
+  switch (role) {
+    case 0: return mgos_sys_config_get_blu_closed_mac();
+    case 1: return mgos_sys_config_get_blu_open_mac();
+    case 2: return mgos_sys_config_get_blu_motion_mac();
+    case 3: return mgos_sys_config_get_blu_indoor_mac();
+    case 4: return mgos_sys_config_get_blu_outdoor_mac();
+    case 5: return mgos_sys_config_get_blu_button_mac();
+    default: return "";
+  }
+}
+const Sensor &MotionReading() { return sensors[2]; }
+const char *SensorName(int role) {
+  const char *name = nullptr;
+  static const char *defaults[] = {"Czujnik zamknięcia", "Czujnik otwarcia",
+                                 "Czujnik ruchu", "Wewnątrz", "Na zewnątrz", "Przycisk"};
+  switch (role) {
+    case 0: name = mgos_sys_config_get_blu_closed_name(); break;
+    case 1: name = mgos_sys_config_get_blu_open_name(); break;
+    case 2: name = mgos_sys_config_get_blu_motion_name(); break;
+    case 3: name = mgos_sys_config_get_blu_indoor_name(); break;
+    case 4: name = mgos_sys_config_get_blu_outdoor_name(); break;
+    case 5: name = mgos_sys_config_get_blu_button_name(); break;
+    default: return "";
+  }
+  return name && *name ? name : defaults[role];
+}
+void SetSensorName(int role, const char *name) {
+  switch (role) {
+    case 0: mgos_sys_config_set_blu_closed_name(name); break;
+    case 1: mgos_sys_config_set_blu_open_name(name); break;
+    case 2: mgos_sys_config_set_blu_motion_name(name); break;
+    case 3: mgos_sys_config_set_blu_indoor_name(name); break;
+    case 4: mgos_sys_config_set_blu_outdoor_name(name); break;
+    case 5: mgos_sys_config_set_blu_button_name(name); break;
+  }
+}
+const Sensor &ReadingFor(int role) { return sensors[role]; }
+bool SensorPaired(int role) {
+  mgos_bt_addr address;
+  const char *mac = SensorMAC(role);
+  return role >= 0 && role < 6 && ValidMAC(mac) &&
+         mgos_bt_addr_from_str(mg_mk_str(mac), &address) &&
+         SecureFor(role, address.addr);
+}
+bool SensorReady(int role) {
+  return role >= 0 && role < 6 && known[role] && SecureFor(role, addresses[role].addr) &&
+         mgos_bt_get_status() == MGOS_BT_STARTED &&
+         sensors[role].Fresh(mgos_uptime(), mgos_sys_config_get_blu_stale_after_s());
+}
+bool ConsumeButtonPress() {
+  bool result = button_pending && mgos_uptime() - button_press_time <= 1;
+  button_pending = false;
+  return result;
+}
+bool MotionReady() { return SensorReady(2); }
 std::string GetInfoJSON() {
-  double now = mgos_uptime();
-  const char *closed = mgos_sys_config_get_blu_closed_mac();
-  const char *open = mgos_sys_config_get_blu_open_mac();
-  return mgos::JSONPrintStringf(
-      "{enable:%B,closed_mac:%Q,open_mac:%Q,stale_after_s:%d,ready:%B,"
-      "closed:{secure:%B,seen:%B,active:%B,battery:%d,rssi:%d,age_s:%d},"
-      "open:{secure:%B,seen:%B,active:%B,battery:%d,rssi:%d,age_s:%d}}",
-      Enabled(), closed ? closed : "", open ? open : "",
-      mgos_sys_config_get_blu_stale_after_s(), Ready(),
-      known[0] && SecureFor(0, addresses[0].addr), sensors[0].seen,
-      sensors[0].active, sensors[0].battery, sensors[0].rssi,
-      sensors[0].seen ? int(now - sensors[0].last_seen) : -1,
-      known[1] && SecureFor(1, addresses[1].addr), sensors[1].seen,
-      sensors[1].active, sensors[1].battery, sensors[1].rssi,
-      sensors[1].seen ? int(now - sensors[1].last_seen) : -1);
+  std::string result = mgos::JSONPrintStringf(
+      "{enable:%B,button_press_seq:%u,button_press_age_ms:%d,presence_timeout_s:%d,stale_after_s:%d,ready:%B", Enabled(),
+      button_press_sequence, button_press_sequence ? int((mgos_uptime() - button_press_time) * 1000) : -1,
+      mgos_sys_config_get_blu_presence_timeout_s(),
+      mgos_sys_config_get_blu_stale_after_s(), Ready());
+  const char *roles[] = {"closed", "open", "motion", "indoor", "outdoor", "button"};
+  for (int i = 0; i < 6; i++) {
+    const auto &sensor = sensors[i];
+    result += mgos::JSONPrintStringf(
+        ",%Q:%Q,%Q:{name:%Q,packet_seq:%u,secure:%B,seen:%B,active:%B,battery:%d,rssi:%d,age_s:%d,temperature:%.1f,humidity:%d}",
+        (std::string(roles[i]) + "_mac").c_str(), SensorMAC(i) ? SensorMAC(i) : "", roles[i],
+        SensorName(i), packet_sequence[i],
+        known[i] && SecureFor(i, addresses[i].addr), sensor.seen, sensor.active,
+        sensor.battery, sensor.rssi, sensor.seen ? int(mgos_uptime() - sensor.last_seen) : -1,
+        sensor.temperature10 / 10.0, sensor.humidity);
+  }
+  return result + "}";
 }
 }  // namespace blu
 }  // namespace shelly

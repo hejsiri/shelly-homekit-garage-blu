@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Prepare model-specific static OTA downloads from both Garage BLU builds."""
+"""Prepare OTA downloads for selected builds (Plus 1 by default)."""
+import argparse
 import hashlib
 import html
 import json
@@ -11,8 +12,14 @@ root = Path(__file__).resolve().parents[2]
 base = 'https://hejsiri.pl/firmware/garage-blu/'
 out = root / 'releases/hosting/garage-blu'
 out.mkdir(parents=True, exist_ok=True)
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--model', action='append', choices=['ShellyPlus1', 'Shelly1Gen3'],
+                    help='Model to publish; repeat for both. Default: ShellyPlus1.')
+models = list(dict.fromkeys(parser.parse_args().model or ['ShellyPlus1']))
+apps = {'ShellyPlus1': 'Plus1', 'Shelly1Gen3': 'S1G3'}
 releases = {}
-for model, app in [('Shelly1Gen3', 'S1G3'), ('ShellyPlus1', 'Plus1')]:
+for model in models:
+    app = apps[model]
     source = root / f'build_{model}/fw.zip'
     with zipfile.ZipFile(source) as archive:
         assert archive.testzip() is None, 'ZIP integrity failure'
@@ -32,13 +39,14 @@ for model, app in [('Shelly1Gen3', 'S1G3'), ('ShellyPlus1', 'Plus1')]:
         'build_id': manifest.get('build_id'), 'url': base + name,
         'size': len(payload), 'sha256': checksum, 'hardware_tested': False}
     (out / f'release-{model}.json').write_text(json.dumps(releases[model], indent=2) + '\n')
-assert len({r['version'] for r in releases.values()}) == 1, 'Build both models with the same version'
+assert len({r['version'] for r in releases.values()}) == 1, 'Selected builds must have the same version'
 channel = [['.*', {'version': version, 'rel_notes': base,
     'urls': {model: r['url'] for model, r in releases.items()}}]]
 (out / 'update.json').write_text(json.dumps(channel, indent=2) + '\n')
 (out / 'release.json').write_text(json.dumps(releases, indent=2) + '\n')
-# Gen3 URL remains available as the first-install example; downloads list both models.
-name = releases['Shelly1Gen3']['url'][len(base):]
+# The first-install example must refer to an image published in this release.
+example_model = models[0]
+name = releases[example_model]['url'][len(base):]
 downloads = ''.join(
     f'<li><strong>{html.escape(model)}</strong>: <a href="{r["url"]}">ZIP {html.escape(r["version"])} ({r["size"]:,} bajtów)</a> · '
     f'<a href="{r["url"]}.sha256">SHA-256</a></li>' for model, r in releases.items())
@@ -96,21 +104,20 @@ który według producenta ma obudowę IP55 oraz łączność Bluetooth i Zigbee.
 To model <strong>SBDW-302C</strong>, inny niż obecnie zaimplementowany SBDW-002C.
 Wymaga osobnego dostosowania i testów; nie jest jeszcze obsługiwany w aktualnym wydaniu.</p>
 <p>Projekt ma być też podstawą do dalszej rozbudowy garażu o inne czujniki
-i akcesoria <strong>Shelly BLU</strong>. Planuję możliwość dodawania pomiaru temperatury
-i wilgotności, wykrywania ruchu i wycieku oraz obsługi przycisku BLU —
-z konfiguracją w tym samym panelu WWW. To planowany kierunek rozwoju;
-aktualne wydanie obsługuje dwa czujniki Door/Window jako krańcówki bramy.</p>
+i akcesoria <strong>Shelly BLU</strong>. W tym wydaniu dodano parowanie czujnika ruchu
+BLU Motion oraz dwóch BLU H&amp;T (wewnętrznego i zewnętrznego), z odczytami
+w panelu WWW i Apple Home. Te nowe funkcje wymagają jeszcze testów na czujnikach.
+BLU Button1 obsługuje pojedynczy klik oraz beacony obecności. W planach pozostaje czujnik wycieku.</p>
 <h2>Wspierane urządzenia</h2>
 <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%" border="1" cellpadding="10">
 <thead><tr><th scope="col">Urządzenie</th><th scope="col">Status Garage BLU</th></tr></thead>
 <tbody>
-<tr><td><strong>Shelly 1 Gen3 (S1G3)</strong></td><td>Osobna paczka S1G3. Kompilacja i testy lokalne przeszły; testy na sprzęcie pozostają do wykonania.</td></tr>
-<tr><td><strong>Shelly Plus 1 (Plus1)</strong></td><td>Osobna paczka dla platformy ESP32. Kompilacja i testy lokalne sprawdzone; działanie na sprzęcie wymaga testów.</td></tr>
-<tr><td><strong>Shelly BLU Door/Window (SBDW-002C)</strong></td><td>Dwa czujniki: pełne zamknięcie i pełne otwarcie bramy. Zachowują fabryczny firmware. Zaimplementowane parowanie i odbiór BLE wymagają testów na sprzęcie.</td></tr>
-<tr><td>Shelly 1 Mini Gen3, 1PM Gen3, pozostałe Gen3, pozostałe Plus, Gen1 i Pro</td><td>Brak paczek i obsługi Garage BLU dla tych modeli w tym wydaniu.</td></tr>
-<tr><td>Shelly Gen4</td><td>Brak portu Garage BLU dla platformy Gen4.</td></tr>
-<tr><td>Shelly BLU H&amp;T (temperatura i wilgotność), Shelly BLU Button, czujnik ruchu Shelly BLU Motion oraz czujnik wycieku Shelly BLU</td><td>Wkrótce — planowane wsparcie. Aktualne wydanie jeszcze ich nie obsługuje.</td></tr>
-<tr><td>Inne czujniki BLE</td><td>Obsługa nie została dodana.</td></tr>
+<tr><td><strong>Shelly 1 Gen3 (S1G3)</strong></td><td>Kod obsługi zachowany i rozwijany. Bieżące kompilacje i testy sprzętowe Gen3 wstrzymane; obecne wydanie jest dla Plus 1.</td></tr>
+<tr><td><strong>Shelly Plus 1 (Plus1)</strong></td><td>Osobna paczka dla platformy ESP32. Wcześniejsza wersja działa na testowym Plus 1; to wydanie wymaga weryfikacji po OTA.</td></tr>
+<tr><td><strong>Shelly BLU Door/Window (SBDW-002C)</strong></td><td>Dwa czujniki: pełne zamknięcie i pełne otwarcie bramy. Zachowują fabryczny firmware. Parowanie i zmiany stanów potwierdzono na dwóch czujnikach z testowym Plus 1.</td></tr>
+<tr><td>Shelly BLU Motion (SBMO-003Z)</td><td>Parowanie, stan ruchu w WWW i Apple Home; testy sprzętowe w toku.</td></tr>
+<tr><td>Shelly BLU H&amp;T (SBHT-003C), do 2 sztuk</td><td>Indoor i Outdoor: temperatura i wilgotność w WWW i Apple Home; testy sprzętowe w toku.</td></tr>
+<tr><td>Shelly BLU Button1</td><td>Pojedynczy klik steruje bramą, beacony aktualizują obecność przycisku i auto na wizualizacji. Sam beacon nie uruchamia bramy.</td></tr>
 </tbody></table></div>
 <p>Sama obecność Bluetooth nie oznacza zgodności. Kod innych urządzeń z bazowego Shelly-HomeKit
 został zachowany, ale nie oznacza to obsługi rozszerzenia Garage BLU na tych modelach.</p>
@@ -118,12 +125,45 @@ został zachowany, ale nie oznacza to obsługi rozszerzenia Garage BLU na tych m
 <p><strong>Czujników Shelly BLU Door/Window nie trzeba aktualizować ani zmieniać ich firmware.</strong>
 Mają działać na oryginalnym firmware Shelly — wystarczy sparować je z modułem
 przez panel WWW Garage BLU. Naszą paczkę OTA instaluje się wyłącznie na sterowniku
-<strong>Shelly 1 Gen3 lub Shelly Plus 1</strong>, a nie na czujnikach. Parowanie i działanie na sprzęcie wymagają jeszcze weryfikacji.</p>
+<strong>Shelly 1 Gen3 lub Shelly Plus 1</strong>, a nie na czujnikach. Nowa obsługa Motion i H&amp;T wymaga jeszcze weryfikacji na sprzęcie.</p>
 <h2>Wkrótce</h2>
-<p>Planuję dodać obsługę <strong>Shelly BLU H&amp;T</strong> (temperatura i wilgotność),
-przycisku <strong>Shelly BLU Button</strong>, czujnika ruchu <strong>Shelly BLU Motion</strong> oraz czujnika wycieku Shelly BLU. Te urządzenia nie są jeszcze obsługiwane
-w aktualnym wydaniu firmware.</p>
+<p>Planuję dodać obsługę czujnika wycieku Shelly BLU oraz Door/Window Outdoor ZB. BLU Button1 jest już obsługiwany.</p>
+<p>H&amp;T Gen3 z ekranem e-ink (S3SN-0U12A) korzysta z Wi-Fi i nie jest jeszcze obsługiwany przez tę integrację BLE.</p>
+<h2>Zmiany w {html.escape(version)}</h2>
+<p><strong>Własne nazwy urządzeń.</strong> Pod Pair każdego sparowanego urządzenia
+pojawiło się pole Name. Po zapisaniu nazwa jest używana na wizualizacji. Kafelek
+bramy korzysta z Name w sekcji Garage Door.</p>
+<p><strong>Auto zgodnie z beaconami.</strong> Kolejny zaszyfrowany pakiet Button1
+nadpisuje ręczne pokazanie/ukrycie auta. Brak beaconów przez limit obecności
+(domyślnie 45 s) ukrywa auto. Zwykłe odświeżenie panelu nie cofa ręcznej zmiany.</p>
+<p><strong>Stan zgodny z HomeKit.</strong> Potwierdzone osiągnięcie krańcówki po
+przekroczeniu czasu ruchu kasuje Przeszkody zarówno w panelu, jak i w HomeKit.
+Przy Przeszkodach animacja ustawia bramę na 50%.</p>
+<p>Scena ładuje wyłącznie aktualny dom i auto. Pojawia się po przygotowaniu
+kompletu grafik wybranego motywu, bez mignięcia starszej wizualizacji.</p>
+<p><strong>Mniejsze przełączniki.</strong> Przełączniki w całym panelu mają teraz
+40 × 24 px zamiast 57 × 32 px, z proporcjonalnie dopasowanym suwakiem.</p>
+<p><strong>Garaż po zalogowaniu.</strong> Wizualizacja nie ładuje się przed potwierdzeniem
+dostępu przez urządzenie. Po wylogowaniu lub odrzuceniu hasła znika wraz z zapisanymi
+danymi widoku. Pozostaje ukryta również podczas aktualizacji.</p>
+<p>Na kafelku bramy status Blokada — limit czasu zastąpiono nazwą <strong>Przeszkody</strong>
+z ikoną trójkąta z wykrzyknikiem. Ikona znika po zmianie statusu lub utracie danych.</p>
+<p>Wspólne komunikaty parowania używają teraz <strong>device</strong> zamiast sensor,
+również w instrukcjach, statusach i błędach. Są odpowiednie także dla BLU Button1.</p>
+<p><strong>Parowanie bez zbędnego PIN-u.</strong> Kliknięcie Pair od razu uruchamia
+wyszukiwanie w modalu. Włącz tryb parowania czujnika — jeden pasujący czujnik zostanie
+wybrany automatycznie. Pole PIN pojawia się tylko, gdy urządzenie go wymaga.</p>
+<p>Sterownik zachowuje istniejący klucz. Przy ponownym parowaniu najpierw sprawdza,
+czy zapisany klucz nadal odbiera poprawne zaszyfrowane odczyty. Urządzenia obsługujące
+bezpośredni zapis klucza mogą otrzymać nowy klucz bez ręcznego ustawiania PIN-u.</p>
+<p>Jeśli czujnik wymaga ponownego obudzenia, wystarczy przytrzymać jego przycisk
+przez ponad 10 sekund i puścić. Wznowienie jest automatyczne — bez Continue pairing.
+Drugie obudzenie nie jest stałym krokiem procesu.</p>
+<p>Testy lokalne obejmują obsługę kluczy, warunkowy PIN, wybór czujnika i anulowanie.
+Zakończenie wymaga poprawnego zaszyfrowanego pakietu. Nowy przebieg wymaga jeszcze
+testu na fizycznych czujnikach.</p>
 <h2>Pobieranie firmware {html.escape(version)}</h2>
+<p>Bieżące wydania i testy dotyczą Shelly Plus 1. Obsługa Gen3 jest zachowana w kodzie; nie publikuję teraz nowych kompilacji Gen3.</p>
 <p>Wybierz paczkę dokładnie dla swojego modelu. Paczki <strong>S1G3</strong> i <strong>Plus1</strong>
 nie są zamienne. Nie instaluj ich na Mini, 1PM, Gen4 ani innych urządzeniach.</p>
 <p>Wersja eksperymentalna: kompilacja i testy lokalne sprawdzone; parowanie BLE i działanie na fizycznym urządzeniu wymagają weryfikacji.</p>
@@ -132,7 +172,7 @@ nie są zamienne. Nie instaluj ich na Mini, 1PM, Gen4 ani innych urządzeniach.<
 <p><a href="AKTUALIZACJA.md">Pełna instrukcja (PL)</a></p>
 <h3>Przed aktualizacją</h3>
 <p>Sprawdź model i zapisz ustawienia oraz aktualną wersję. Zatrzymaj bramę, zapewnij stabilne zasilanie i Wi-Fi.
-Nie mamy potwierdzenia instalacji tej paczki na fizycznym urządzeniu ani przejścia z fabrycznego 2.1.0.</p>
+To wydanie nie przeszło jeszcze testu sprzętowego. Nie potwierdzono przejścia z fabrycznego 2.1.0 na Gen3.</p>
 <h3>Pierwsza instalacja z fabrycznego Gen3 / Plus</h3>
 <ol>
 <li>Otwórz lokalny panel Shelly pod <code>http://ADRES_IP/</code> i zaloguj się.
@@ -140,7 +180,7 @@ Jeżeli panel proponuje oficjalne stabilne wydanie fabryczne, zaktualizuj je i p
 Nie obniżaj wersji według starych instrukcji.</li>
 <li>W sekcji aktualizacji wskaż nasz ZIP lub jego URL, jeżeli panel udostępnia instalację własnego firmware.
 Alternatywnie użyj fabrycznego RPC <code>Shelly.Update</code> z parametrem <code>url</code>.
-Poniższy przykład dotyczy <strong>Shelly 1 Gen3</strong>. Dla <strong>Plus 1</strong> użyj adresu ZIP z odpowiedniego wiersza powyżej. RPC rozpoczyna aktualizację — najpierw zastąp <code>ADRES_IP</code> adresem urządzenia:</li>
+Poniższy przykład dotyczy <strong>{html.escape(example_model)}</strong>. RPC rozpoczyna aktualizację — najpierw zastąp <code>ADRES_IP</code> adresem urządzenia:</li>
 </ol>
 <pre style="white-space:pre-wrap;overflow-wrap:anywhere">http://ADRES_IP/rpc/Shelly.Update?url={quote(base + name, safe='')}</pre>
 <p>Przy włączonej autoryzacji użyj uwierzytelnionego panelu lub klienta RPC. Nie wyłączaj hasła.

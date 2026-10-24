@@ -157,7 +157,11 @@ ShellyT32: PLATFORM=esp32
 ShellyT32: build-ShellyT32
 	@true
 
-fs/index.html.gz: $(wildcard fs_src/*) Makefile
+fs/garage.html.gz: fs_src/garage.html
+	mkdir -p fs
+	gzip -9 -c $< > $@
+
+fs/index.html.gz: $(wildcard fs_src/*) Makefile fs/garage.html.gz
 	mkdir -p $(BUILD_DIR)
 	cat fs_src/index.html | \
 	sed "s/.*<link.*rel=\"stylesheet\".*//g" | sed -e '/<style>/ r fs_src/style.css' | \

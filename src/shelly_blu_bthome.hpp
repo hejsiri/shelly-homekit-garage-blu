@@ -9,11 +9,16 @@ namespace blu {
 struct Reading {
   bool window_open = false;
   int battery = -1;
+  bool motion = false;
+  int button = -1;
+  int packet_id = -1;
+  int temperature10 = 0;
+  int humidity = -1;
 };
 
 // BTHome v2 service payload, after UUID 0xFCD2. Only the objects used by
-// BLU Door/Window are accepted; never guess the length of an unknown object.
-inline bool Decode(const uint8_t *data, size_t len, Reading *out) {
+// BLU Door/Window and Motion are accepted; unknown object lengths are rejected.
+inline bool Decode(const uint8_t *data, size_t len, Reading *out, bool motion = false) {
   if (len < 1 || (data[0] >> 5) != 2 || (data[0] & 0x1b)) return false;
   Reading result;
   bool have_window = false;
@@ -26,6 +31,7 @@ inline bool Decode(const uint8_t *data, size_t len, Reading *out) {
     switch (id) {
       case 0x00:
       case 0x01:
+      case 0x21:
       case 0x2d:
       case 0x3a:
         size = 1;
@@ -44,9 +50,11 @@ inline bool Decode(const uint8_t *data, size_t len, Reading *out) {
       if (data[i] > 100) return false;
       result.battery = data[i];
     }
-    if (id == 0x2d) {
+    if (id == (motion ? 0x2d : 0x21)) return false;
+    if (id == (motion ? 0x21 : 0x2d)) {
       if (data[i] > 1) return false;
-      result.window_open = data[i] != 0;
+      if (motion) result.motion = data[i] != 0;
+      else result.window_open = data[i] != 0;
       have_window = true;
     }
     i += size;
@@ -55,6 +63,70 @@ inline bool Decode(const uint8_t *data, size_t len, Reading *out) {
   *out = result;
   return true;
 }
+
+// SBHT-003C: signed tenths of a degree and integer percent humidity.
+inline bool DecodeHT(const uint8_t *data, size_t len, Reading *out) {
+  if (len < 1 || (data[0] >> 5) != 2 || (data[0] & 0x1b)) return false;
+  Reading result;
+  bool temperature = false;
+  int previous = -1;
+  for (size_t i = 1; i < len;) {
+    const uint8_t id = data[i++];
+    if (id <= previous) return false;
+    previous = id;
+    size_t n = id == 0x45 ? 2 :
+      (id == 0 || id == 1 || id == 0x15 || id == 0x1e || id == 0x2e || id == 0x3a || id == 0x64) ? 1 : 0;
+    if (!n || n > len - i) return false;
+    if (id == 1) { if (data[i] > 100) return false; result.battery = data[i]; }
+    if (id == 0x2e) { if (data[i] > 100) return false; result.humidity = data[i]; }
+    if (id == 0x45) {
+      int value = int(data[i]) | (int(data[i + 1]) << 8);
+      result.temperature10 = value >= 32768 ? value - 65536 : value;
+      if (result.temperature10 < -1000 || result.temperature10 > 1000) return false;
+      temperature = true;
+    }
+    i += n;
+  }
+  if (!temperature || result.humidity < 0) return false;
+  *out = result;
+  return true;
+}
+
+// Single-key BTHome Button1. No event means presence only.
+inline bool DecodeButton(const uint8_t *data, size_t len, Reading *out) {
+  if (!len || (data[0] >> 5) != 2 || (data[0] & 0x1b)) return false;
+  Reading r;
+  int previous = -1;
+  bool have_data = false;
+  for (size_t i = 1; i < len;) {
+    const uint8_t id = data[i++];
+    if (id <= previous) return false;
+    previous = id;
+    const size_t n = id == 0xf0 ? 2 : id == 0xf1 ? 4 : id == 0xf2 ? 3 :
+      (id == 0 || id == 1 || id == 0x3a) ? 1 : 0;
+    if (!n || n > len - i) return false;
+    if (id == 0) r.packet_id = data[i];
+    if (id == 1) { if (data[i] > 100) return false; r.battery = data[i]; have_data = true; }
+    if (id == 0x3a) { r.button = data[i]; have_data = true; }
+    i += n;
+  }
+  if (!have_data) return false;
+  *out = r;
+  return true;
+}
+
+struct ButtonEvents {
+  int last_packet = -1;
+  double last_press = -10;
+  bool Accept(const Reading &r, double now) {
+    if (r.packet_id < 0) return false;
+    if (r.packet_id == last_packet) return false;
+    last_packet = r.packet_id;
+    if (r.button != 1 || now - last_press < 1.5) return false;
+    last_press = now;
+    return true;
+  }
+};
 
 inline bool DecodeAdvertisement(const uint8_t *data, size_t len, Reading *out) {
   bool found = false;
@@ -80,9 +152,12 @@ struct Sensor {
   double last_seen = 0;
   int battery = -1;
   int rssi = 0;
-  void Update(const Reading &reading, double now, int signal) {
+  int temperature10 = 0;
+  int humidity = -1;
+  void Update(const Reading &reading, double now, int signal, int kind = 0) {
     seen = true;
-    active = !reading.window_open;
+    active = kind == 1 ? reading.motion : kind == 0 ? !reading.window_open : false;
+    if (kind == 2) { temperature10 = reading.temperature10; humidity = reading.humidity; }
     last_seen = now;
     if (reading.battery >= 0) battery = reading.battery;
     rssi = signal;

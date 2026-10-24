@@ -8,14 +8,15 @@
 namespace shelly {
 namespace blu {
 namespace {
-SecureRecord cache[2] = {};
-bool loaded[2] = {};
+SecureRecord cache[6] = {};
+bool loaded[6] = {};
 const char *Name(int role) {
-  return role == 0 ? "closed" : "open";
+  static const char *names[] = {"closed", "open", "motion", "indoor", "outdoor", "button"};
+  return names[role];
 }
 }  // namespace
 bool LoadRecord(int role, SecureRecord *record) {
-  if (role < 0 || role > 1) return false;
+  if (role < 0 || role > 5) return false;
   if (!loaded[role]) {
     nvs_handle_t handle;
     if (nvs_open("blu_secure", NVS_READONLY, &handle) != ESP_OK) return false;
@@ -31,7 +32,7 @@ bool LoadRecord(int role, SecureRecord *record) {
   return true;
 }
 bool SaveRecord(int role, const SecureRecord &record) {
-  if (role < 0 || role > 1) return false;
+  if (role < 0 || role > 5) return false;
   nvs_handle_t handle;
   if (nvs_open("blu_secure", NVS_READWRITE, &handle) != ESP_OK) return false;
   esp_err_t err = nvs_set_blob(handle, Name(role), &record, sizeof(record));

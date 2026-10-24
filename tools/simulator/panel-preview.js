@@ -4,46 +4,86 @@ const previewInfo = {
  version:'2.16.1 + BLU',fw_build:'20261022-171641',sys_mode:2,gdo_avail:true,wc_avail:false,
  hap_cn:1,hap_paired:false,hap_running:true,hap_ip_conns_pending:0,hap_ip_conns_active:0,hap_ip_conns_max:16,
  uptime:3600,sys_temp:39,auth_en:true,
- components:[{id:1,type:5,name:'Garage Door',cur_state:1,cur_state_str:'closed',move_time:20,pulse_time_ms:500,
- close_sensor_mode:0,open_sensor_mode:-1,out_mode:-1,sensor_swap:false,
- blu:{enable:true,closed_mac:'AA:BB:CC:DD:EE:01',open_mac:'AA:BB:CC:DD:EE:02',stale_after_s:180,ready:true,
- closed:{secure:true,seen:true,active:true,battery:92,rssi:-58,age_s:2},open:{secure:true,seen:true,active:false,battery:84,rssi:-65,age_s:3}}}]
+ components:[{id:1,type:5,name:'Brama garażowa',cur_state:1,cur_state_str:'closed',move_time:20,pulse_time_ms:500,
+ close_sensor_mode:0,open_sensor_mode:-1,out_mode:-1,sensor_swap:false,resume_after_stop:false,
+ blu:{enable:true,closed_mac:'AA:BB:CC:DD:EE:01',open_mac:'AA:BB:CC:DD:EE:02',stale_after_s:180,presence_timeout_s:45,button_press_seq:0,button_press_age_ms:-1,ready:true,button_mac:'AA:BB:CC:DD:EE:07',button:{name:'Przycisk w aucie',packet_seq:1,secure:true,seen:true,battery:93,rssi:-60,age_s:3},
+ closed:{name:'Czujnik zamknięcia',packet_seq:1,secure:true,seen:true,active:true,battery:92,rssi:-58,age_s:2},open:{name:'Czujnik otwarcia',packet_seq:1,secure:true,seen:true,active:false,battery:84,rssi:-65,age_s:3},motion_mac:'AA:BB:CC:DD:EE:04',motion:{name:'Czujnik ruchu',packet_seq:1,secure:true,seen:true,active:false,battery:88,rssi:-51,age_s:0},indoor_mac:'AA:BB:CC:DD:EE:05',indoor:{name:'Wewnątrz',packet_seq:1,secure:true,seen:true,temperature:21.4,humidity:48,battery:94,rssi:-55,age_s:12},outdoor_mac:'AA:BB:CC:DD:EE:06',outdoor:{name:'Na zewnątrz',packet_seq:1,secure:true,seen:true,temperature:8.7,humidity:76,battery:91,rssi:-72,age_s:22}}}]
 };
+let previewBeaconAt = Date.now();
+let previewMoveStart = 0, previewPosition = 0, previewMoveFrom = 0;
+function advancePreview(){
+ const c=previewInfo.components[0];
+ if(!previewMoveStart)return;
+ c.state_age_ms=Date.now()-previewMoveStart;
+ if(c.cur_state!==2&&c.cur_state!==3)return;
+ const delta=c.state_age_ms/(c.move_time*1000);
+ previewPosition=Math.max(0,Math.min(1,previewMoveFrom+(c.cur_state===2?delta:-delta)));
+ if((c.cur_state===2&&previewPosition===1)||(c.cur_state===3&&previewPosition===0)){
+   c.cur_state=previewPosition===1?0:1;c.cur_state_str=previewPosition===1?'open':'closed';
+   c.blu.closed.active=previewPosition===0;c.blu.open.active=previewPosition===1;previewMoveStart=0;
+ }
+}
 refreshUI=function(){
+ const c=previewInfo.components[0];
+ advancePreview();
+ const age = Math.floor((Date.now()-previewBeaconAt)/1000);
+ c.blu.button.age_s = age;
+ if(age>=10){c.blu.button.packet_seq++;c.blu.button.age_s=0;previewBeaconAt=Date.now();}
  lastInfo=previewInfo;
+ garageDashboardSetAccess(true);
  for(const [key,value] of Object.entries(previewInfo)) updateElement(key,value,previewInfo);
 };
 let previewPair = {state:"idle", error:"", candidates:[]};
 let previewPairStart = 0;
+let previewDiscoveryStart = 0;
 callDevice=function(method,params){
  if(method==='Shelly.BLU.Discover') {
-   previewPair={state:"scanning",error:"",candidates:[{mac:"AA:BB:CC:DD:EE:03",rssi:-48,encrypted:false}]};
+   previewPairStart=0;
+   previewDiscoveryStart=Date.now();
+   previewPair={state:"scanning",error:"",candidates:[{mac:"AA:BB:CC:DD:EE:03",rssi:-48,encrypted:false,model:2},{mac:"AA:BB:CC:DD:EE:04",rssi:-51,encrypted:false,model:5},{mac:"AA:BB:CC:DD:EE:05",rssi:-52,encrypted:false,model:3},{mac:"AA:BB:CC:DD:EE:07",rssi:-50,encrypted:false,model:1}]};
    return Promise.resolve({});
  }
  if(method==='Shelly.BLU.Pair') {
    previewPair.state="connecting";previewPair.role=params.role;previewPair.mac=params.mac;
    previewPairStart=Date.now();return Promise.resolve({});
  }
- if(method==='Shelly.BLU.Cancel') {previewPair.state="error";previewPair.error="Preview: pairing cancelled";return Promise.resolve({});}
+ if(method==='Shelly.BLU.Cancel') {previewPairStart=0;previewPair.state="error";previewPair.error="Preview: pairing cancelled";return Promise.resolve({});}
+ if(method==='Shelly.BLU.Resume') {previewPair.state="connecting_secure";previewPairStart=Date.now();return Promise.resolve({});}
  if(method==='Shelly.BLU.Status') {
+   if(previewPair.state==='scanning' && Date.now()-previewDiscoveryStart<3000)
+     return Promise.resolve({...previewPair,candidates:[]});
    if(previewPairStart && previewPair.state!=="done" && previewPair.state!=="error") {
-     const stages=["connecting","securing_link","discovering_services","enabling_beacon","setting_pin","connecting_secure","reading_key","waiting_encrypted_beacon","done"];
-     previewPair.state=stages[Math.min(8,Math.floor((Date.now()-previewPairStart)/1000))];
+     const stages=["connecting","securing_link","discovering_services","enabling_beacon","reading_key","waiting_encrypted_beacon","done"];
+     previewPair.state=stages[Math.min(stages.length-1,Math.floor((Date.now()-previewPairStart)/1000))];
      if(previewPair.state==="done") {
-       const role=previewPair.role===0?"closed":"open";
+       const role=["closed","open","motion","indoor","outdoor","button"][previewPair.role];
        previewInfo.components[0].blu[role+"_mac"]=previewPair.mac;
+       if(role==='motion') Object.assign(previewInfo.components[0].blu.motion,{secure:true,seen:true,active:false,battery:88,rssi:-51,age_s:0});
      }
    }
    return Promise.resolve(previewPair);
  }
  if(method==='Shelly.SetConfig' && params.id===1){
-   Object.assign(previewInfo.components[0],params.config);
+   const c=previewInfo.components[0],{blu,...config}=params.config;
+   Object.assign(c,config);
+   if(blu){
+     for(const [key,value] of Object.entries(blu)){
+       const role=key.replace(/_name$/, '');
+       if(key.endsWith('_name')&&c.blu[role]) c.blu[role].name=value;
+       else c.blu[key]=value;
+     }
+   }
    refreshUI();return Promise.resolve({});
  }
  if(method==='Shelly.SetState' && params.id===1){
-   const c=previewInfo.components[0];c.cur_state=c.cur_state===1?0:1;
-   c.cur_state_str=c.cur_state===1?'closed':'open';
-   c.blu.closed.active=c.cur_state===1;c.blu.open.active=c.cur_state===0;
+   advancePreview();
+   const c=previewInfo.components[0];
+   if(c.cur_state===2||c.cur_state===3){c.previous_direction=c.cur_state;c.cur_state=4;}
+   else if(c.cur_state===4){const prev=c.previous_direction||2;c.cur_state=c.resume_after_stop?prev:prev===2?3:2;}
+   else c.cur_state=c.cur_state===1?2:3;
+   c.cur_state_str=c.cur_state===2?'opening':c.cur_state===3?'closing':'stopped';
+   c.state_age_ms=0;previewMoveFrom=previewPosition;previewMoveStart=Date.now();
+   c.blu.closed.active=false;c.blu.open.active=false;
    refreshUI();return Promise.resolve({});
  }
  return Promise.reject(new Error('Podgląd panelu: ta operacja wymaga fizycznego Shelly.'));

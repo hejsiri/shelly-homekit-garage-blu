@@ -1,229 +1,192 @@
-# Garage door with encrypted Shelly BLU sensors
+# Garage BLU — configuration and development
 
-Targets: **Shelly 1 Gen3** and **Shelly Plus 1**, with separate firmware packages. Not Mini or Gen4. HomeKit uses Wi-Fi. The two
-Shelly BLU Door/Window (SBDW-002C) sensors retain their original firmware.
+Garage BLU adds encrypted Shelly BLU devices and a garage dashboard to
+[Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
+The current OTA release is **2.16.1-blu35 for Shelly Plus 1**. Shelly 1 Gen3
+support remains in the source; new Gen3 builds and hardware checks are paused.
+HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
 
-This is an experimental implementation. The firmware compiles, cryptographic
-and host-side tests pass, but BLE pairing and operation have **not** been tested
-on physical Shelly hardware. Do not treat a demonstration in the local web
-preview as evidence of successful radio pairing.
+Previous versions have run on a physical Plus 1, with OTA and encrypted
+Door/Window readings confirmed. Motion and Button1 readings have also been
+observed in the panel. This release has host-side checks and a local UI preview;
+its changes still need verification after installation on a physical garage.
+A preview does not demonstrate successful BLE pairing or relay operation.
 
-## Wspierane urządzenia Garage BLU
+## Supported devices
 
-| Urządzenie | Status w tym wydaniu |
+| Device | Function |
 | --- | --- |
-| **Shelly 1 Gen3 (S1G3)** | Osobna paczka Garage BLU dla Gen3; kompilacja i testy lokalne przeszły, testy na sprzęcie pozostają do wykonania. |
-| **Shelly Plus 1 (Plus1)** | Osobna paczka ESP32 z obsługą BLE; działanie na sprzęcie wymaga weryfikacji. |
-| **Shelly BLU Door/Window (SBDW-002C)** | Zaimplementowane dwa czujniki: pełne zamknięcie i pełne otwarcie bramy. Czujniki zachowują fabryczny firmware; parowanie i odbiór BLE wymagają testów na sprzęcie. |
-| Shelly 1 Mini Gen3, 1PM Gen3, pozostałe Gen3, pozostałe Plus, Gen1 i Pro | Brak paczek i obsługi Garage BLU dla tych modeli w tym wydaniu. |
-| Shelly Gen4 | Brak portu Garage BLU dla platformy Gen4. |
-| Shelly BLU H&T (temperatura i wilgotność), Shelly BLU Button, czujnik ruchu Shelly BLU Motion oraz czujnik wycieku Shelly BLU | Wkrótce — planowane wsparcie; jeszcze niedostępne w aktualnym wydaniu. |
-| Inne czujniki BLE | Obsługa nie została dodana. |
+| Shelly Plus 1 | Garage relay, BLE receiver, web panel and HomeKit connection; current build target. |
+| Shelly 1 Gen3 | Separate ESP32-C3 target retained in source; no new release package. |
+| Two BLU Door/Window, SBDW-002C | Fully closed and fully open endpoints. |
+| One BLU Motion, SBMO-003Z | Motion in the panel and an optional HomeKit Motion Sensor service. |
+| Two BLU H&T, SBHT-003C | Indoor/outdoor temperature and humidity in the panel and HomeKit. |
+| One BLU Button1 | Single press: open / stop / close. Authenticated beacons: presence in BLE range. |
 
-## Installation and OTA updates
+Other controller variants, including Mini, 1PM and Gen4, are not supported by
+these packages. Door/Window Outdoor ZB (SBDW-302C) and a BLU leak sensor remain
+planned. H&T Gen3 with an e-ink screen is a Wi-Fi device, not this BLU H&T.
 
-Follow the [Polish installation and update instructions](docs/AKTUALIZACJA.md).
-Download Garage BLU firmware from <https://hejsiri.pl/firmware/garage-blu/>.
-The upstream rojer.me packages do not contain these BLU changes.
+## Install and update
 
-## Add a sensor without the Shelly application
+Follow the [installation instructions](docs/AKTUALIZACJA.md) and use the
+[Garage BLU OTA channel](https://hejsiri.pl/firmware/garage-blu/).
+Only the controller receives this firmware; do not upload it to BLU devices.
+The S1G3 and Plus1 packages are not interchangeable. Upstream packages do not
+include Garage BLU features.
 
-BLU Door/Window sensors do not need a firmware update or replacement firmware.
-They are intended to run their original Shelly firmware; pair them with the
-controller through the Garage BLU web panel. Only the Shelly 1 Gen3 or Shelly Plus 1 controller
-receives the Garage BLU OTA package. Physical pairing remains unverified.
+The panel supports **Check → Install** and ZIP file upload. It authenticates
+before uploading, waits for the device response and reports failures/timeouts.
+The garage dashboard is hidden during an update. With device authentication
+enabled, it loads only after access to the protected full-status RPC succeeds;
+logout or loss of the connection unloads it and clears cached dashboard data.
 
-1. Set an administrator password in the web panel's **Security Settings**.
-   Provisioning RPCs require authentication to be configured. Use a trusted
-   local network: the existing panel uses HTTP/WebSocket, not HTTPS.
-2. Select **Garage Door Opener** mode and click **Pair** beside **Closing sensor**
-   or **Opening sensor**.
-3. Hold the BLU sensor's button for more than 10 seconds to enable pairing mode.
-   Choose the discovered Door/Window sensor from the list. Discovery is limited
-   to eight devices advertising the Door/Window model and pairing-mode flag.
-4. For a new or factory-reset sensor, choose a **new six-digit PIN** (100000–999999).
-   For an encrypted sensor, also enter its **current PIN** and choose a different
-   new PIN; alternatively factory-reset that sensor first. No Shelly app is
-   required. Keep the new PIN for later reconfiguration.
-5. Click **Pair selected sensor**. Firmware establishes a bonded BLE connection,
-   enables beacon mode, writes the new PIN, reconnects with PIN authentication,
-   and reads the newly generated BTHome key. Keys are stored on Shelly and are
-   never included in the web status response. PINs are not saved in configuration.
-6. Wait for **Sensor paired and encrypted state verified**. Completion requires
-   an authenticated encrypted state advertisement, not just a GATT connection.
-   Wake the sensor if necessary. The pairing operation can be cancelled or can
-   time out; errors remain visible in the panel.
-7. Repeat for the second endpoint. Enable **BLU endpoint sensors**, set the
-   timeout (default 180 seconds, 30–3600 allowed), and save. Saving the general
-   BLU configuration refreshes the readings and restarts the service; pairing saves its own assignment.
+## Pair and name devices
 
-Discovery lasts 60 seconds, connection/configuration has a 90-second deadline,
-and encrypted-beacon verification can wait for up to 180 seconds. The sensors
-remain encrypted if setup fails after the PIN write: retry using that new PIN,
-or factory-reset the sensor. A stale bond can be replaced once on the explicitly selected outgoing pairing
-connection; this does not bypass PIN authentication. If reconnection requires
-physical pairing mode again, the panel asks you to hold the sensor button again.
+1. Configure an administrator password and select **Garage Door Opener** mode.
+   Pairing RPCs require authentication to be configured. The local panel uses
+   HTTP/WebSocket, so use a trusted local network.
+2. Click **Pair** beside the required role. Discovery starts in a modal.
+3. Hold the device button for more than 10 seconds, then release it. One matching
+   device is selected automatically. If several match, choose the intended one.
+4. No PIN is requested by default. The modal asks for one only if the device
+   requires legacy authentication or PIN-based encryption activation.
+5. For the same saved MAC/key, a new correctly decrypted reading can confirm
+   the existing configuration without another BLE security exchange. Otherwise
+   the controller bonds, enables beacons and reads the key. A device with no key
+   and a writable key characteristic can receive a randomly generated key.
+6. Completion requires a fresh, authenticated encrypted packet. A BLE connection
+   alone is not success. If the radio sleeps, the modal asks for pairing mode
+   again and resumes automatically on a fresh advertisement from that device.
+   Cancellation and errors remain visible; a retry does not erase unrelated bonds.
+7. After pairing, **Name** appears in a new row below **Pair**, before the status.
+   Enter a name and use **Save** in the garage section. It is stored on Shelly
+   and used on dashboard tiles/readings. The garage tile uses the first **Name**
+   field in that section. Empty device names restore the default label.
+8. Pair both endpoint devices, enable **BLU sensors**, set the freshness timeout
+   (default 180 seconds, permitted 30–3600), and save.
 
-For mounting, the closing sensor must detect its magnet only at the fully
-closed endpoint, and the opening sensor only at the fully open endpoint.
-Wired polarity, swap and open-sensor-disable settings do not affect BLU roles.
+Names are limited to 64 UTF-8 bytes. Renaming keeps the encrypted keys and live
+readings. Motion and H&T HomeKit services also use these names; Apple Home may
+retain names that were manually assigned there. Optional services exist only
+for securely paired devices, retain stable instance IDs, and report a fault
+rather than disappear when the device stops responding.
+
+The closing contact must detect its magnet only at the fully closed endpoint,
+and the opening contact only at the fully open endpoint. Wired polarity/swap
+settings do not change these BLU role assignments. A failed new pairing attempt
+can coexist with working readings from an earlier saved key; the panel reports
+recent encrypted readings separately from the result of that attempt.
+
+## Dashboard and garage state
+
+The dashboard receives state from the same firmware component as HomeKit.
+After a movement timeout, either valid endpoint clears both the timeout flag
+and HomeKit obstruction notification. Missing, stale or conflicting endpoints
+cannot clear the fault. The animation estimates travel between endpoints from
+the configured movement time; the endpoint contacts confirm the actual limits.
+An obstruction displays a fixed 50% position as a visual fault indicator.
+The scene is revealed only after all current theme images are loaded and decoded;
+legacy house/car layers are not requested during page startup.
+
+The **Continue previous direction after stop** switch chooses the direction of
+the next relay impulse after a stop. Match it to the motor controller's behavior;
+it does not reprogram the motor controller.
+
+Button1 beacons control only the picture of the car. A new authenticated packet
+shows it; exceeding the presence timeout (default 45 seconds) hides it. The
+manual show/hide button lasts until the next packet or presence transition.
+Repeated status polls of the same packet preserve that manual choice. Presence
+means the button is in BLE range, not proof of an exact parking location.
+Beacons never trigger the relay. A fresh single press can trigger the normal
+open / stop / close action when the garage inputs are ready.
 
 ## Authentication and replay protection
 
-Only AES-CCM-authenticated BTHome v2 advertisements from each assigned MAC and
-key are used. Plaintext packets are rejected, including for previously paired
-MACs. Unknown, malformed and unsupported contact data do not update state.
+Only AES-CCM-authenticated BTHome v2 packets from the assigned MAC and key enter
+the receive path. Plaintext, malformed payloads and replayed counters are rejected.
+Each accepted encrypted counter is committed to NVS before the payload is exposed
+to the application. A failed commit rejects the packet. There is no counter-wrap
+or restart bypass. Re-pairing with the same key retains its counter history.
 
-Each accepted encrypted counter must be strictly greater than its predecessor.
-The counter is committed to NVS **before** the authenticated payload is exposed
-to the application. A failed commit rejects the message. This also prevents a
-captured packet being accepted again after controller restart. There is no
-counter-wrap or counter-reset exception; rotate the key by pairing with a new PIN when needed.
+Each role's key, MAC and counter are in the `blu_secure` NVS namespace, separate
+from JSON configuration and status RPCs. PINs are not saved in configuration.
+This storage does not prevent physical flash extraction. The controller's
+factory reset erases this namespace without resetting external BLU devices.
+Persisting counters trades flash writes for replay protection; endurance and
+radio timing still need assessment with real beacon rates.
 
-Each role's key, MAC and counter are stored in the `blu_secure` NVS namespace,
-separate from the JSON configuration and FS RPCs. This is not encrypted storage
-against physical flash extraction. The Shelly factory-reset routine erases the
-namespace; it does not reset the external BLU sensors. Persisting every new
-counter trades NVS writes for replay protection; flash endurance and timing
-must be assessed with actual beacon rates during hardware validation.
+Physical pairing mode and BLE bonding authorize enrollment. Required link
+security and legacy authentication are preserved; not displaying an unnecessary
+PIN field does not disable them. Existing bonds are renewed only for the
+selected peer when the recovery path calls for it.
 
-New-device enrollment begins with physical pairing mode and BLE bonding; the
-initial trust step is not a claim of cryptographic device identity. Existing
-encrypted devices require PIN authentication. The new PIN rotates the BTHome
-key so that old-key recordings cannot bootstrap a newly enrolled device.
-
-Before both first readings, after a timeout, while BLU pairing is active, on
-scan failure or with contradictory endpoints, BLU-controlled garage commands
-are blocked. HomeKit's current position read returns an error when data is
-unreliable. This prevents new relay pulses; it does not physically stop a motor
-already moving or replace the motor controller's safety functions.
+Commands are blocked before reliable endpoint readings, during pairing, after
+a timeout in sensor freshness, on scan failure, or with contradictory endpoints.
+HomeKit current-position reads return an error when data is unreliable. Blocking
+new relay impulses does not stop a motor already moving or replace its protections.
 
 Protocol references:
-- [Shelly common features and GATT UUIDs](https://shelly-api-docs.shelly.cloud/docs-ble/common/)
+- [Shelly BLE common features and GATT UUIDs](https://shelly-api-docs.shelly.cloud/docs-ble/common/)
 - [Shelly encryption](https://shelly-api-docs.shelly.cloud/docs-ble/encryption/)
 - [BTHome AES-CCM and replay requirements](https://bthome.io/encryption/)
 
-## Build and checks on this Mac
+## Build and test
 
-Mongoose OS CLI: `~/.mos/bin/mos`, built natively for Apple Silicon from official
-`mongoose-os/mos`, commit `b44964e63a926c1ac2af7496c8749555d6c3e166`.
-USB dependencies are under `~/.mos/deps`. No Homebrew installation is needed.
-The official prebuilt download URLs returned HTTP 404 on 2026-10-22.
-
-Start Docker Desktop and run:
+Start Docker Desktop. The current default target is Shelly Plus 1:
 
 ```sh
-./tools/build-blu.sh
-./tests/run-blu-tests.sh
+bash tools/build-blu.sh
+bash tests/run-blu-tests.sh
 node --check fs_src/script.js
+node tests/blu_pairing_ui_test.js
+node tests/garage_auth_ui_test.js
+node tests/garage_dashboard_ui_test.js
+node tests/garage_visualization_ui_test.js
+node tests/garage_car_presence_test.js
+node tests/garage_named_status_test.js
+node tests/garage_scene_loading_test.js
+node tests/blu_button_indicator_test.js
+node tests/ota_upload_ui_test.js
 ```
 
-The build script stages sources under `~/.mos/work/shelly-garage-blu` because
-`mos` rejects paths containing spaces. It copies the firmware back to
-`build_Shelly1Gen3/fw.zip`. This target retains the existing Gen3 pinout and
-OTA layout. Do not flash this image onto another model.
+The helper uses `~/.mos/bin/mos`, stages sources under
+`~/.mos/work/shelly-garage-blu` to avoid spaces in the build path, and copies
+`build_ShellyPlus1/fw.zip` back to the checkout. It forces application and web
+panel regeneration while retaining the SDK cache. To build the retained Gen3
+source, set `SHELLY_BLU_MODEL=Shelly1Gen3`; its image goes to
+`build_Shelly1Gen3/fw.zip`. Never interchange these targets.
 
-Host tests use the actual firmware decoder and AES-CCM implementation with
-an NVS test adapter. They verify a published BTHome interoperability vector,
-modified ciphertext/MIC, wrong identity, truncation, plaintext rejection,
-failed persistence, replay in the same process and after a process restart,
-sensor freshness/conflicts, and 100,000 arbitrary payloads under ASan/UBSan.
-They do not simulate the NimBLE connection or security state machine.
+Host checks cover the actual decoder and AES-CCM/replay implementation,
+persistence failures/restarts, arbitrary payloads under ASan/UBSan, pairing
+recovery helpers, strict status JSON, optional HomeKit services, endpoint
+recovery, name validation, modal behavior, authorization and OTA errors.
+They do not replace NimBLE, RF, relay or end-to-end Apple Home tests.
 
 ## Local previews
 
-`python3 tools/simulator/panel-preview.py` serves the original firmware panel
-at `http://127.0.0.1:18766` with a clearly marked mock RPC adapter. The **Pair**
-flow here is a UI demonstration and does not change any sensor or store a key.
+`python3 tools/simulator/panel-preview.py` serves the original panel at
+`http://127.0.0.1:18766` with a clearly marked mock adapter. Pairing, saving names
+and beacons here are simulated and do not contact Shelly.
+`./tools/simulator/start.sh` serves the separate door-motion demonstration at
+`http://127.0.0.1:18765` using a separate motion model.
 
-`./tools/simulator/start.sh` serves the separate door-motion demonstration
-at `http://127.0.0.1:18765`. It uses the real plaintext decoder for generated
-sample packets and a separate motion model. It does not test the new secure
-receive path, BLE hardware, ESP32 execution or HomeKit networking.
+## Publish OTA
+
+Run `python3 tools/ota/prepare.py --model ShellyPlus1` after a successful build.
+It generates versioned ZIP/SHA-256 files, channel JSON, release metadata, a
+static download page and CORS settings under `releases/hosting/garage-blu/`.
+The output contains no device configuration, keys or credentials.
+
+Upload the ZIP and checksum first to `domains/hejsiri.pl/public_html/firmware/garage-blu/`.
+Verify the public ZIP hash and size, then publish metadata and switch `update.json`
+last. Check public JSON, byte-range requests (206) and OPTIONS preflight (204).
+Publishing a package does not install it on any device.
 
 ## Remaining hardware validation
 
-Verify physical discovery, Just Works enrollment of reset sensors, PIN
-rotation/reconnection, wrong-PIN failure, beacon interval, timeout/cancellation,
-power loss during persistence, NVS endurance, runtime heap, Wi-Fi/BLE
-coexistence, metal-door reception and end-to-end HomeKit/relay behavior.
-
-## Build verification — 2026-10-22
-
-Success, built S1G3/esp32c3 version 2.16.1 (20261022-202353).
-
-App size: 1356768 of 2818048 (48%). ZIP integrity and local security/decoder tests passed.
-BLE pairing on physical hardware remains unverified.
-
-## OTA hosting — hejsiri.pl
-
-The Shelly1Gen3 and ShellyPlus1 web panels use `https://hejsiri.pl/firmware/garage-blu/update.json`.
-Other model panels retain the upstream update channel. Garage BLU releases use
-`2.16.1-bluN` versions so subsequent BLE builds can be compared by the existing
-version parser. Publish only the tested build intended for this model.
-
-After `bash tools/build-blu.sh`, run `python3 tools/ota/prepare.py` to generate
-`releases/hosting/garage-blu/`: model-specific versioned ZIPs, SHA-256, channel JSON, metadata,
-static download page and CORS/preflight configuration. The output contains no
-sensor keys, configuration backups or device credentials. Upload this directory
-to `domains/hejsiri.pl/public_html/firmware/garage-blu/` on the active hosting.
-Verify downloaded ZIP SHA-256, range requests and cross-origin preflight after upload.
-Hosting a ZIP does not initiate an update on any device.
-
-### Published build — 2026-10-23
-
-Built S1G3/esp32c3 `2.16.1-blu1` (`20261023-062416`). ZIP: 2,241,371 bytes;
-application: 1,356,752 / 2,818,048 bytes. Includes the pairing status colors
-and hejsiri.pl update channel. SHA-256:
-`2d9bcd027678f7ae74349cc295e50e8b1444f1b3d4c1c12178168a838be3ece9`.
-
-Published to the active Hostido document root. Public HTTPS download matches
-this checksum; JSON CORS headers, OPTIONS preflight (204), and ZIP byte-range
-requests (206) verified. No device was flashed; hardware validation is pending.
-
-## Building Shelly Plus 1
-
-Use `SHELLY_BLU_MODEL=ShellyPlus1 bash tools/build-blu.sh` for the ESP32 Plus1 image.
-The default `bash tools/build-blu.sh` still builds ESP32-C3 S1G3. Build both with
-the same version before running `python3 tools/ota/prepare.py`; the OTA channel
-maps each model to its own ZIP. Do not interchange their packages.
-
-The Plus1 target retains the upstream pinout, 4 MB flash partition layout and
-0x190000 app slots, and enables BLE scanning, outgoing NimBLE pairing and Wi-Fi
-coexistence. Physical pairing, RAM, reception and OTA installation must be tested
-on each model separately.
-
-## Build verification — 2026-10-23 / blu2
-
-Both targets compiled successfully as `2.16.1-blu2`:
-
-| Target | Build ID | ZIP bytes | App bytes / slot bytes |
-| --- | --- | --- | --- |
-| Shelly Plus 1 | 20261023-083745 | 1806208 | 1375584 / 1638400 (84.0%) |
-| Shelly 1 Gen3 | 20261023-084052 | 2241371 | 1356752 / 2818048 (48.1%) |
-
-The Plus1 partition-table binary is byte-identical to the official upstream
-2.16.1 Plus1 release. ZIP integrity, per-model manifest/channel mapping, JS
-syntax and version comparison checks passed. Host decoder/AES-CCM/replay tests
-passed. Neither image has been flashed or tested on physical hardware.
-
-## Pairing fixes — 2.16.1-blu3
-
-- Status polling no longer clears PIN input after a pairing error. PINs are
-  cleared after an accepted pairing request, explicit cancellation or a new scan;
-  rejected requests preserve both input fields.
-- BLE pairing is initialized once when garage components are created, including
-  switching from Switch mode without rebooting the device.
-- Saving BLU endpoint settings refreshes readings and assignments immediately;
-  the firmware restarts its service, not necessarily the whole device.
-- Disconnect errors identify the pairing stage and BLE reason code.
-- The panel explicitly declares UTF-8. The build helper forces app-object and
-  panel regeneration to avoid stale artifacts after staging edits.
-
-`node tests/blu_pairing_ui_test.js` verifies PIN preservation across repeated
-status polls and rejected RPCs, and clearing after an accepted RPC.
-Both model images compiled and contain the new disconnect diagnostic.
-The first stock 1.7.5 -> blu2 OTA on a real Plus1 succeeded, with web UI and
-roughly 140 kB free heap shortly after boot. A physical Door/Window was discovered,
-but the initial pairing disconnected before completion; end-to-end encrypted
-pairing is not yet validated. No Gen3 hardware test has been performed.
+Check the complete pairing flow on Door/Window and Button1 1.0.23, sleep/wake
+recovery, encrypted packets after reboot, name persistence and HomeKit labels,
+button presence transitions, late endpoint recovery after a timeout, OTA,
+Wi-Fi/BLE coexistence, runtime heap and reception near the metal door.
+New Gen3 hardware validation remains paused.

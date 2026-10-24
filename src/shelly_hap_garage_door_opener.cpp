@@ -1,3 +1,4 @@
+#include "shelly_blu_motion_hap.hpp"
 /*
  * Copyright (c) Shelly-HomeKit Contributors
  * All rights reserved
@@ -126,19 +127,20 @@ StatusOr<std::string> GarageDoorOpener::GetInfo() const {
 StatusOr<std::string> GarageDoorOpener::GetInfoJSON() const {
   return mgos::JSONPrintStringf(
       "{id: %d, type: %d, name: %Q, "
-      "cur_state: %d, cur_state_str: %Q, "
+      "cur_state: %d, cur_state_str: %Q, state_age_ms: %d, "
       "move_time: %d, pulse_time_ms: %d, "
       "close_sensor_mode: %d, open_sensor_mode: %d, "
       "out_mode: %d, "
-      "sensor_swap: %B"
+      "sensor_swap: %B, resume_after_stop: %B, movement_timed_out: %B, obstruction_detected: %B"
 #ifdef SHELLY_GARAGE_BLE
       ",blu:%s"
 #endif
       "}",
       id(), type(), cfg_->name, (int) cur_state_, StateStr(cur_state_),
+      int((mgos_uptime_micros() - begin_) / 1000),
       cfg_->move_time_ms / 1000, cfg_->pulse_time_ms, cfg_->close_sensor_mode,
       cfg_->open_sensor_mode, (out_open_ != out_close_ ? cfg_->out_mode : -1),
-      cfg_->sensor_swap
+      cfg_->sensor_swap, cfg_->resume_after_stop, movement_timed_out_, obstruction_detected_
 #ifdef SHELLY_GARAGE_BLE
       ,
       blu::GetInfoJSON().c_str()
@@ -156,6 +158,21 @@ Status GarageDoorOpener::SetConfig(const std::string &config_json,
              "{blu:{enable:%B,closed_mac:%Q,open_mac:%Q,stale_after_s:%d}}",
              &blu_enable, &closed_mac, &open_mac, &stale_after);
   mgos::ScopedCPtr closed_owner(closed_mac), open_owner(open_mac);
+  const char *roles[] = {"closed", "open", "motion", "indoor", "outdoor", "button"};
+  std::string names[6];
+  bool has_name[6] = {};
+  // Validate every name before changing any configuration.
+  for (int i = 0; i < 6; i++) {
+    char *name = nullptr;
+    const std::string format = std::string("{blu:{") + roles[i] + "_name:%Q}}";
+    json_scanf(config_json.c_str(), config_json.size(), format.c_str(), &name);
+    mgos::ScopedCPtr owner(name);
+    if (name == nullptr) continue;
+    if (strlen(name) > 64)
+      return mgos::Errorf(STATUS_INVALID_ARGUMENT, "BLU name too long (max 64 bytes)");
+    names[i] = name;
+    has_name[i] = true;
+  }
   const char *old_closed = mgos_sys_config_get_blu_closed_mac();
   const char *old_open = mgos_sys_config_get_blu_open_mac();
   if (old_closed == nullptr) old_closed = "";
@@ -174,13 +191,13 @@ Status GarageDoorOpener::SetConfig(const std::string &config_json,
   cfg.name = nullptr;
   int move_time = -1, pulse_time_ms = -1, out_mode = -1;
   int close_sensor_mode = -1, open_sensor_mode = -1;
-  int8_t sensor_swap = -1;
+  int8_t sensor_swap = -1, resume_after_stop = -1;
   json_scanf(config_json.c_str(), config_json.size(),
              "{name: %Q, move_time: %d, pulse_time_ms: %d, "
              "close_sensor_mode: %d, open_sensor_mode: %d, out_mode: %d, "
-             "sensor_swap: %B}",
+             "sensor_swap: %B, resume_after_stop: %B}",
              &cfg.name, &move_time, &pulse_time_ms, &close_sensor_mode,
-             &open_sensor_mode, &out_mode, &sensor_swap);
+             &open_sensor_mode, &out_mode, &sensor_swap, &resume_after_stop);
   mgos::ScopedCPtr name_owner((void *) cfg.name);
   // Validate.
   if (cfg.name != nullptr && strlen(cfg.name) > 64) {
@@ -203,6 +220,12 @@ Status GarageDoorOpener::SetConfig(const std::string &config_json,
     *restart_required = true;
   }
 #ifdef SHELLY_GARAGE_BLE
+  for (int i = 0; i < 6; i++) {
+    if (has_name[i] && names[i] != blu::SensorName(i)) {
+      blu::SetSensorName(i, names[i].c_str());
+      *restart_required = true;
+    }
+  }
   if (blu_enable != mgos_sys_config_get_blu_enable() ||
       strcmp(closed, old_closed) != 0 || strcmp(open, old_open) != 0 ||
       stale_after != mgos_sys_config_get_blu_stale_after_s()) {
@@ -214,6 +237,7 @@ Status GarageDoorOpener::SetConfig(const std::string &config_json,
     *restart_required = true;
   }
 #endif
+  if (resume_after_stop != -1) cfg_->resume_after_stop = resume_after_stop;
   // We don't impose a limit on pulse time.
   // Apply.
   if (cfg.name != nullptr && strcmp(cfg_->name, cfg.name) != 0) {
@@ -305,10 +329,11 @@ void GarageDoorOpener::SetCurState(State new_state) {
       ("GDO %d: Cur State: %s -> %s (%d -> %d)", id(), StateStr(cur_state_),
        StateStr(new_state), (int) cur_state_, (int) new_state));
   bool obst_notify = false;
-  if (cur_state_ == State::kStopped) {
-    // Leaving Stopepd state - reset the "obstruction detected" flag.
+  if (new_state != State::kStopped) {
+    // A confirmed endpoint or a new movement clears the same fault in HAP and RPC.
+    obst_notify = obstruction_detected_;
     obstruction_detected_ = false;
-    obst_notify = true;
+    movement_timed_out_ = false;
   }
   if (new_state == State::kStopped) {
     // Entering Stopped state - remember what was the previous state.
@@ -325,42 +350,23 @@ void GarageDoorOpener::SetCurState(State new_state) {
 
 void GarageDoorOpener::ToggleState(const char *source) {
   if (!SensorsReady()) return;
-  // Every target state change generates a pulse.
-  State new_state =
-      (tgt_state_ == State::kClosed ? State::kOpen : State::kClosed);
-  const char *out_src = (new_state == State::kOpen ? "GDO:open" : "GDO:close");
-  if (cfg_->out_mode == 0 ||
-      (cfg_->out_mode == 1 && new_state == State::kClosed)) {
+  // Opening/closing -> stop. A second press reverses by default.
+  const bool moving = cur_state_ == State::kOpening || cur_state_ == State::kClosing;
+  State direction;
+  if (cur_state_ == State::kClosed) direction = State::kOpen;
+  else if (cur_state_ == State::kOpen) direction = State::kClosed;
+  else if (cur_state_ == State::kStopped) {
+    bool was_opening = pre_stopped_state_ == State::kOpening;
+    direction = (cfg_->resume_after_stop ? was_opening : !was_opening) ? State::kOpen : State::kClosed;
+  } else direction = cur_state_ == State::kOpening ? State::kOpen : State::kClosed;
+  const char *out_src = moving ? "GDO:stop" : direction == State::kOpen ? "GDO:open" : "GDO:close";
+  if (cfg_->out_mode == 0 || (cfg_->out_mode == 1 && direction == State::kClosed))
     out_close_->Pulse(true, cfg_->pulse_time_ms, out_src);
-  } else {
-    out_open_->Pulse(true, cfg_->pulse_time_ms, out_src);
-  }
-  switch (cur_state_) {
-    case State::kOpen:
-      SetTgtState(new_state, source);
-      SetCurState(State::kClosing);
-      break;
-    case State::kClosed:
-      SetTgtState(new_state, source);
-      SetCurState(State::kOpening);
-      break;
-    case State::kOpening:
-      SetTgtState(new_state, source);
-      SetCurState(State::kStopped);
-      break;
-    case State::kClosing:
-      SetTgtState(State::kOpen, source);
-      SetCurState(State::kOpening);
-      break;
-    case State::kStopped:
-      if (pre_stopped_state_ == State::kOpening) {
-        SetTgtState(State::kClosed, "fixup");
-        SetCurState(State::kClosing);
-      } else {
-        SetTgtState(State::kOpen, "fixup");
-        SetCurState(State::kOpening);
-      }
-      break;
+  else out_open_->Pulse(true, cfg_->pulse_time_ms, out_src);
+  if (moving) SetCurState(State::kStopped);
+  else {
+    SetTgtState(direction, source);
+    SetCurState(direction == State::kOpen ? State::kOpening : State::kClosing);
   }
 }
 
@@ -401,6 +407,10 @@ void GarageDoorOpener::SetTgtState(State new_state, const char *src) {
 
 void GarageDoorOpener::RunOnce() {
   const bool ready = SensorsReady();
+#ifdef SHELLY_GARAGE_BLE
+  const bool button_press = blu::ConsumeButtonPress();
+  if (button_press && ready) ToggleState("BLUbutton");
+#endif
   if (ready != sensors_ready_) {
     sensors_ready_ = ready;
     cur_state_char_->RaiseEvent();
@@ -450,6 +460,7 @@ void GarageDoorOpener::RunOnce() {
           break;
         }
         if (elapsed_ms > cfg_->move_time_ms) {
+          movement_timed_out_ = true;
           obstruction_detected_ = true;
           SetCurState(State::kStopped);
           break;
@@ -473,6 +484,7 @@ void GarageDoorOpener::RunOnce() {
       }
       int64_t elapsed_ms = (mgos_uptime_micros() - begin_) / 1000;
       if (elapsed_ms > cfg_->move_time_ms) {
+        movement_timed_out_ = true;
         obstruction_detected_ = true;
         SetCurState(State::kStopped);
         break;
@@ -502,6 +514,19 @@ void GarageDoorOpener::RunOnce() {
   }
 }
 
+#ifdef SHELLY_GARAGE_BLE
+void GarageDoorOpener::AddBLUServices(mgos::hap::Accessory *accessory) {
+  if (blu::SensorPaired(2))
+    blu_sensors_.push_back(blu::CreateMotionService());
+  for (int role = 3; role <= 4; role++) {
+    if (!blu::SensorPaired(role)) continue;
+    blu_sensors_.push_back(blu::CreateHTService(role, true));
+    blu_sensors_.push_back(blu::CreateHTService(role, false));
+  }
+  for (auto &service : blu_sensors_) accessory->AddService(service.get());
+}
+#endif
+
 void CreateHAPGDO(int id, Input *in_close, Input *in_open, Output *out_close,
                   Output *out_open, const struct mgos_config_gdo *gdo_cfg,
                   std::vector<std::unique_ptr<Component>> *comps,
@@ -530,6 +555,9 @@ void CreateHAPGDO(int id, Input *in_close, Input *in_open, Output *out_close,
   gdo2->set_primary(to_pri_acc);
   pri_acc->SetCategory(kHAPAccessoryCategory_GarageDoorOpeners);
   pri_acc->AddService(gdo2);
+#ifdef SHELLY_GARAGE_BLE
+  gdo2->AddBLUServices(pri_acc);
+#endif
 }
 
 }  // namespace hap

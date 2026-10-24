@@ -1,0 +1,43 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const source=fs.readFileSync('fs_src/script.js','utf8');const bridge=source.slice(source.indexOf('let garageDashboardComponent = null'));
+let listener,clicks=0,messages=[];const peer={},button={disabled:false,click(){clicks++}},view={motion:{from:0,to:.96,duration:20000,start:100}};const component={garageMotionState:view};
+const attrs={'data-src':'garage.html'},frame={contentWindow:peer,getAttribute:n=>attrs[n]||null,setAttribute:(n,v)=>{attrs[n]=v},removeAttribute:n=>{delete attrs[n]}},header={style:{display:'none'}};
+const other={style:{},innerHTML:''};
+const context={updateInProgress:false,updateCommonVisibility(){},document:{documentElement:{dataset:{}}},window:{addEventListener(type,fn){listener=fn}},location:{origin:'http://shelly'},performance:{now:()=>1100},el(c,id){if(c==='garage_dashboard')return frame;if(c==='header_container')return header;if(id==='toggle_btn')return button;return id==='garage_view'?view:other}};
+peer.postMessage=(d,o)=>{assert.equal(o,'http://shelly');messages.push(d)};vm.createContext(context);vm.runInContext(bridge,context);
+// No iframe request or telemetry/control access before server-verified access.
+const html=fs.readFileSync('fs_src/index.html','utf8');
+assert.match(html,/<div[^>]+id="header_container"[^>]+display:\s*none/);
+assert.doesNotMatch(html.match(/<iframe[^>]+id="garage_dashboard"[^>]*>/)[0],/\ssrc=/);
+context.garageDashboardRefresh(component,{cur_state_str:'opening'});
+listener({origin:'http://shelly',source:peer,data:{garageAction:'toggle'}});
+listener({origin:'http://shelly',source:peer,data:{garageAction:'theme',theme:'night'}});
+assert.equal(messages.length,0);assert.equal(clicks,0);assert.equal(attrs.src,undefined);
+assert.equal(context.document.documentElement.dataset.theme,undefined);
+context.garageDashboardSetAccess(true);assert.equal(attrs.src,'garage.html');assert.equal(header.style.display,'block');
+context.garageDashboardRefresh(component,{cur_state_str:'opening'});assert.equal(messages[0].garageTelemetry.motion.elapsed,1000);
+for(const [origin,source] of [['http://evil',peer],['http://shelly',{}]])listener({origin,source,data:{garageAction:'toggle'}});assert.equal(clicks,0);
+listener({origin:'http://shelly',source:peer,data:{garageAction:'toggle'}});assert.equal(clicks,1);
+button.disabled=true;listener({origin:'http://shelly',source:peer,data:{garageAction:'toggle'}});assert.equal(clicks,1);
+listener({origin:'http://shelly',source:peer,data:{garageAction:'ready'}});assert.equal(messages.length,2);
+listener({origin:'http://shelly',source:peer,data:{garageAction:'theme',theme:'night'}});assert.equal(context.document.documentElement.dataset.theme,'night');
+listener({origin:'http://shelly',source:peer,data:{garageAction:'theme',theme:'bad'}});assert.equal(context.document.documentElement.dataset.theme,'night');
+// Updating hides/unloads the frame and suppresses messages, independently of login.
+vm.runInContext(source.slice(source.indexOf('function setUpdateInProgress('),source.indexOf('function durationStr(')),context);
+context.setUpdateInProgress(true);assert.equal(header.style.display,'none');assert.equal(attrs.src,undefined);
+const posted=messages.length;
+button.disabled=false;
+context.garageDashboardRefresh(component,{cur_state_str:'closed'});
+listener({origin:'http://shelly',source:peer,data:{garageAction:'toggle'}});
+assert.equal(messages.length,posted);assert.equal(clicks,1);
+context.setUpdateInProgress(false);assert.equal(header.style.display,'block');
+// Logout forgets prior readings and cannot be undone by OTA completion or iframe ready.
+context.garageDashboardSetAccess(false);context.setUpdateInProgress(false);
+assert.equal(header.style.display,'none');assert.equal(attrs.src,undefined);
+listener({origin:'http://shelly',source:peer,data:{garageAction:'ready'}});
+listener({origin:'http://shelly',source:peer,data:{garageAction:'toggle'}});
+assert.equal(messages.length,posted);assert.equal(clicks,1);
+context.garageDashboardSetAccess(true);
+listener({origin:'http://shelly',source:peer,data:{garageAction:'ready'}});
+assert.equal(messages.length,posted);
+console.log('PASS: dashboard access, lazy iframe, logout/OTA visibility, telemetry, origin checks and blocked controls');

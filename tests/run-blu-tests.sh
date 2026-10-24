@@ -18,8 +18,20 @@ cd "$project_root"
 clang++ -std=c++14 -Wall -Wextra -Werror -fsanitize=address,undefined \
   -I src tests/blu_bthome_test.cpp -o "$test_dir/decoder"
 "$test_dir/decoder"
+clang++ -std=c++14 -Wall -Wextra -Werror -fsanitize=address,undefined -I src tests/blu_button_test.cpp -o "$test_dir/button"
+"$test_dir/button"
 clang++ -std=c++14 -DSHELLY_GARAGE_BLE -Wall -Wextra -Werror -fsanitize=address,undefined \
   -I src -I tests/stubs -I "$mbedtls_source/include" tests/blu_secure_test.cpp \
   src/shelly_blu_keys.cpp "$crypto_build/library/libmbedcrypto.a" -o "$test_dir/secure"
 "$test_dir/secure" "$test_dir/nvs.bin"
 "$test_dir/secure" "$test_dir/nvs.bin" restart
+python3 tests/blu_status_json_test.py
+python3 tests/blu_hap_topology_test.py
+python3 tests/blu_key_read_test.py
+python3 tests/blu_bond_reset_test.py
+python3 tests/blu_security_start_test.py
+
+python3 tests/garage_stop_behavior_test.py
+
+python3 tests/garage_endpoint_recovery_test.py
+python3 tests/blu_names_config_test.py

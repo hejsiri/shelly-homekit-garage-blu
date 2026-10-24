@@ -50,8 +50,14 @@ class GarageDoorOpener : public Component, public mgos::hap::Service {
                    bool *restart_required) override;
   Status SetState(const std::string &state_json) override;
   bool IsIdle() override;
+#ifdef SHELLY_GARAGE_BLE
+  void AddBLUServices(mgos::hap::Accessory *accessory);
+#endif
 
  private:
+#ifdef SHELLY_GARAGE_BLE
+  std::vector<std::unique_ptr<mgos::hap::Service>> blu_sensors_;
+#endif
   // NB: Values correspond to HAP Current Door State values.
   enum class State {
     kOpen = 0,
@@ -89,6 +95,7 @@ class GarageDoorOpener : public Component, public mgos::hap::Service {
   State pre_stopped_state_ = State::kStopped;
   int64_t begin_ = 0;
   bool obstruction_detected_ = false;
+  bool movement_timed_out_ = false;
   bool sensors_ready_ = true;
 };
 

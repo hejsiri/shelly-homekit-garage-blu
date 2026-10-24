@@ -690,13 +690,36 @@ static void HTTPHandler(struct mg_connection *nc, int ev, void *ev_data,
   if (ev != MG_EV_HTTP_REQUEST) return;
   struct http_message *hm = (struct http_message *) ev_data;
   const char *file = nullptr, *type = nullptr;
+  bool compressed = true;
   if (mg_vcasecmp(&hm->method, "GET") == 0) {
     if (mg_vcmp(&hm->uri, "/") == 0 || mg_vcmp(&hm->uri, "/ota") == 0) {
       file = "index.html.gz";
       type = "text/html";
+    } else if (mg_vcmp(&hm->uri, "/garage.html") == 0) {
+      file = "garage.html.gz";
+      type = "text/html";
     } else if (mg_vcmp(&hm->uri, "/favicon.ico") == 0) {
       file = "favicon.ico.gz";
       type = "image/x-icon";
+    }
+  }
+  if (file == nullptr && mg_vcasecmp(&hm->method, "GET") == 0) {
+    // Explicit public UI assets only; never expose arbitrary filesystem paths.
+    static const char *const assets[] = {
+        "/garage-v16-day.webp", "/garage-v16-night.webp",
+        "/garage-v16-door-day.webp", "/garage-v16-door-night.webp",
+        "/garage-v16-interior-day.webp", "/garage-v16-interior-night.webp",
+        "/garage-tesla-s-day.webp", "/garage-tesla-s-night.webp",
+        "/garage-house-day.webp", "/garage-house-night.webp",
+        "/garage-interior-car.webp", "/garage-interior-empty.webp",
+        "/garage-interior-car-night.webp", "/garage-interior-empty-night.webp",
+        "/garage-car.webp", "/garage-car-night.webp", "/garage-door-night.webp", "/garage-door.webp", "/garage-icon-open.svg", "/garage-icon-closed.svg"};
+    for (const char *uri : assets) {
+      if (mg_vcmp(&hm->uri, uri) != 0) continue;
+      file = uri + 1;
+      type = strstr(uri, ".svg") ? "image/svg+xml" : "image/webp";
+      compressed = false;
+      break;
     }
   }
   if (file == nullptr) {
@@ -710,7 +733,8 @@ static void HTTPHandler(struct mg_connection *nc, int ev, void *ev_data,
     ReportClientRequest(addr);
   }
   mg_http_serve_file(nc, hm, file, mg_mk_str(type),
-                     mg_mk_str("Content-Encoding: gzip\r\nPragma: no-cache"));
+                     mg_mk_str(compressed ? "Content-Encoding: gzip\r\nPragma: no-cache"
+                                            : "Cache-Control: max-age=0, must-revalidate"));
   (void) user_data;
 }
 

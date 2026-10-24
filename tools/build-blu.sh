@@ -5,7 +5,7 @@ set -euo pipefail
 project_root="$(cd "$(dirname "$0")/.." && pwd)"
 build_root="${SHELLY_BLU_BUILD_ROOT:-$HOME/.mos/work/shelly-garage-blu}"
 mos_bin="${MOS:-$HOME/.mos/bin/mos}"
-model="${SHELLY_BLU_MODEL:-Shelly1Gen3}"
+model="${SHELLY_BLU_MODEL:-ShellyPlus1}"
 case "$model" in
   Shelly1Gen3|ShellyPlus1) ;;
   *) echo "Unsupported BLU model: $model" >&2; exit 1 ;;
