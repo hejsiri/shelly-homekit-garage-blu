@@ -130,6 +130,10 @@ przez panel WWW Garage BLU. Naszą paczkę OTA instaluje się wyłącznie na ste
 <p>Planuję dodać obsługę czujnika wycieku Shelly BLU oraz Door/Window Outdoor ZB. BLU Button1 jest już obsługiwany.</p>
 <p>H&amp;T Gen3 z ekranem e-ink (S3SN-0U12A) korzysta z Wi-Fi i nie jest jeszcze obsługiwany przez tę integrację BLE.</p>
 <h2>Zmiany w {html.escape(version)}</h2>
+<p><strong>Odnośniki Garage BLU.</strong> Link projektu i zgłaszanie błędów w panelu
+prowadzą do repozytorium hejsiri/shelly-homekit-garage-blu. Pomoc dla bramy i aktualizacji
+otwiera dokumentację tego repozytorium. Usunięto komunikat Donation odsyłający
+do projektu bazowego.</p>
 <p><strong>Panel WWW po angielsku.</strong> Przetłumaczono pozostałe systemowe
 komunikaty panelu i wizualizacji: wskazówki, statusy, motywy i domyślne nazwy BLU.
 Nazwy wpisane samodzielnie w polach Name pozostają bez zmian.</p>

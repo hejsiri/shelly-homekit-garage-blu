@@ -18,7 +18,7 @@ Parowanie i działanie na fizycznym sprzęcie wymagają jeszcze weryfikacji.
 ## Pobieranie
 
 Aktualna paczka i jej suma SHA-256: <https://hejsiri.pl/firmware/garage-blu/>.
-Aktualne wydanie to **2.16.1-blu37**, dla Shelly Plus 1. Pobierz ZIP bez rozpakowywania. Opcjonalnie
+Aktualne wydanie to **2.16.1-blu38**, dla Shelly Plus 1. Pobierz ZIP bez rozpakowywania. Opcjonalnie
 porównaj `shasum -a 256 nazwa-paczki.zip` z plikiem `.sha256` obok paczki.
 `update.json` jest listą aktualizacji dla naszego panelu, a nie plikiem firmware.
 
@@ -47,7 +47,7 @@ porównaj `shasum -a 256 nazwa-paczki.zip` z plikiem `.sha256` obok paczki.
    **Shelly Plus 1:**
 
    ```text
-   http://ADRES_IP/rpc/Shelly.Update?url=https%3A%2F%2Fhejsiri.pl%2Ffirmware%2Fgarage-blu%2Fshelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu37.zip
+   http://ADRES_IP/rpc/Shelly.Update?url=https%3A%2F%2Fhejsiri.pl%2Ffirmware%2Fgarage-blu%2Fshelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu38.zip
    ```
 
    Przy włączonej autoryzacji użyj uwierzytelnionego panelu lub klienta RPC.
@@ -55,7 +55,7 @@ porównaj `shasum -a 256 nazwa-paczki.zip` z plikiem `.sha256` obok paczki.
    z instrukcji Gen1 nie są instrukcją RPC dla Gen3 / Plus.
 4. Nie odłączaj zasilania. Poczekaj na zakończenie aktualizacji i restart,
    następnie ponownie otwórz panel. Sprawdź adres w routerze, jeśli się zmienił.
-5. Sprawdź w panelu model i wersję `2.16.1-blu37`. Ustaw hasło administratora,
+5. Sprawdź w panelu model i wersję `2.16.1-blu38`. Ustaw hasło administratora,
    wybierz **Garage Door Opener**, ustaw sterowanie zgodnie z napędem i sparuj
    czujniki **Closing sensor** oraz **Opening sensor**. Przetestuj oba położenia
    i działanie przekaźnika pod nadzorem przed normalnym użyciem bramy.
@@ -306,3 +306,12 @@ opis beaconów Button1, wskazówkę kierunku po zatrzymaniu, powiadomienie aktua
 statusy bramy, ruchu i obecności, etykiety motywów oraz opisy dostępności.
 Domyślne nazwy BLU są po angielsku; własne nazwy zapisane w polach Name pozostają
 bez zmian. Status Przeszkody nazywa się teraz **Obstruction**.
+
+
+### blu38 — odnośniki do repozytorium Garage BLU
+
+Główny link projektu i zgłaszanie błędów w panelu prowadzą do
+https://github.com/hejsiri/shelly-homekit-garage-blu oraz jego Issues.
+Pomoc dla Garage Door i Firmware prowadzi do dokumentacji Garage BLU.
+Usunięto komunikat Donation odsyłający do projektu bazowego.
+Stopka zachowuje wskazanie autorów Shelly-HomeKit z listą AUTHORS.md w tym repozytorium.
