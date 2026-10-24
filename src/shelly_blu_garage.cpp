@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <strings.h>
+#include <utility>
 #include "mgos.hpp"
 #include "mgos_bt_gap.h"
 #include "mgos_sys_config.h"
@@ -18,6 +19,8 @@ Sensor sensors[6];
 mgos_bt_addr addresses[6];
 bool configured = false;
 ButtonEvents button_events;
+ProgrammableButtonEvents programmable_button_events;
+std::function<void(uint8_t)> button_event_handler;
 bool button_pending = false;
 double button_press_time = 0;
 uint32_t button_press_sequence = 0;
@@ -60,13 +63,17 @@ void ScanResult(int, void *event_data, void *) {
                        Decode(plain, plain_size, &reading, index == 2)))
     return;
   const bool button_event = index == 5 && button_events.Accept(reading, mgos_uptime());
-  if (button_event && !PairingBusy()) {
+  const int switch_event = index == 5 ? programmable_button_events.Accept(reading) : -1;
+  const bool events_allowed = !PairingBusy();
+  if (button_event && events_allowed) {
     ++button_press_sequence;
     button_pending = true;
     button_press_time = mgos_uptime();
   }
   sensors[index].Update(reading, mgos_uptime(), result->rssi, index == 2 ? 1 : index >= 3 ? 2 : 0);
   ++packet_sequence[index];
+  if (switch_event >= 0 && events_allowed && button_event_handler)
+    button_event_handler(static_cast<uint8_t>(switch_event));
   PairingVerified(index);
 }
 
@@ -114,6 +121,7 @@ bool Enabled() {
 void ResetReadings() {
   for (auto &sensor : sensors) sensor = Sensor();
   button_events = ButtonEvents();
+  programmable_button_events = ProgrammableButtonEvents();
   button_pending = false;
   const char *macs[6] = {SensorMAC(0), SensorMAC(1), SensorMAC(2), SensorMAC(3), SensorMAC(4), SensorMAC(5)};
   for (int i = 0; i < 6; i++) {
@@ -204,6 +212,21 @@ bool ConsumeButtonPress() {
   button_pending = false;
   return result;
 }
+void SetButtonEventHandler(std::function<void(uint8_t)> handler) {
+  button_event_handler = std::move(handler);
+}
+const char *CarName() {
+  const char *name = mgos_sys_config_get_blu_car_name();
+  return name && *name ? name : "Car presence";
+}
+bool CarPresenceReady() {
+  return SensorPaired(5) && mgos_bt_get_status() == MGOS_BT_STARTED &&
+         mgos_bt_gap_scan_in_progress();
+}
+bool CarPresent() {
+  return CarPresenceReady() &&
+         sensors[5].Fresh(mgos_uptime(), mgos_sys_config_get_blu_presence_timeout_s());
+}
 bool MotionReady() { return SensorReady(2); }
 std::string GetInfoJSON() {
   std::string result = mgos::JSONPrintStringf(
@@ -214,7 +237,8 @@ std::string GetInfoJSON() {
   const char *button_name = mgos_sys_config_get_blu_button_name();
   const char *car_name = mgos_sys_config_get_blu_car_name();
   result += mgos::JSONPrintStringf(
-      ",button_name:%Q,car_name:%Q", button_name ? button_name : "", car_name ? car_name : "");
+      ",button_name:%Q,car_name:%Q,car_present:%B,car_presence_ready:%B",
+      button_name ? button_name : "", car_name ? car_name : "", CarPresent(), CarPresenceReady());
   const char *roles[] = {"closed", "open", "motion", "indoor", "outdoor", "button"};
   for (int i = 0; i < 6; i++) {
     const auto &sensor = sensors[i];

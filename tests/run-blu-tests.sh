@@ -27,6 +27,7 @@ clang++ -std=c++14 -DSHELLY_GARAGE_BLE -Wall -Wextra -Werror -fsanitize=address,
 "$test_dir/secure" "$test_dir/nvs.bin" restart
 python3 tests/blu_status_json_test.py
 python3 tests/blu_hap_topology_test.py
+python3 tests/blu_button_hap_test.py
 python3 tests/blu_key_read_test.py
 python3 tests/blu_bond_reset_test.py
 python3 tests/blu_security_start_test.py

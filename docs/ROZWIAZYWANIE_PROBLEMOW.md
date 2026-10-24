@@ -1,6 +1,6 @@
 # Rozwiązywanie problemów Garage BLU
 
-Dla **2.16.1-blu39 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Dla **2.16.1-blu40 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](KONFIGURACJA.md) · [Historia zmian](HISTORIA_ZMIAN.md)
@@ -114,8 +114,24 @@ obecność znika. Odbiór w zasięgu BLE nie dowodzi dokładnego miejsca postoju
 
 Obsługiwany jest świeży pojedynczy nacisk. Zwykły beacon obecności nie steruje
 przekaźnikiem. Sprawdź przypisanie Button1, nowy odczyt i gotowość krańcówek;
-przy niepewnym stanie bramy polecenie może zostać zablokowane. Nie szukaj osobnej
-usługi przycisku w HomeKit — w tej wersji Button1 steruje usługą bramy.
+przy niepewnym stanie bramy polecenie może zostać zablokowane. Podwójny i długi
+klik wysyłają zdarzenia HomeKit, bez bezpośredniego sterowania przekaźnikiem.
+
+### Nie widać przycisku lub obecności w aplikacji Dom
+
+1. Sprawdź, czy sterownik działa na blu40 lub nowszym i Button1 ma bezpieczne przypisanie w panelu.
+2. Po aktualizacji uruchom sterownik ponownie i pozwól aplikacji Dom odświeżyć konfigurację.
+   Już sparowanego Button1 nie trzeba parować ponownie. Nie resetuj HomeKit.
+3. Czujnik obecności używa Car name, a przycisk Name pod Button1; bez własnych nazw
+   szukaj Car presence i Button. Dom może zachować wcześniej nadane własne nazwy.
+4. W ustawieniach przycisku w Domu przypisz akcje do pojedynczego, podwójnego i długiego
+   naciśnięcia. Zdarzenia HomeKit nie wymagają gotowości krańcówek; bezpośrednie sterowanie
+   bramą pojedynczym kliknięciem nadal jej wymaga.
+5. Brak obecności po 45 sekundach bez beacona jest prawidłowy. Ręczne pokazanie auta
+   na grafice nie zmienia stanu czujnika w Domu. Brak Bluetooth lub nasłuchu BLE daje błąd odczytu.
+
+Powtórzenia, niepoprawne pakiety, beacony bez zdarzenia i naciśnięcia podczas
+parowania nie uruchamiają akcji przycisku w HomeKit.
 
 ## Aktualizacja zatrzymana na Uploading
 

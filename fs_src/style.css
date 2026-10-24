@@ -455,6 +455,7 @@ input:checked + .slider:before {
 .blu-pair-dialog select{max-width:100%}
 :root[data-theme="day"] .blu-open{color:#555;background:#eee}
 :root[data-theme="night"] .blu-open{color:#ccc;background:#383838}
+:is(#blu_closed_status,#blu_open_status) .blu-closed{color:#fff;background:#000}
 :root[data-theme="night"] .blu-waiting{color:#ffda85;background:#493714}
 @media(prefers-color-scheme:dark){:root:not([data-theme="day"]) .blu-waiting{color:#ffda85;background:#493714}}
 

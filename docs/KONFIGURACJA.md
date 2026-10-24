@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1-blu39 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Instrukcja dla **2.16.1-blu40 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -84,11 +84,11 @@ nazw ani statusów nad grafiką garażu.
 | Motion sensor | Status Motion / No motion, kafelek Motion detected / No motion i usługa ruchu w HomeKit. |
 | Indoor H&T | Temperatura i wilgotność wewnątrz, odczyt nad garażem i usługi w HomeKit. |
 | Outdoor H&T | Temperatura i wilgotność na zewnątrz, odczyt nad garażem i usługi w HomeKit. |
-| BLU Button1 | In range / Out of range, kafelek obecności i wskaźnik naciśnięcia. Pojedynczy nacisk steruje istniejącą bramą. |
+| BLU Button1 | In range / Out of range, kafelek obecności i wskaźnik naciśnięcia. Dwa akcesoria HomeKit: czujnik obecności auta i przycisk programowalny. Pojedynczy nacisk steruje także istniejącą bramą. |
 
 Usługi Motion i H&T są dodawane do HomeKit po bezpiecznym sparowaniu. Chwilowy brak
-odczytów nie usuwa ich z HomeKit; są raportowane jako niedostępne. Button1 nie jest
-w tym wydaniu oddzielną usługą przycisku w aplikacji Dom.
+odczytów nie usuwa ich z HomeKit; są raportowane jako niedostępne. Po sparowaniu
+Button1 pojawiają się osobne akcesoria obecności auta i przycisku programowalnego.
 
 ## Własne nazwy
 
@@ -99,15 +99,16 @@ Zapis na Shelly przetrwa ponowne otwarcie strony. Zmiana nazwy nie wymaga parowa
 - Motion używa nazwy na swoim kafelku.
 - Button1 używa Name na wskaźniku naciśnięcia. Osobne Car name określa nazwę kafelka auta.
   Puste pola pokazują podpowiedzi Button i Name of car. Obie nazwy zapisuje Save;
-  wyczyszczenie pól przywraca etykiety Button i Car presence na kafelkach.
+  wyczyszczenie pól przywraca etykiety Button i Car presence na kafelkach i nazwy
+  akcesoriów HomeKit. Zmiana Car name odświeża usługę HomeKit bez usuwania kluczy.
 - H&T używają nazw przy odczytach temperatury i wilgotności.
 - Nazwy krańcówek pozostają w ustawieniach.
 - Kafelek bramy używa pierwszego Name w sekcji Garage Door.
 
 Puste Name urządzenia BLU przywraca angielską nazwę domyślną. Limit wynosi 64 bajty
 UTF-8; polskie znaki mogą zajmować więcej niż jeden bajt. Teksty systemowe są po
-angielsku, lecz własne nazwy mogą być po polsku. Motion i H&T przekazują nazwy także
-do usług HomeKit; aplikacja Dom może zachować nazwy nadane wcześniej ręcznie.
+angielsku, lecz własne nazwy mogą być po polsku. Motion, H&T oraz oba akcesoria Button1
+przekazują nazwy także do HomeKit; aplikacja Dom może zachować nazwy nadane wcześniej ręcznie.
 
 ## Wizualizacja i statusy
 
@@ -144,12 +145,32 @@ Wskaźnik Button1 miga po nowym pojedynczym naciśnięciu, a nie od zwykłego be
 Naciśnięcie może wywołać normalne otwórz / stop / zamknij, jeśli stan krańcówek
 pozwala na sterowanie. Beacon nigdy nie uruchamia przekaźnika.
 
+### Obecność i przycisk w aplikacji Dom
+
+Od blu40 sparowany Button1 udostępnia dwa osobne akcesoria przez ten sam mostek Shelly:
+
+- **Czujnik obecności auta (Occupancy Sensor)** — nazwa z Car name. Obecność oznacza
+  świeży, poprawnie odszyfrowany beacon; po 45 sekundach bez pakietu zgłasza brak
+  obecności. To prawidłowy stan, nie błąd czujnika. Brak Bluetooth lub nasłuchu BLE zgłasza błąd
+  zamiast wiarygodnego odczytu. Ręczny przełącznik grafiki auta nie zmienia HomeKit.
+- **Przycisk programowalny (Stateless Programmable Switch)** — nazwa z Name pod
+  BLU Button1. W ustawieniach tego akcesorium w aplikacji Dom przypisz akcje do
+  pojedynczego, podwójnego i długiego naciśnięcia. Pojedynczy klik nadal bezpośrednio
+  steruje bramą, oprócz zdarzenia w HomeKit; podwójny i długi klik wysyłają tylko
+  zdarzenie HomeKit. Zwykłe beacony i powtórzenia tego samego pakietu nie wywołują akcji.
+
+Jeśli Button1 jest już bezpiecznie sparowany, wystarczy aktualizacja i restart
+sterownika. Nie resetuj HomeKit ani nie paruj BLU ponownie. Nowe akcesoria
+pojawią się po odświeżeniu konfiguracji w Domu. Mają stałe identyfikatory; brak
+beaconów lub zmiana nazwy nie usuwa ich z HomeKit. Dom może zachować własne, ręcznie
+nadane nazwy.
+
 ## Dodanie do Apple Home
 
 1. Skonfiguruj role krańcówek i potwierdź poprawny stan bramy.
 2. W HomeKit Settings wybierz Setup i wyświetl kod QR / kod konfiguracji.
 3. W aplikacji Dom wybierz dodanie akcesorium i użyj tego kodu.
-4. Sprawdź połączenie i wskazania bramy; opcjonalne Motion i H&T pojawiają się po ich bezpiecznym sparowaniu.
+4. Sprawdź połączenie i wskazania bramy; opcjonalne Motion, H&T oraz oba akcesoria Button1 pojawiają się po ich bezpiecznym sparowaniu.
 
 Nie używaj HomeKit Reset do zwykłego odświeżenia statusu lub aktualizacji firmware;
 usuwa on parowania HomeKit i kod konfiguracji.

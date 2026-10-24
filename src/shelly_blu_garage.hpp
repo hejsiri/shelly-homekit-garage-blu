@@ -1,6 +1,7 @@
 #pragma once
 
 #ifdef SHELLY_GARAGE_BLE
+#include <functional>
 #include <string>
 #include "shelly_blu_bthome.hpp"
 namespace shelly {
@@ -18,6 +19,10 @@ void SetSensorName(int role, const char *name);
 const Sensor &MotionReading();
 bool MotionReady();
 bool ConsumeButtonPress();
+void SetButtonEventHandler(std::function<void(uint8_t)> handler);
+const char *CarName();
+bool CarPresenceReady();
+bool CarPresent();
 const Sensor &ReadingFor(int role);
 bool SensorReady(int role);
 bool SensorPaired(int role);

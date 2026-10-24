@@ -128,6 +128,22 @@ struct ButtonEvents {
   }
 };
 
+// HomeKit supports single, double and long presses. Keep this deduplication
+// separate from the garage's single-press debounce.
+struct ProgrammableButtonEvents {
+  int last_packet = -1;
+  int Accept(const Reading &r) {
+    if (r.packet_id < 0 || r.packet_id == last_packet) return -1;
+    last_packet = r.packet_id;
+    switch (r.button) {
+      case 1: return 0;
+      case 2: return 1;
+      case 4: return 2;
+      default: return -1;
+    }
+  }
+};
+
 inline bool DecodeAdvertisement(const uint8_t *data, size_t len, Reading *out) {
   bool found = false;
   Reading reading;

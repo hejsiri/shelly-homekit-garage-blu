@@ -2,7 +2,7 @@
 
 Garage BLU adds encrypted Shelly BLU devices and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu39 for Shelly Plus 1 and Shelly 1 Gen3**,
+The current OTA release is **2.16.1-blu40 for Shelly Plus 1 and Shelly 1 Gen3**,
 with separate model-specific ZIPs and checksums. The Gen3 image targets ESP32-C3;
 its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
@@ -30,7 +30,7 @@ A preview does not demonstrate successful BLE pairing or relay operation.
 | Two BLU Door/Window, SBDW-002C | Fully closed and fully open endpoints. |
 | One BLU Motion, SBMO-003Z | Motion in the panel and an optional HomeKit Motion Sensor service. |
 | Two BLU H&T, SBHT-003C | Indoor/outdoor temperature and humidity in the panel and HomeKit. |
-| One BLU Button1 | Single press: open / stop / close. Authenticated beacons: presence in BLE range. |
+| One BLU Button1 | Single press: open / stop / close. Separate HomeKit occupancy sensor and programmable button (single / double / long press). Authenticated beacons determine presence in BLE range. |
 
 Other controller variants, including Mini, 1PM and Gen4, are not supported by
 these packages. Door/Window Outdoor ZB (SBDW-302C) and a BLU leak sensor remain
@@ -105,13 +105,31 @@ The **Continue previous direction after stop** switch chooses the direction of
 the next relay impulse after a stop. Match it to the motor controller's behavior;
 it does not reprogram the motor controller.
 
-Button1 beacons control only the picture of the car. A new authenticated packet
+Button1 beacons update the car picture and a separate HomeKit occupancy accessory. A new authenticated packet
 shows it; exceeding the presence timeout (default 45 seconds) hides it. The
 manual show/hide button lasts until the next packet or presence transition.
 Repeated status polls of the same packet preserve that manual choice. Presence
 means the button is in BLE range, not proof of an exact parking location.
 Beacons never trigger the relay. A fresh single press can trigger the normal
 open / stop / close action when the garage inputs are ready.
+
+After securely pairing Button1, HomeKit exposes two bridged accessories:
+
+- **Car presence** (Occupancy Sensor): uses **Car name** and the same authenticated
+  presence state as the dashboard. Missing beacons for 45 seconds mean normal
+  absence; unavailable Bluetooth or a stopped BLE scan reports a fault.
+- **Button** (Stateless Programmable Switch): uses Button1 **Name** and sends
+  single, double and long presses, configurable in Apple Home. A single press
+  also retains direct garage control. Double and long presses only send HomeKit
+  events. Beacon packets and unsupported press types do not trigger button events.
+
+Already paired Button1 devices gain these accessories after updating and restarting
+the controller. No HomeKit reset or new BLU pairing is required. Accessory IDs
+remain stable when names change or the button is out of range. Apple Home may
+keep its previously assigned names.
+
+Event mapping follows the [BTHome event definitions](https://bthome.io/format/#events)
+and [Apple programmable switch events](https://github.com/apple/HomeKitADK/blob/master/HAP/HAPCharacteristicTypes.h).
 
 ## Authentication and replay protection
 

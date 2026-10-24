@@ -1,6 +1,6 @@
 # Historia zmian Garage BLU
 
-Bieżące opisy i instrukcje dotyczą **2.16.1-blu39** (stan: 2026-10-24).
+Bieżące opisy i instrukcje dotyczą **2.16.1-blu40** (stan: 2026-10-24).
 Zobacz [instalację i aktualizacje](AKTUALIZACJA.md), [konfigurację](KONFIGURACJA.md)
 i [rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md).
 
@@ -232,3 +232,19 @@ przycisku, drugie kafelek obecności auta. Puste pola pokazują podpowiedzi Butt
 i Name of car; Save zapisuje obie wartości na sterowniku. Wyczyszczenie pól
 przywraca domyślne etykiety kafelków. Zmiana nazwy nie wymaga ponownego parowania
 i zachowuje klucze oraz bieżące odczyty. Funkcja jest dostępna w paczkach Plus1 i S1G3.
+
+
+## blu40 — obecność auta i Button1 w HomeKit
+
+Sparowany Button1 udostępnia dwa osobne akcesoria HomeKit: Occupancy Sensor
+z nazwą Car name oraz Stateless Programmable Switch z nazwą Name przycisku.
+Pojedyncze, podwójne i długie naciśnięcia są przekazywane do aplikacji Dom.
+Pojedynczy klik zachowuje bezpośrednie sterowanie bramą. Zwykłe beacony,
+nieobsługiwane typy zdarzeń, niepoprawne i powtórzone pakiety nie wywołują akcji.
+
+Obecność w HomeKit i panelu pochodzi z tego samego stanu firmware; 45 sekund bez
+beacona oznacza brak obecności. Brak Bluetooth lub nasłuchu BLE jest raportowany jako błąd.
+Akcesoria mają stałe identyfikatory i pozostają w HomeKit po utracie zasięgu.
+Zmiana Car name odświeża nazwę akcesorium bez usuwania kluczy i odczytów.
+
+Badge Closed ma czarne tło i biały tekst w jasnym i ciemnym motywie.

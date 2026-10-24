@@ -29,6 +29,7 @@ refreshUI=function(){
  const age = Math.floor((Date.now()-previewBeaconAt)/1000);
  c.blu.button.age_s = age;
  if(age>=10){c.blu.button.packet_seq++;c.blu.button.age_s=0;previewBeaconAt=Date.now();}
+ c.blu.car_presence_ready=true;c.blu.car_present=!!(c.blu.button.secure&&c.blu.button.seen&&c.blu.button.age_s<=c.blu.presence_timeout_s);
  lastInfo=previewInfo;
  garageDashboardSetAccess(true);
  for(const [key,value] of Object.entries(previewInfo)) updateElement(key,value,previewInfo);

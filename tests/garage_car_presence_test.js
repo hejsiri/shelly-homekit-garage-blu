@@ -16,4 +16,6 @@ ctx.car='empty';blu.button.packet_seq++;update();assert.equal(ctx.car,'car'); //
 blu.button_mac='AA:BB:CC:DD:EE:02';blu.button.seen=false;update();assert.equal(ctx.car,'empty');
 blu.button.secure=false;ctx.car='car';update();assert.equal(ctx.car,'car'); // No pairing: toolbar is independent.
 blu.button.secure=true;blu.button.seen=true;blu.button.packet_seq=0;update();assert.equal(ctx.car,'car');
+blu.car_present=false;blu.button.age_s=0;update();assert.equal(ctx.car,'empty'); // Firmware agrees with HomeKit, even inside the rounded timeout second.
+blu.car_present=true;blu.button.age_s=46;update();assert.equal(ctx.car,'car');
 console.log('PASS: authenticated beacon overrides manual car selection; repeated polling preserves it; timeout hides car');

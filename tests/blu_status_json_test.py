@@ -46,6 +46,8 @@ unsigned packet_sequence[6] = {1,2,3,4,5,6};
 double button_press_time = 0;
 bool Enabled() { return true; }
 bool Ready() { return true; }
+bool CarPresent() { return false; }
+bool CarPresenceReady() { return true; }
 const char *mgos_sys_config_get_blu_button_name() { return ""; }
 const char *mgos_sys_config_get_blu_car_name() { return "Auto \"garaż\" <test>"; }
 int mgos_sys_config_get_blu_presence_timeout_s() { return 45; }
@@ -74,6 +76,8 @@ with tempfile.TemporaryDirectory(prefix='shelly-status-json-') as temp:
         assert isinstance(result[role], dict)
         assert result[role]['name'] == 'Czujnik "garaż" <test>'
         assert result[role]['packet_seq'] > 0
+    assert result['car_present'] is False
+    assert result['car_presence_ready'] is True
     assert result['button_name'] == ''
     assert result['car_name'] == 'Auto "garaż" <test>'
     assert result['closed']['active'] is True

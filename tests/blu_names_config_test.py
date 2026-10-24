@@ -79,15 +79,16 @@ int main(){
  assert(g.SetConfig(R"({"blu":{"button_name":"Remote","car_name":"Auto \"garaż\""}})",&restart).ok&&restart);
  assert(names[5]=="Remote"&&car_name=="Auto \"garaż\"");
  restart=false;
- assert(g.SetConfig(R"({"blu":{"car_name":"Tesla"}})",&restart).ok&&!restart);
- assert(car_name=="Tesla"&&names[5]=="Remote"); // Independent labels, no HAP restart for car-only changes.
+ assert(g.SetConfig(R"({"blu":{"car_name":"Tesla"}})",&restart).ok&&restart);
+ assert(car_name=="Tesla"&&names[5]=="Remote"); // Renaming also refreshes the HomeKit accessory name.
+ restart=false;
  assert(g.SetConfig("{}",&restart).ok&&car_name=="Tesla");
  assert(!g.SetConfig("{\"blu\":{\"button_name\":\"Changed\",\"car_name\":\""+std::string(65,'x')+"\"}}",&restart).ok);
  assert(names[5]=="Remote"&&car_name=="Tesla"&&!restart);
  assert(!g.SetConfig(R"({"blu":{"car_name":"Changed","stale_after_s":1}})",&restart).ok&&car_name=="Tesla");
  std::string unicode;for(int i=0;i<33;i++)unicode+="ż";
  assert(!g.SetConfig("{\"blu\":{\"car_name\":\""+unicode+"\"}}",&restart).ok&&car_name=="Tesla");
- assert(g.SetConfig("{\"blu\":{\"car_name\":\""+std::string(64,'x')+"\"}}",&restart).ok&&!restart);
+ assert(g.SetConfig("{\"blu\":{\"car_name\":\""+std::string(64,'x')+"\"}}",&restart).ok&&restart);
  assert(car_name.size()==64);
  assert(g.SetConfig(R"({"blu":{"button_name":"","car_name":""}})",&restart).ok&&restart);
  assert(names[5].empty()&&car_name.empty()&&std::string(blu::SensorName(5))=="Button");

@@ -35,7 +35,7 @@ namespace shelly {
 int restarts = 0;
 void RestartService() { restarts++; }
 namespace blu {
-bool paired[5] = {};
+bool paired[6] = {};
 bool SensorPaired(int role) { return paired[role]; }
 std::unique_ptr<mgos::hap::Service> CreateMotionService() {
  return std::unique_ptr<mgos::hap::Service>(new mgos::hap::Service{2, false});
@@ -60,21 +60,21 @@ harness += selection + r'''
 }}
 int main() {
  using namespace shelly;
- for (int mask = 0; mask < 32; mask++) {
-  for (int i = 0; i < 5; i++) blu::paired[i] = (mask & (1 << i)) != 0;
+ for (int mask = 0; mask < 64; mask++) {
+  for (int i = 0; i < 6; i++) blu::paired[i] = (mask & (1 << i)) != 0;
   hap::GarageDoorOpener garage;
   mgos::hap::Accessory accessory;
   garage.AddBLUServices(&accessory);
-  int counts[5] = {};
+  int counts[6] = {};
   for (auto *service : accessory.services) counts[service->role]++;
   assert(counts[0] == 0 && counts[1] == 0);
   assert(counts[2] == (blu::paired[2] ? 1 : 0));
   assert(counts[3] == (blu::paired[3] ? 2 : 0));
   assert(counts[4] == (blu::paired[4] ? 2 : 0));
  }
- for (int selected = 0; selected < 5; selected++) {
+ for (int selected = 0; selected < 6; selected++) {
   blu::role = selected; blu::state = "waiting_encrypted_beacon";
-  blu::PairingVerified((selected + 1) % 5);
+  blu::PairingVerified((selected + 1) % 6);
   assert(blu::state == "waiting_encrypted_beacon" && mgos::callbacks.empty());
   const int before = restarts;
   blu::PairingVerified(selected);
@@ -93,4 +93,4 @@ with tempfile.TemporaryDirectory(prefix='shelly-hap-topology-') as temp:
     (d / 'test.cpp').write_text(harness)
     subprocess.run(['clang++', '-std=c++14', '-Wall', '-Wextra', '-Werror', str(d / 'test.cpp'), '-o', str(d / 'test')], check=True)
     subprocess.run([str(d / 'test')], check=True)
-print('PASS: all 32 pairing combinations expose only paired services; verified optional sensors defer one HomeKit refresh')
+print('PASS: all 64 pairing combinations expose only paired services; verified optional sensors defer one HomeKit refresh')

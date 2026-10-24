@@ -232,7 +232,13 @@ Status GarageDoorOpener::SetConfig(const std::string &config_json,
       *restart_required = true;
     }
   }
-  if (car_name != nullptr) mgos_sys_config_set_blu_car_name(car_name);
+  if (car_name != nullptr) {
+    const char *old_car_name = mgos_sys_config_get_blu_car_name();
+    if (strcmp(car_name, old_car_name ? old_car_name : "") != 0) {
+      mgos_sys_config_set_blu_car_name(car_name);
+      *restart_required = true;
+    }
+  }
   if (blu_enable != mgos_sys_config_get_blu_enable() ||
       strcmp(closed, old_closed) != 0 || strcmp(open, old_open) != 0 ||
       stale_after != mgos_sys_config_get_blu_stale_after_s()) {
@@ -564,6 +570,7 @@ void CreateHAPGDO(int id, Input *in_close, Input *in_open, Output *out_close,
   pri_acc->AddService(gdo2);
 #ifdef SHELLY_GARAGE_BLE
   gdo2->AddBLUServices(pri_acc);
+  blu::AddButtonAccessories(accs, svr);
 #endif
 }
 
