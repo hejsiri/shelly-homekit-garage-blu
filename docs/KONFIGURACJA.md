@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1-blu49 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Instrukcja dla **2.16.1-blu50 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-25**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -139,12 +139,17 @@ Bateria oznaczona `~` jest szacunkiem z napięcia 2,1–3,1 V, a nie dokładnym 
 pozostałej pojemności. Diagnostyka `blu.indoor.gatt` / `blu.outdoor.gatt` w GetInfo
 zawiera odczytaną wersję firmware i sprzętu oraz ostatni błąd.
 
-Odczyt ma budżet 10 sekund i timeout połączenia 3 sekundy. Skanowanie BLE wraca po
+Odczyt ma budżet 20 sekund i timeout połączenia 3 sekundy. Skanowanie BLE wraca po
 nawiązaniu połączenia; krótka przerwa skanowania nie unieważnia świeżych krańcówek.
 Ich próg nieświeżości pozostaje bez zmian. Odczyty są odkładane podczas ruchu bramy,
 a trwający odczyt przerywa rozpoczęcie ruchu. Dla tego termometru pomiar staje się
 nieświeży po minimum **15 minutach** (lub dłuższym ustawionym czasie). Nieudany odczyt
 nie odświeża daty starych pomiarów.
+
+Blu50 poprawia obsługę tekstów zakończonych NUL lub dopełnieniem. Cechy są najpierw
+wykrywane po UUID, a wartości odczytywane zwykłym ATT Read z ich znalezionych uchwytów.
+W razie błędu modal zawiera UUID, uchwyt, długość i bajty odpowiedzi. Nie oznacza to
+jeszcze potwierdzenia pomiarów na fizycznym B1.4.
 
 To funkcja eksperymentalna. [Opublikowany przykład odczytu](https://github.com/ManiAm/raspi-enviro-watch#reading-ble-device-characteristics)
 dotyczy firmware **2.1.1_0159** i sprzętu **B1.5**. Użytkownik ma **B1.4 / 2.1.1_0159**:

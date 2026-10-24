@@ -1,6 +1,6 @@
 # Rozwiązywanie problemów Garage BLU
 
-Dla **2.16.1-blu49 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Dla **2.16.1-blu50 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-25**.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](KONFIGURACJA.md) · [Historia zmian](HISTORIA_ZMIAN.md)
@@ -197,13 +197,16 @@ z takimi danymi. MAC można zamaskować, zachowując możliwość rozróżnienia
 
 ## Xiaomi LYWSD03MMC: bezpośredni odczyt nie działa
 
-- Wymagane blu49 i typ **Xiaomi LYWSD03MMC (experimental)** przy Indoor/Outdoor H&T.
+- Zainstaluj blu50 lub nowsze i wybierz typ **Xiaomi LYWSD03MMC (experimental)** przy Indoor/Outdoor H&T.
 - Termometr musi być włączony i blisko Shelly. Zamknij Xiaomi Home, skanery BLE
   i inne aplikacje połączone z nim — mogą zajmować jego jedyne połączenie.
 - Nie wpisuj tokenu ani PIN-u. Shelly nic nie zapisuje w termometrze.
 - Wykrycie MAC nie oznacza jeszcze zgodności. Sukces wymaga odczytu modelu i danych;
   błąd zostaje w modalu, a wcześniejsze przypisanie pozostaje zapisane.
-- Skopiuj pełny błąd z modalu. Po udanym dodaniu ostatni błąd odświeżania i wersje
+- Blu49 odrzucał nazwę modelu z końcowym bajtem NUL, nawet przy `GATT 0x0`.
+  Blu50 usuwa taki terminator i odczytuje wartości przez wykryte uchwyty. Sam
+  status `0x0` nie potwierdza jeszcze modelu ani pomiarów.
+- Skopiuj pełny błąd z modalu (w blu50 zawiera też UUID, uchwyt, długość i bajty). Po udanym dodaniu ostatni błąd odświeżania i wersje
   urządzenia można sprawdzić w GetInfo → `blu.indoor.gatt` / `blu.outdoor.gatt`.
 - Dane odświeżają się co 5 minut. Nieświeżość następuje po minimum 15 minutach;
   brak natychmiastowej zmiany na ekranie po zmianie temperatury jest oczekiwany.

@@ -1,6 +1,6 @@
 # Historia zmian Garage BLU
 
-Bieżące opisy i instrukcje dotyczą **2.16.1-blu49** (stan: 2026-10-24).
+Bieżące opisy i instrukcje dotyczą **2.16.1-blu50** (stan: 2026-10-25).
 Zobacz [instalację i aktualizacje](AKTUALIZACJA.md), [konfigurację](KONFIGURACJA.md)
 i [rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md).
 
@@ -416,3 +416,27 @@ podczas ruchu, zapisy dopiero po sukcesie oraz regresję BLU/HomeKit/panelu.
 Próba fizyczna **B1.4 / 2.1.1_0159** pozostaje do wykonania; przykład źródłowy
 potwierdza to firmware na B1.5. MCCGQ02HL i szyfrowane beacony z ręcznym kluczem
 nadal nie są obsługiwane. Obrazy Plus1/Gen3 mają `hardware_tested: false`.
+
+## blu50 — poprawka weryfikacji modelu Xiaomi
+
+Blu49 na fizycznym B1.4 / 2.1.1_0159 wykrył urządzenie i doszedł do odczytu GATT,
+lecz odrzucił odpowiedź modelu przy statusie `0x0`. Poprzedni komunikat nie zawierał
+bajtów odpowiedzi, więc nie potwierdzono jej dokładnej zawartości. Testem odtworzono
+odrzucenie poprawnej nazwy `LYWSD03MMC` z końcowym bajtem NUL.
+
+Blu50 normalizuje końcowy NUL i dopełnienie w tekstach modelu oraz wersji firmware/
+sprzętu. Nadal odrzuca inny model, dodatkowy sufiks i NUL wewnątrz tekstu. Klient
+wykrywa cechy po UUID, sprawdza ich jednoznaczność, a potem odczytuje wartości zwykłym
+ATT Read z dynamicznych uchwytów, zamiast Read By Type. Nie używa stałych adresów ATT,
+PIN-u, bindkey, zapisów GATT ani SMP. Budżet transakcji wynosi 20 sekund, timeout
+połączenia pozostaje 3 sekundy; odczyt nadal jest przerywany podczas ruchu bramy.
+
+Przy błędzie diagnostyka podaje UUID, uchwyt, pierwotną długość i do 32 bajtów
+odpowiedzi w hex. Nieudany odczyt obu cech danych pokazuje również błąd pierwotnej
+cechy. Wcześniejsze przypisanie i pomiary nie są zastępowane nieudaną próbą.
+
+Regresja obejmuje nazwy z NUL/dopełnieniem, błędne i zbyt długie teksty, zmienne
+uchwyty oraz kolejność cech, brak i duplikaty UUID, odmowę odczytu, zapasową cechę,
+timeout i spóźnione odpowiedzi po anulowaniu. Sprawdzono też wspólne testy BLU,
+HomeKit i panelu. Odczyt T/H na fizycznym B1.4 / 2.1.1_0159 nadal czeka na próbę
+blu50; obie paczki zachowują `hardware_tested: false`.

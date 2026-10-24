@@ -8,7 +8,7 @@ pełne zamknięcie i otwarcie. Sterownik komunikuje się z HomeKit przez Wi-Fi,
 a z urządzeniami BLU przez Bluetooth. Projekt bazuje na
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
 
-**Aktualne wydanie: 2.16.1-blu49 · Shelly Plus 1 i Shelly 1 Gen3 · 2026-10-24.**
+**Aktualne wydanie: 2.16.1-blu50 · Shelly Plus 1 i Shelly 1 Gen3 · 2026-10-25.**
 Dla każdego modelu jest osobny ZIP, suma SHA-256 i wpis w kanale OTA.
 Panel WWW ma angielskie teksty systemowe. Dokumentacja użytkownika jest po polsku,
 a odnośniki do przycisków i pól zachowują ich angielskie nazwy.
@@ -46,6 +46,8 @@ w Indoor/Outdoor H&T naciśnij **Pair** i zamknij inne aplikacje połączone z t
 Shelly sprawdza model i pomiary przed zapisaniem przypisania, a potem odczytuje je co
 5 minut. Bateria jest szacowana z napięcia (oznaczenie `~` w panelu). Próba fizyczna
 **B1.4 / 2.1.1_0159 pozostaje do wykonania**; nie deklarujemy zgodności tej rewizji.
+Blu50 poprawia odczyt tekstów zakończonych NUL (model i wersje) oraz odczytuje dane
+ze zwykłych uchwytów ATT odkrytych po UUID. Błąd zawiera teraz surową odpowiedź.
 Ręczne klucze i MCCGQ02HL z blu46/47 pozostają wycofane.
 
 BLU urządzenia zachowują fabryczny firmware Shelly. Paczkę Garage BLU instaluje się
@@ -67,7 +69,7 @@ do wykonania.
 
 ## Funkcje
 
-| Funkcja | Zachowanie w blu49 |
+| Funkcja | Zachowanie w blu50 |
 | --- | --- |
 | Parowanie w panelu | Pair otwiera modal i uruchamia wyszukiwanie. Jeden zgodny model jest wybierany automatycznie; PIN pojawia się tylko, gdy jest potrzebny. |
 | Szyfrowane odczyty | AES-CCM BTHome v2, sprawdzanie MAC i klucza oraz ochrona przed ponownym użyciem pakietów. |
@@ -103,17 +105,17 @@ statusy i zachowanie po zatrzymaniu. Przy problemach zacznij od
 ## Pobieranie i aktualizacja
 
 - [Paczki i opis na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/)
-- [ZIP 2.16.1-blu49 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu49.zip)
-- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu49.zip.sha256)
-- [ZIP 2.16.1-blu49 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu49.zip)
-- [SHA-256 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu49.zip.sha256)
+- [ZIP 2.16.1-blu50 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu50.zip)
+- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu50.zip.sha256)
+- [ZIP 2.16.1-blu50 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu50.zip)
+- [SHA-256 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu50.zip.sha256)
 - [Instrukcja instalacji, aktualizacji i kontroli po restarcie](docs/AKTUALIZACJA.md)
 
 Obie paczki zostały skompilowane; wspólny kod sprawdzono testami hosta i panelu WWW;
 zweryfikowano też publiczne ZIP-y, sumy SHA-256 i kanał OTA. Wcześniejsze wydania
 potwierdziły OTA i szyfrowane odczyty na Plus 1. W blu42 potwierdzono na tym modelu
 migrację i widoczność bramy, ruchu, obecności oraz przycisku w aplikacji Dom;
-ruch był aktywny i gotowy, a obecność odpowiadała odczytowi BLE. Metadane blu49 nadal mają
+ruch był aktywny i gotowy, a obecność odpowiadała odczytowi BLE. Metadane blu50 nadal mają
 `hardware_tested: false`: pełna próba tego wydania na fizycznej bramie pozostaje
 do wykonania. Test na fizycznym Shelly 1 Gen3 nie został jeszcze wykonany.
 
@@ -122,7 +124,7 @@ do wykonania. Test na fizycznym Shelly 1 Gen3 nie został jeszcze wykonany.
 - [Repozytorium Garage BLU](https://github.com/hejsiri/shelly-homekit-garage-blu)
 - [Zgłoszenia błędów i propozycje](https://github.com/hejsiri/shelly-homekit-garage-blu/issues)
 - [Budowanie, testy i publikowanie (EN)](README-BLU.md)
-- [Historia zmian blu20–blu49](docs/HISTORIA_ZMIAN.md)
+- [Historia zmian blu20–blu50](docs/HISTORIA_ZMIAN.md)
 - [Projekt bazowy Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit)
 
 W zgłoszeniu podaj wersję sterownika, model i firmware urządzenia BLU oraz dokładny

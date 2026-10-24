@@ -2,7 +2,7 @@
 
 Garage BLU adds encrypted Shelly BLU devices, Xiaomi thermometers and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu49 for Shelly Plus 1 and Shelly 1 Gen3**,
+The current OTA release is **2.16.1-blu50 for Shelly Plus 1 and Shelly 1 Gen3**,
 with separate model-specific ZIPs and checksums. The Gen3 image targets ESP32-C3;
 its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
@@ -87,8 +87,11 @@ One matching device continues automatically; several require selecting the inten
 Shelly verifies the Device Information model and a valid five-byte measurement before
 saving the assignment. Failed probes keep the previous assignment.
 
-The client reads characteristics by UUID, without fixed ATT handles, GATT writes or
-SMP initiation. It reads model `0x2a24`, optional firmware/hardware `0x2a26` / `0x2a27`,
+The client enumerates characteristic UUIDs, then uses normal ATT reads of their
+discovered value handles. No firmware-specific handles, GATT writes or SMP initiation.
+Since blu50, Device Information strings tolerate trailing NUL/padding, while an
+embedded NUL, wrong model or arbitrary suffix still fails validation. Model/read
+errors include UUID, dynamic handle, original response length and bounded raw hex. It reads model `0x2a24`, optional firmware/hardware `0x2a26` / `0x2a27`,
 then `ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6` (or the stock mirror
 `8edfffef-3d1b-9c37-4623-ad7265f14076`). Data is signed little-endian temperature in
 hundredths of a degree, humidity percent and little-endian battery millivolts.
@@ -96,7 +99,7 @@ The panel marks battery percent `~` because it is an estimate from 2.1–3.1 V.
 [The reference implementation](https://github.com/ManiAm/raspi-enviro-watch#reading-ble-device-characteristics)
 demonstrates stock **2.1.1_0159 / B1.5**. **B1.4 / 2.1.1_0159 is not yet verified**.
 
-Only one 10-second read transaction runs at a time, with a 3-second connection timeout.
+Only one 20-second read transaction runs at a time, with a 3-second connection timeout.
 Polling runs every 300 seconds, retries back off 60/120/300 seconds, and movement defers
 or cancels reads. Scanning resumes once connected; a bounded 4-second scan grace keeps
 fresh endpoints valid during connection setup, without extending their stale timeout.

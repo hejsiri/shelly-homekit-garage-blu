@@ -825,7 +825,7 @@ void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
     const unsigned current = ++generation;
     diagnostics.clear();
     state = "reading_xiaomi";
-    deadline = mgos_uptime() + 12;
+    deadline = mgos_uptime() + 22;
     const bool started = XiaomiGATTStart(role, peer,
         [selected_role, address, current](const Sensor &reading, int voltage, const std::string &failure) {
       if (generation != current || state != "reading_xiaomi") return;
