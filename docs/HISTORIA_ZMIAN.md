@@ -1,6 +1,6 @@
 # Historia zmian Garage BLU
 
-Bieżące opisy i instrukcje dotyczą **2.16.1-blu38** (stan: 2026-10-24).
+Bieżące opisy i instrukcje dotyczą **2.16.1-blu39** (stan: 2026-10-24).
 Zobacz [instalację i aktualizacje](AKTUALIZACJA.md), [konfigurację](KONFIGURACJA.md)
 i [rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md).
 
@@ -223,3 +223,12 @@ Kanał OTA zawiera oba modele i wybiera adres ZIP-u według identyfikatora urzą
 Paczka Plus1 pozostała bez zmian. Publikator domyślnie uwzględnia oba targety
 i odrzuca niezgodne wersje, platformy lub sumy części przed zapisaniem metadanych.
 Test na fizycznym Gen3 pozostaje do wykonania.
+
+
+## blu39 — osobna nazwa auta
+
+Pod Name sparowanego Button1 dodano Car name. Pierwsze pole nazywa wskaźnik
+przycisku, drugie kafelek obecności auta. Puste pola pokazują podpowiedzi Button
+i Name of car; Save zapisuje obie wartości na sterowniku. Wyczyszczenie pól
+przywraca domyślne etykiety kafelków. Zmiana nazwy nie wymaga ponownego parowania
+i zachowuje klucze oraz bieżące odczyty. Funkcja jest dostępna w paczkach Plus1 i S1G3.

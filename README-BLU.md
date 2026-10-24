@@ -2,7 +2,7 @@
 
 Garage BLU adds encrypted Shelly BLU devices and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu38 for Shelly Plus 1 and Shelly 1 Gen3**,
+The current OTA release is **2.16.1-blu39 for Shelly Plus 1 and Shelly 1 Gen3**,
 with separate model-specific ZIPs and checksums. The Gen3 image targets ESP32-C3;
 its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
@@ -72,7 +72,9 @@ logout or loss of the connection unloads it and clears cached dashboard data.
    Enter a name and use **Save** in the garage section. It is stored on Shelly
    and used on Motion/Button1 tiles and H&T readings. Endpoint names remain in
    settings; endpoint readings are not displayed above the garage. The garage tile
-   uses the first **Name** field in that section. Empty device names restore the default label.
+   uses the first **Name** field in that section. Button1 has a separate **Car name**
+   field for the car presence tile. Empty Button1 fields show **Button** and
+   **Name of car** placeholders; save stores empty values and restores default tile labels.
 8. Pair both endpoint devices, enable **BLU sensors**, set the freshness timeout
    (default 180 seconds, permitted 30–3600), and save.
 

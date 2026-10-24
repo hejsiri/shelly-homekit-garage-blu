@@ -173,6 +173,11 @@ Status GarageDoorOpener::SetConfig(const std::string &config_json,
     names[i] = name;
     has_name[i] = true;
   }
+  char *car_name = nullptr;
+  json_scanf(config_json.c_str(), config_json.size(), "{blu:{car_name:%Q}}", &car_name);
+  mgos::ScopedCPtr car_name_owner(car_name);
+  if (car_name != nullptr && strlen(car_name) > 64)
+    return mgos::Errorf(STATUS_INVALID_ARGUMENT, "Car name too long (max 64 bytes)");
   const char *old_closed = mgos_sys_config_get_blu_closed_mac();
   const char *old_open = mgos_sys_config_get_blu_open_mac();
   if (old_closed == nullptr) old_closed = "";
@@ -221,11 +226,13 @@ Status GarageDoorOpener::SetConfig(const std::string &config_json,
   }
 #ifdef SHELLY_GARAGE_BLE
   for (int i = 0; i < 6; i++) {
-    if (has_name[i] && names[i] != blu::SensorName(i)) {
+    const char *old_name = i == 5 ? mgos_sys_config_get_blu_button_name() : blu::SensorName(i);
+    if (has_name[i] && names[i] != (old_name ? old_name : "")) {
       blu::SetSensorName(i, names[i].c_str());
       *restart_required = true;
     }
   }
+  if (car_name != nullptr) mgos_sys_config_set_blu_car_name(car_name);
   if (blu_enable != mgos_sys_config_get_blu_enable() ||
       strcmp(closed, old_closed) != 0 || strcmp(open, old_open) != 0 ||
       stale_after != mgos_sys_config_get_blu_stale_after_s()) {

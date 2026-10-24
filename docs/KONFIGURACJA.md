@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1-blu38 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Instrukcja dla **2.16.1-blu39 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -97,7 +97,9 @@ Pair i przed jego statusem. Wpisz nazwę, a następnie użyj Save w sekcji bramy
 Zapis na Shelly przetrwa ponowne otwarcie strony. Zmiana nazwy nie wymaga parowania.
 
 - Motion używa nazwy na swoim kafelku.
-- Button1 używa nazwy na kafelku obecności i wskaźniku naciśnięcia.
+- Button1 używa Name na wskaźniku naciśnięcia. Osobne Car name określa nazwę kafelka auta.
+  Puste pola pokazują podpowiedzi Button i Name of car. Obie nazwy zapisuje Save;
+  wyczyszczenie pól przywraca etykiety Button i Car presence na kafelkach.
 - H&T używają nazw przy odczytach temperatury i wilgotności.
 - Nazwy krańcówek pozostają w ustawieniach.
 - Kafelek bramy używa pierwszego Name w sekcji Garage Door.

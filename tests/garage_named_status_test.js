@@ -25,7 +25,15 @@ for(const id of ['weather-indoor','weather-outdoor']){
   assert.equal(node(id).querySelector('.sensor-label').textContent,unsafe+':');
   assert(!node(id).innerHTML.includes(unsafe)); // User names never enter markup.
 }
-for(const id of ['button-indicator','car-presence'])assert.equal(node(id).querySelector('.tile-name').textContent,unsafe);
+assert.equal(node('button-indicator').querySelector('.tile-name').textContent,unsafe);
+assert.equal(node('car-presence').querySelector('.tile-name').textContent,'Car presence');
+status.blu.car_name='Auto „garaż” '+unsafe;send();
+assert.equal(node('car-presence').querySelector('.tile-name').textContent,status.blu.car_name);
+assert.equal(node('car-presence').innerHTML,'');
+assert.equal(node('button-indicator').querySelector('.tile-name').textContent,unsafe);
+status.blu.car_name='';status.blu.button.name='Button';send();
+assert.equal(node('car-presence').querySelector('.tile-name').textContent,'Car presence');
+assert.equal(node('button-indicator').querySelector('.tile-name').textContent,'Button');
 for(const state of ['open','closed']){
   status.cur_state_str=state;status.obstruction_detected=false; // HomeKit flag wins over a legacy timeout field.
   send();assert.equal(node('status').textContent,state==='open'?'Open':'Closed');

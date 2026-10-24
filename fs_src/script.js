@@ -845,6 +845,14 @@ function gdoSetConfig(c, cfg, spinner) {
       }
       cfg.blu[role + "_name"] = name;
     }
+    if (c.data.blu.button && c.data.blu.button.secure) {
+      const carName = el(c, "blu_car_name").value.trim();
+      if (new TextEncoder().encode(carName).length > 64) {
+        alert("Car name is too long. Please use a shorter name.");
+        return;
+      }
+      cfg.blu.car_name = carName;
+    }
     const mac = /^(?:[0-9A-F]{2}:){5}[0-9A-F]{2}$/;
     if (cfg.blu.enable && (!mac.test(cfg.blu.closed_mac) || !mac.test(cfg.blu.open_mac) ||
         cfg.blu.closed_mac === cfg.blu.open_mac ||
@@ -1246,9 +1254,12 @@ function updateComponent(cd) {
           const sensor = cd.blu[role];
           el(c, "blu_" + role + "_name_row").style.display = sensor && sensor.secure ? "" : "none";
           if (!sensor) continue;
-          setValueIfNotModified(el(c, "blu_" + role + "_name"), sensor.name || "");
+          const name = role === "button" ? cd.blu.button_name ?? sensor.name ?? "" : sensor.name || "";
+          setValueIfNotModified(el(c, "blu_" + role + "_name"), name);
           bluSensorStatus(el(c, "blu_" + role + "_status"), sensor, role === "button" ? cd.blu.presence_timeout_s || 45 : cd.blu.stale_after_s, role === "button" ? "button" : role === "motion" ? true : ["indoor", "outdoor"].includes(role) ? "ht" : false);
         }
+        el(c, "blu_car_name_row").style.display = cd.blu.button && cd.blu.button.secure ? "" : "none";
+        setValueIfNotModified(el(c, "blu_car_name"), cd.blu.car_name || "");
         el(c, "toggle_btn").disabled = cd.blu.enable && !cd.blu.ready;
       }
       updateInnerText(el(c, "head"), cd.name);

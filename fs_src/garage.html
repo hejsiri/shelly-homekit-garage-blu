@@ -204,7 +204,7 @@ function update(data){
  const button=blu.button,presence=document.getElementById('car-presence');presence.hidden=!(button&&button.secure);
  const present=button&&button.secure&&button.seen&&button.age_s>=0&&button.age_s<=(blu.presence_timeout_s||45);
  presence.querySelector(':scope > div > span').textContent=present?'Detected':'Not detected';presence.classList.toggle('active',!!present);
- presence.querySelector('.tile-name').textContent=button&&button.name||'Car presence';
+ presence.querySelector('.tile-name').textContent=blu.car_name||'Car presence';
  presence.title='BLU button detected within range — this does not confirm the parking location';
 
 }

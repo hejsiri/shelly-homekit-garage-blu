@@ -28,7 +28,9 @@ using ScopedCPtr=std::unique_ptr<void,Free>;
 Status Errorf(int,const char*,...){return {false};}
 }
 void mgos_conf_set_str(char **p,const char *s){free(*p);*p=strdup(s);}
-std::string names[6];
+std::string names[6], car_name;
+const char *mgos_sys_config_get_blu_car_name(){return car_name.c_str();}
+void mgos_sys_config_set_blu_car_name(const char *s){car_name=s;}
 bool enabled=false;int stale=180;std::string closed_mac="AA:BB:CC:DD:EE:01",open_mac="AA:BB:CC:DD:EE:02";
 bool mgos_sys_config_get_blu_enable(){return enabled;}
 int mgos_sys_config_get_blu_stale_after_s(){return stale;}
@@ -73,6 +75,26 @@ int main(){
  restart=false;
  assert(g.SetConfig("{\"blu\":{\"motion_name\":\""+std::string(64,'x')+"\"}}",&restart).ok&&restart);
  assert(names[2].size()==64&&blu::invalidations==0);
+ restart=false;
+ assert(g.SetConfig(R"({"blu":{"button_name":"Remote","car_name":"Auto \"garaż\""}})",&restart).ok&&restart);
+ assert(names[5]=="Remote"&&car_name=="Auto \"garaż\"");
+ restart=false;
+ assert(g.SetConfig(R"({"blu":{"car_name":"Tesla"}})",&restart).ok&&!restart);
+ assert(car_name=="Tesla"&&names[5]=="Remote"); // Independent labels, no HAP restart for car-only changes.
+ assert(g.SetConfig("{}",&restart).ok&&car_name=="Tesla");
+ assert(!g.SetConfig("{\"blu\":{\"button_name\":\"Changed\",\"car_name\":\""+std::string(65,'x')+"\"}}",&restart).ok);
+ assert(names[5]=="Remote"&&car_name=="Tesla"&&!restart);
+ assert(!g.SetConfig(R"({"blu":{"car_name":"Changed","stale_after_s":1}})",&restart).ok&&car_name=="Tesla");
+ std::string unicode;for(int i=0;i<33;i++)unicode+="ż";
+ assert(!g.SetConfig("{\"blu\":{\"car_name\":\""+unicode+"\"}}",&restart).ok&&car_name=="Tesla");
+ assert(g.SetConfig("{\"blu\":{\"car_name\":\""+std::string(64,'x')+"\"}}",&restart).ok&&!restart);
+ assert(car_name.size()==64);
+ assert(g.SetConfig(R"({"blu":{"button_name":"","car_name":""}})",&restart).ok&&restart);
+ assert(names[5].empty()&&car_name.empty()&&std::string(blu::SensorName(5))=="Button");
+ restart=false;
+ assert(g.SetConfig(R"({"blu":{"button_name":"","car_name":""}})",&restart).ok&&!restart);
+ assert(g.SetConfig(R"({"blu":{"button_name":"Button"}})",&restart).ok&&restart&&names[5]=="Button");
+ assert(blu::invalidations==0);
 }
 '''
 with tempfile.TemporaryDirectory() as temp:
@@ -80,4 +102,4 @@ with tempfile.TemporaryDirectory() as temp:
     subprocess.run(['clang','-I',str(frozen),'-c',str(frozen/'frozen.c'),'-o',str(p/'frozen.o')],check=True)
     subprocess.run(['clang++','-std=c++14','-Wall','-Wextra','-Werror','-I',str(frozen),str(p/'test.cpp'),str(p/'frozen.o'),'-o',str(p/'test')],check=True)
     subprocess.run([str(p/'test')],check=True)
-print('PASS: all six names, Unicode/quotes, defaults, length bounds, atomic validation and retained telemetry')
+print('PASS: six device names and independent car name, defaults, atomic validation and retained telemetry')

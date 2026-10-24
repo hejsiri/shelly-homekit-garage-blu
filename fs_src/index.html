@@ -858,7 +858,11 @@
             <div class="form-control"><label>BLU Button1:</label><input type="text" id="blu_button_mac" readonly placeholder="Not paired" maxlength="17"><button type="button" id="blu_pair_button">Pair</button></div>
             <div class="form-control" id="blu_button_name_row" style="display:none">
               <label>Name:</label>
-              <input type="text" id="blu_button_name" aria-label="Button device name" maxlength="64">
+              <input type="text" id="blu_button_name" aria-label="Button device name" placeholder="Button" maxlength="64">
+            </div>
+            <div class="form-control" id="blu_car_name_row" style="display:none">
+              <label>Car name:</label>
+              <input type="text" id="blu_car_name" aria-label="Car name" placeholder="Name of car" maxlength="64">
             </div>
             <p id="blu_button_status" class="blu-sensor"></p>
             <p class="help">Presence beacon: the button is within BLE range. Keep it in your car. Single press: open / stop / close. Beacons never trigger the garage door.</p>

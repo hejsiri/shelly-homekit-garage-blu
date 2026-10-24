@@ -6,7 +6,7 @@ const previewInfo = {
  uptime:3600,sys_temp:39,auth_en:true,
  components:[{id:1,type:5,name:'Garage door',cur_state:1,cur_state_str:'closed',move_time:20,pulse_time_ms:500,
  close_sensor_mode:0,open_sensor_mode:-1,out_mode:-1,sensor_swap:false,resume_after_stop:false,
- blu:{enable:true,closed_mac:'AA:BB:CC:DD:EE:01',open_mac:'AA:BB:CC:DD:EE:02',stale_after_s:180,presence_timeout_s:45,button_press_seq:0,button_press_age_ms:-1,ready:true,button_mac:'AA:BB:CC:DD:EE:07',button:{name:'Button in car',packet_seq:1,secure:true,seen:true,battery:93,rssi:-60,age_s:3},
+ blu:{enable:true,closed_mac:'AA:BB:CC:DD:EE:01',open_mac:'AA:BB:CC:DD:EE:02',stale_after_s:180,presence_timeout_s:45,button_press_seq:0,button_press_age_ms:-1,ready:true,button_mac:'AA:BB:CC:DD:EE:07',button_name:'',car_name:'',button:{name:'Button',packet_seq:1,secure:true,seen:true,battery:93,rssi:-60,age_s:3},
  closed:{name:'Closing sensor',packet_seq:1,secure:true,seen:true,active:true,battery:92,rssi:-58,age_s:2},open:{name:'Opening sensor',packet_seq:1,secure:true,seen:true,active:false,battery:84,rssi:-65,age_s:3},motion_mac:'AA:BB:CC:DD:EE:04',motion:{name:'Motion sensor',packet_seq:1,secure:true,seen:true,active:false,battery:88,rssi:-51,age_s:0},indoor_mac:'AA:BB:CC:DD:EE:05',indoor:{name:'Indoor',packet_seq:1,secure:true,seen:true,temperature:21.4,humidity:48,battery:94,rssi:-55,age_s:12},outdoor_mac:'AA:BB:CC:DD:EE:06',outdoor:{name:'Outdoor',packet_seq:1,secure:true,seen:true,temperature:8.7,humidity:76,battery:91,rssi:-72,age_s:22}}}]
 };
 let previewBeaconAt = Date.now();
@@ -69,7 +69,8 @@ callDevice=function(method,params){
    if(blu){
      for(const [key,value] of Object.entries(blu)){
        const role=key.replace(/_name$/, '');
-       if(key.endsWith('_name')&&c.blu[role]) c.blu[role].name=value;
+       if(key==='button_name') {c.blu.button_name=value;c.blu.button.name=value||'Button';}
+       else if(key.endsWith('_name')&&c.blu[role]) c.blu[role].name=value;
        else c.blu[key]=value;
      }
    }

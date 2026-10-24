@@ -211,6 +211,10 @@ std::string GetInfoJSON() {
       button_press_sequence, button_press_sequence ? int((mgos_uptime() - button_press_time) * 1000) : -1,
       mgos_sys_config_get_blu_presence_timeout_s(),
       mgos_sys_config_get_blu_stale_after_s(), Ready());
+  const char *button_name = mgos_sys_config_get_blu_button_name();
+  const char *car_name = mgos_sys_config_get_blu_car_name();
+  result += mgos::JSONPrintStringf(
+      ",button_name:%Q,car_name:%Q", button_name ? button_name : "", car_name ? car_name : "");
   const char *roles[] = {"closed", "open", "motion", "indoor", "outdoor", "button"};
   for (int i = 0; i < 6; i++) {
     const auto &sensor = sensors[i];
