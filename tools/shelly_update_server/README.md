@@ -1,5 +1,10 @@
 # Shelly-HomeKit Update Server
 
+This is an inherited upstream tool, not the active Garage BLU update service.
+Garage BLU publishes static, model-specific files with `tools/ota/prepare.py`
+to hejsiri.pl. See the current [publishing instructions](../../README-BLU.md#publish-ota).
+Running this Go server is not required for Garage BLU installation or updates.
+
 ## Overview
 
 This server is intended as a single entry point for all update requests and will contain
@@ -14,5 +19,5 @@ replacing the current JSON + version regex matching done in UI.
 
 ## Endpoints
 
- * `/update` - this is the main entry point for all device updates, wille xamine headers and will redirect to the actual ZIP file to update from (according to model and location template from `--dest-url-template`.
+ * `/update` - this is the main entry point for all device updates, will examine headers and will redirect to the actual ZIP file to update from (according to model and location template from `--dest-url-template`.
  * `/log` - will show recent history of requests from this address, for debugging.

@@ -1,154 +1,107 @@
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 # Shelly HomeKit Garage BLU
 
-Shelly HomeKit Garage BLU to firmware do sterowania bramą garażową przez Apple HomeKit
-na **Shelly 1 Gen3** i **Shelly Plus 1**. Bazuje na otwartym projekcie
-[mongoose-os-apps/shelly-homekit](https://github.com/mongoose-os-apps/shelly-homekit),
-który udostępnia urządzenia Shelly w aplikacji Dom bez dodatkowego mostka.
+Firmware dla **Shelly Plus 1**, który łączy bramę garażową z Apple HomeKit
+bez dodatkowego mostka. Dwa bezprzewodowe **Shelly BLU Door/Window** potwierdzają
+pełne zamknięcie i otwarcie. Sterownik komunikuje się z HomeKit przez Wi-Fi,
+a z urządzeniami BLU przez Bluetooth. Projekt bazuje na
+[Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
 
-Dodano dwa czujniki **Shelly BLU Door/Window** jako potwierdzenie pełnego zamknięcia
-i otwarcia bramy, parowanie z panelu WWW bez aplikacji Shelly, szyfrowane komunikaty
-BTHome z ochroną przed ponownym użyciem pakietów, blokowanie poleceń przy braku
-wiarygodnego stanu czujników oraz kanał OTA na hejsiri.pl. HomeKit działa przez Wi-Fi,
-a czujniki komunikują się z modułem przez Bluetooth. Obsługa BLE wymaga jeszcze
-weryfikacji na fizycznym sprzęcie.
+**Aktualne wydanie: 2.16.1-blu38 · Shelly Plus 1 · 2026-10-24.**
+Kod dla Shelly 1 Gen3 pozostaje w repozytorium; nowe paczki i testy Gen3 są wstrzymane.
+Panel WWW ma angielskie teksty systemowe. Dokumentacja użytkownika jest po polsku,
+a odnośniki do przycisków i pól zachowują ich angielskie nazwy.
 
-[Instrukcja instalacji i aktualizacji](docs/AKTUALIZACJA.md) ·
-[Paczki OTA na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/) ·
-[Konfiguracja BLE i ograniczenia](README-BLU.md).
+[Instalacja i aktualizacje](docs/AKTUALIZACJA.md) ·
+[Konfiguracja i obsługa](docs/KONFIGURACJA.md) ·
+[Rozwiązywanie problemów](docs/ROZWIAZYWANIE_PROBLEMOW.md) ·
+[Historia zmian](docs/HISTORIA_ZMIAN.md) ·
+[Dokumentacja techniczna (EN)](README-BLU.md)
 
 ## Idea projektu
 
-Chciałem stworzyć prosty sposób na dodanie bramy garażowej do Apple HomeKit
-**bez plątaniny kabli prowadzących do czujników**. Bezprzewodowe czujniki BLU
-mają ułatwić i przyspieszyć montaż, szczególnie przy istniejącym napędzie,
-gdzie prowadzenie dodatkowego okablowania bywa kłopotliwe.
-
-Kluczowe są **dwa czujniki — po jednym dla każdego położenia krańcowego**.
-Pierwszy potwierdza, że brama jest całkowicie zamknięta, a drugi, że jest
-całkowicie otwarta. W rozwiązaniu z jednym czujnikiem zamknięcia jego
-zwolnienie oznacza tylko „brama nie jest zamknięta”; nie potwierdza pełnego
-otwarcia. Brama może przecież być w ruchu albo zatrzymać się w połowie.
-
-Zależało mi na tym, by potwierdzenie obu pozycji pochodziło z czujników,
-niezależnie od tego, czy bramę uruchomiono z aplikacji Dom, przyciskiem
-na ścianie czy zwykłym pilotem radiowym. Dzięki temu naprzemienne korzystanie
-z HomeKit i pilota nie wymaga zgadywania położenia na podstawie ostatniej
-komendy z aplikacji. **Do takiego potwierdzania obu stanów projekt wymaga
-dwóch czujników.** Nie jest to ciągły pomiar położenia bramy między krańcówkami.
-
-W założeniach projektu ważna jest również możliwość montażu czujników
-na zewnątrz. Kierunkiem rozwoju jest obsługa
-[Shelly BLU Door/Window Outdoor ZB](https://www.shelly.com/pl/products/shelly-blu-door-window-outdoor-zb-ivory),
-który według producenta ma obudowę IP55 oraz łączność Bluetooth i Zigbee.
-To model **SBDW-302C**, inny niż obecnie zaimplementowany SBDW-002C;
-jego parowanie i zgodność z Garage BLU wymagają osobnego dostosowania i testów.
-Nie jest jeszcze obsługiwany w aktualnym wydaniu.
-
-Projekt ma być też podstawą do dalszej rozbudowy garażu o inne czujniki
-i akcesoria **Shelly BLU**. Dodano obsługę BLU Motion i dwóch BLU H&T
-(wewnętrznego i zewnętrznego), z konfiguracją w tym samym panelu WWW.
-Obsługiwany jest również BLU Button1: pojedynczy klik steruje bramą, a beacony
-pokazują obecność przycisku przechowywanego w aucie. Obsługa czujnika wycieku
-i modelu Outdoor ZB pozostaje w planach.
+Dwie krańcówki BLE pozwalają potwierdzać oba końcowe położenia bez prowadzenia
+przewodów do czujników. Zwolnienie jednego kontaktronu oznacza wyłącznie, że brama
+opuściła dane położenie; drugi czujnik potwierdza osiągnięcie przeciwnego końca.
+Stan może być odświeżany także wtedy, gdy bramę uruchomiono pilotem lub przyciskiem
+napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 
 ## Wspierany sprzęt
 
-| Urządzenie | Rola w Garage BLU |
+| Urządzenie | Funkcja i status |
 | --- | --- |
-| **Shelly 1 Gen3 (S1G3)** | Sterownik bramy, przekaźnik, panel WWW i połączenie z Apple HomeKit przez Wi-Fi. |
-| **Shelly Plus 1 (Plus1)** | Sterownik bramy na ESP32; osobna paczka firmware, ten sam panel i obsługa BLE. |
-| **Shelly BLU Door/Window (SBDW-002C) — 2 sztuki** | Czujniki pełnego zamknięcia i pełnego otwarcia bramy; komunikacja Bluetooth, fabryczny firmware czujników. |
-| **Shelly BLU Motion (SBMO-003Z) — 1 sztuka** | Osobny szyfrowany czujnik ruchu w panelu WWW i usługa Motion Sensor w Apple Home; weryfikacja na sprzęcie w toku. |
-| **Shelly BLU H&T (SBHT-003C) — do 2 sztuk** | Osobne przypisania Indoor i Outdoor, temperatura oraz wilgotność w WWW i Apple Home; weryfikacja na sprzęcie w toku. |
-| **Shelly BLU Button1 — 1 sztuka** | Pojedynczy klik: otwórz / stop / zamknij. Beacon: obecność przycisku w zasięgu BLE i widoczność auta na wizualizacji. |
+| **Shelly Plus 1 (Plus1)** | Bieżący target i jedyna paczka publikowana dla blu38. Sterowanie przekaźnikiem, WWW, BLE i HomeKit. |
+| **Shelly 1 Gen3 (S1G3)** | Kod zachowany; kompilacje i testy sprzętowe tego targetu są wstrzymane. |
+| **BLU Door/Window SBDW-002C — 2 sztuki** | Role Closing sensor i Opening sensor. Szyfrowane odczyty dwóch fizycznych czujników potwierdzono we wcześniejszych próbach. |
+| **BLU Motion SBMO-003Z — 1 sztuka** | Ruch w WWW i usługa Motion Sensor w HomeKit; odczyty obserwowano na sprzęcie. |
+| **BLU H&T SBHT-003C — do 2 sztuk** | Role Indoor i Outdoor; temperatura i wilgotność w WWW i HomeKit. Obsługa zaimplementowana, testy fizycznych H&T pozostają do wykonania. |
+| **BLU Button1 — 1 sztuka** | Pojedynczy nacisk steruje bramą; beacony określają obecność przycisku w zasięgu. Szyfrowane odczyty obserwowano na sprzęcie. |
 
-Każdy sterownik ma własną paczkę OTA. Paczki S1G3 i Plus1 nie są zamienne.
-Na Shelly Plus 1 potwierdzono instalację OTA oraz sparowanie dwóch BLU
-Door/Window z odbiorem zaszyfrowanych stanów. Sterowanie rzeczywistą bramą,
-nowe czujniki i działanie na Shelly 1 Gen3 wymagają dalszych testów sprzętowych.
+BLU urządzenia zachowują fabryczny firmware Shelly. Paczkę Garage BLU instaluje się
+na sterowniku, a urządzenia BLU paruje w jego panelu WWW.
+**Nie używaj paczki Plus1 na Mini, 1PM, Gen3, Gen4 ani innych modelach.**
+Door/Window Outdoor ZB (SBDW-302C) i czujnik wycieku BLU pozostają w planach.
+H&T Gen3 z ekranem e-ink korzysta z Wi-Fi i nie jest obsługiwanym tu BLU H&T.
 
-**Czujników Shelly BLU Door/Window nie trzeba aktualizować ani zmieniać ich
-firmware. Mają działać na oryginalnym firmware Shelly — wystarczy sparować je
-z modułem w panelu WWW Garage BLU.** Naszą paczkę firmware instaluje się tylko
-na sterowniku Shelly 1 Gen3 lub Shelly Plus 1 — wybierz odpowiednią paczkę. Podgląd sparowanych czujników działa także przed włączeniem ich jako krańcówek bramy.
+## Funkcje
 
-Czujniki Motion i H&T pojawiają się w Apple Home dopiero po bezpiecznym
-sparowaniu. Pierwszy potwierdzony zaszyfrowany odczyt odświeża listę usług
-HomeKit bez ponownego dodawania sterownika. Sparowany czujnik, który chwilowo
-nie odpowiada, pozostaje w HomeKit z informacją o niedostępności.
-
-## Funkcje Garage BLU
-
-| Funkcja | Zaimplementowane działanie |
+| Funkcja | Zachowanie w blu38 |
 | --- | --- |
-| Brama w Apple HomeKit | Sterowanie i odczyt stanu w aplikacji Dom, bez dodatkowego mostka. |
-| Dwie krańcówki BLE | Osobne czujniki **Closing sensor** i **Opening sensor**. |
-| Parowanie przez WWW | Automatyczne wykrywanie i konfiguracja; PIN tylko wtedy, gdy wymaga go czujnik. |
-| Szyfrowanie BTHome | Weryfikacja AES-CCM i ochrona przed ponownym użyciem przechwyconych pakietów. |
-| Kontrola wiarygodności stanu | Blokowanie nowych poleceń przy braku, przedawnieniu lub sprzecznych odczytach oraz podczas parowania. |
-| Wizualizacja garażu | Widok dnia/nocy, animacja położenia i kafelki odczytów, dostępne po zalogowaniu; ukryte podczas OTA. |
-| Własne nazwy | Pole **Name** pod przyciskiem **Pair** dla każdego sparowanego urządzenia. Zapisane nazwy pojawiają się na wizualizacji; nazwa bramy pochodzi z sekcji Garage Door. |
-| Auto na wizualizacji | Nowy zaszyfrowany beacon Button1 pokazuje auto. Brak beaconów przez 45 s je ukrywa. Ręczny przełącznik działa do następnego beacona lub zmiany obecności. |
-| Zgodność stanu z HomeKit | Panel otrzymuje ten sam stan i flagę przeszkody co HomeKit. Potwierdzone pełne otwarcie lub zamknięcie kasuje przekroczenie czasu ruchu. |
-| Aktualizacje OTA | Pobieranie wydań Garage BLU z hejsiri.pl lub aktualizacja z pliku ZIP. |
+| Parowanie w panelu | Pair otwiera modal i uruchamia wyszukiwanie. Jeden zgodny model jest wybierany automatycznie; PIN pojawia się tylko, gdy jest potrzebny. |
+| Szyfrowane odczyty | AES-CCM BTHome v2, sprawdzanie MAC i klucza oraz ochrona przed ponownym użyciem pakietów. |
+| Wiarygodny stan | Polecenia są blokowane przy brakujących, nieaktualnych lub sprzecznych odczytach krańcówek oraz podczas parowania. |
+| Nazwy akcesoriów | Name pod Pair zapisuje nazwę urządzenia; Motion, Button1 i H&T używają jej na wizualizacji. Nazwa bramy pochodzi z Name w sekcji Garage Door. Krańcówki są opisane w ustawieniach. |
+| Wizualizacja | Motywy Day / Night / Auto, animacja bramy, kafelki ruchu i Button1, odczyty temperatury i wilgotności. Przy włączonym haśle widok jest dostępny po zalogowaniu; podczas OTA jest ukryty. |
+| Obecność auta | Nowy poprawnie odszyfrowany pakiet Button1 pokazuje auto, brak pakietów przez 45 s je ukrywa. Ręczny wybór działa do następnego pakietu lub zmiany obecności. |
+| Sterowanie Button1 | Pojedynczy nacisk: otwórz / zatrzymaj / zamknij zgodnie ze stanem bramy. Sam beacon nie uruchamia przekaźnika. |
+| Kierunek po zatrzymaniu | Continue previous direction after stop: wyłączony — zmiana kierunku; włączony — kontynuacja poprzedniego. Opcję trzeba dopasować do reakcji napędu. |
+| Obstruction | Przekroczenie czasu ruchu jest sygnalizowane w panelu i HomeKit. Animacja pokazuje umowne 50%; prawidłowo potwierdzona krańcówka usuwa błąd. |
+| OTA | Firmware → Update → Check → Install lub Update from file → Upload. Kanał i paczki są na hejsiri.pl. |
 
-Beacony potwierdzają obecność przycisku w zasięgu Bluetooth, a nie dokładne miejsce
-zaparkowania. Nie uruchamiają przekaźnika. Animacja pomiędzy krańcówkami szacuje
-położenie na podstawie czasu ruchu; potwierdzone pozycje pochodzą z czujników.
-Przy statusie **Przeszkody** animacja pokazuje umowne **50%**. Scena pojawia się
-dopiero po przygotowaniu kompletu aktualnych grafik wybranego motywu.
-
-Nowe wydanie wymaga sprawdzenia po instalacji na urządzeniu. Blokowanie poleceń nie
-zatrzymuje fizycznie bramy będącej już w ruchu i nie zastępuje zabezpieczeń napędu.
-
-## Wkrótce
-
-Planuję dodać obsługę czujnika wycieku Shelly BLU oraz modelu Door/Window Outdoor ZB.
-BLU Button1 jest już obsługiwany.
+Obecność oznacza zasięg BLE przycisku, a nie potwierdzenie miejsca zaparkowania.
+Animacja nie mierzy odległości ani rzeczywistego procentu otwarcia bramy.
+Blokowanie nowych impulsów nie zatrzymuje napędu już będącego w ruchu i nie zastępuje
+jego zabezpieczeń.
 
 ## Szybki start
 
-Bieżące paczki i testy dotyczą **Shelly Plus 1 (Plus1)**. Kod obsługi
-**Shelly 1 Gen3** jest zachowany i rozwijany, ale jego kompilacje i testy
-są na razie wstrzymane. Nowe funkcje wymagają weryfikacji na sprzęcie.
+1. [Zainstaluj właściwy ZIP](docs/AKTUALIZACJA.md) na Shelly Plus 1.
+2. W Security Settings ustaw hasło panelu. W General Settings wybierz Mode → Garage Door Opener i Save.
+3. W sekcji bramy sparuj Closing sensor i Opening sensor przez Pair. Czujniki mają wykrywać swoje magnesy wyłącznie w odpowiednich skrajnych położeniach.
+4. Włącz BLU sensors, ustaw czasy zgodnie z napędem i zapisz Save. Sprawdź wskazania obu krańcówek.
+5. Opcjonalnie sparuj Motion, Indoor / Outdoor H&T i Button1; wpisz własne nazwy w Name i zapisz.
+6. W HomeKit Settings wybierz Setup i dodaj akcesorium w aplikacji Dom za pomocą wyświetlonego kodu.
 
-- [Paczki Garage BLU i instrukcja online](https://hejsiri.pl/firmware/garage-blu/)
-- [Pełna instrukcja instalacji i aktualizacji](docs/AKTUALIZACJA.md)
-- [Pobierz firmware 2.16.1-blu38 dla Shelly Plus 1 (ZIP)](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu38.zip)
-- [Suma SHA-256 paczki Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu38.zip.sha256)
+[Pełna konfiguracja krok po kroku](docs/KONFIGURACJA.md) opisuje pola,
+statusy i zachowanie po zatrzymaniu. Przy problemach zacznij od
+[diagnostyki](docs/ROZWIAZYWANIE_PROBLEMOW.md).
 
-### Pierwsza instalacja z fabrycznego firmware Gen3 / Plus
+## Pobieranie i aktualizacja
 
-Otwórz lokalny panel urządzenia i postępuj zgodnie z
-[instrukcją dla firmware fabrycznego](docs/AKTUALIZACJA.md#pierwsza-instalacja-z-fabrycznego-firmware-gen3--plus).
-Użyj naszej paczki ZIP lub fabrycznego RPC `Shelly.Update` z adresem paczki.
-Instrukcja zawiera gotowy adres RPC do uzupełnienia adresem IP urządzenia.
-Nie mamy jeszcze potwierdzenia przejścia z fabrycznego 2.1.0 na fizycznym sprzęcie.
+- [Paczki i opis na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/)
+- [ZIP 2.16.1-blu38 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu38.zip)
+- [SHA-256 paczki](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu38.zip.sha256)
+- [Instrukcja instalacji, aktualizacji i kontroli po restarcie](docs/AKTUALIZACJA.md)
 
-### Aktualizacja z istniejącego Shelly-HomeKit
+Bieżąca paczka została skompilowana, sprawdzona testami hosta i podglądem WWW;
+zweryfikowano też publiczny ZIP, sumę SHA-256 i kanał OTA. Wcześniejsze wydania
+potwierdziły OTA i szyfrowane odczyty na Plus 1. Metadane blu38 nadal mają
+`hardware_tested: false`: pełna próba tego wydania na fizycznej bramie pozostaje
+do wykonania.
 
-Pobierz powyższy ZIP bez rozpakowywania. W panelu wybierz
-**Firmware → Update from file → Upload**, poczekaj na restart i sprawdź wersję.
+## Projekt, zgłoszenia i rozwój
 
-### Kolejne aktualizacje Garage BLU
+- [Repozytorium Garage BLU](https://github.com/hejsiri/shelly-homekit-garage-blu)
+- [Zgłoszenia błędów i propozycje](https://github.com/hejsiri/shelly-homekit-garage-blu/issues)
+- [Budowanie, testy i publikowanie (EN)](README-BLU.md)
+- [Historia zmian blu20–blu38](docs/HISTORIA_ZMIAN.md)
+- [Projekt bazowy Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit)
 
-W panelu wybierz **Firmware → Update → Check**, a po wykryciu nowszego
-wydania — **Install**. Panel korzysta z
-[kanału OTA Garage BLU](https://hejsiri.pl/firmware/garage-blu/update.json).
-Po restarcie sprawdź wersję i stany obu czujników.
-
-## Dokumentacja i rozwój
-
-- [Instalacja i aktualizacje](docs/AKTUALIZACJA.md)
-- [Konfiguracja czujników, bezpieczeństwo, budowanie i testy](README-BLU.md)
-- [Kod projektu Garage BLU](https://github.com/hejsiri/shelly-homekit-garage-blu)
-- [Bazowy projekt Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit)
+W zgłoszeniu podaj wersję sterownika, model i firmware urządzenia BLU oraz dokładny
+komunikat błędu. Nie publikuj haseł, PIN-ów, kodu HomeKit ani kluczy BTHome.
 
 ## Autorzy i licencja
 
-Projekt bazuje na pracy autorów Shelly-HomeKit wymienionych w [AUTHORS.md](AUTHORS.md).
-Kod jest udostępniany na licencji [Apache 2.0](LICENSE).
-
-H&T Gen3 z ekranem e-ink (S3SN-0U12A) korzysta z Wi-Fi. Nie jest czujnikiem BLU i nie można sparować go powyższym przyciskiem BLE; jego integracja sieciowa wymaga osobnego uruchomienia.
+Projekt korzysta z pracy autorów [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit)
+wymienionych w [AUTHORS.md](AUTHORS.md). Licencja: [Apache 2.0](LICENSE).

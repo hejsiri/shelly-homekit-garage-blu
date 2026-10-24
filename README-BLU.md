@@ -6,6 +6,13 @@ The current OTA release is **2.16.1-blu38 for Shelly Plus 1**. Shelly 1 Gen3
 support remains in the source; new Gen3 builds and hardware checks are paused.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
 
+User documentation (Polish, with the English UI labels):
+[install/update](docs/AKTUALIZACJA.md), [configuration](docs/KONFIGURACJA.md),
+[troubleshooting](docs/ROZWIAZYWANIE_PROBLEMOW.md), and
+[release history](docs/HISTORIA_ZMIAN.md). The current panel and this document
+use **Obstruction**, **In range / Out of range**, **Ready / Pressed** and
+**Day / Night / Auto**. User-entered accessory names retain their language.
+
 Previous versions have run on a physical Plus 1, with OTA and encrypted
 Door/Window readings confirmed. Motion and Button1 readings have also been
 observed in the panel. This release has host-side checks and a local UI preview;
@@ -61,8 +68,9 @@ logout or loss of the connection unloads it and clears cached dashboard data.
    Cancellation and errors remain visible; a retry does not erase unrelated bonds.
 7. After pairing, **Name** appears in a new row below **Pair**, before the status.
    Enter a name and use **Save** in the garage section. It is stored on Shelly
-   and used on dashboard tiles/readings. The garage tile uses the first **Name**
-   field in that section. Empty device names restore the default label.
+   and used on Motion/Button1 tiles and H&T readings. Endpoint names remain in
+   settings; endpoint readings are not displayed above the garage. The garage tile
+   uses the first **Name** field in that section. Empty device names restore the default label.
 8. Pair both endpoint devices, enable **BLU sensors**, set the freshness timeout
    (default 180 seconds, permitted 30–3600), and save.
 
@@ -121,8 +129,9 @@ security and legacy authentication are preserved; not displaying an unnecessary
 PIN field does not disable them. Existing bonds are renewed only for the
 selected peer when the recovery path calls for it.
 
-Commands are blocked before reliable endpoint readings, during pairing, after
-a timeout in sensor freshness, on scan failure, or with contradictory endpoints.
+In BLU endpoint mode, commands are blocked before reliable endpoint readings,
+during pairing, after a timeout in sensor freshness, on scan failure, or with
+contradictory endpoints.
 HomeKit current-position reads return an error when data is unreliable. Blocking
 new relay impulses does not stop a motor already moving or replace its protections.
 
@@ -148,6 +157,8 @@ node tests/garage_named_status_test.js
 node tests/garage_scene_loading_test.js
 node tests/blu_button_indicator_test.js
 node tests/ota_upload_ui_test.js
+node tests/garage_simulator_stop_test.js
+python3 tests/garage_http_assets_test.py
 ```
 
 The helper uses `~/.mos/bin/mos`, stages sources under
@@ -174,14 +185,30 @@ and beacons here are simulated and do not contact Shelly.
 ## Publish OTA
 
 Run `python3 tools/ota/prepare.py --model ShellyPlus1` after a successful build.
-It generates versioned ZIP/SHA-256 files, channel JSON, release metadata, a
-static download page and CORS settings under `releases/hosting/garage-blu/`.
-The output contains no device configuration, keys or credentials.
+It generates versioned ZIP/SHA-256 files, channel JSON, release metadata,
+the download page, current user guides and CORS settings under
+`releases/hosting/garage-blu/`. The output contains no device configuration,
+keys or credentials. Download-page copy is maintained in
+`tools/ota/landing.html`; the user guides come from `docs/*.md`.
+
+For a firmware release, update current version/download information and the
+package table in the installation guide from the actual manifest and checksum.
+Keep old behavior in the release history. Confirm the model, ZIP integrity,
+part hashes and sizes before publishing.
+
+For documentation-only updates, use the existing release ZIP, confirm that its
+SHA-256 and the channel/release JSON files are unchanged, then upload only the
+HTML page and guides. Do not create a new firmware version for text-only repository
+or hosting documentation changes. Existing installations read the updated guides
+without an OTA install. English panel labels in the guides must match `fs_src`.
 
 Upload the ZIP and checksum first to `domains/hejsiri.pl/public_html/firmware/garage-blu/`.
 Verify the public ZIP hash and size, then publish metadata and switch `update.json`
 last. Check public JSON, byte-range requests (206) and OPTIONS preflight (204).
-Publishing a package does not install it on any device.
+Publishing a package does not install it on any device. Publishing documentation
+only does not replace the ZIP or change the channel. Project and issue links point
+to [hejsiri/shelly-homekit-garage-blu](https://github.com/hejsiri/shelly-homekit-garage-blu);
+upstream links are references/attribution.
 
 ## Remaining hardware validation
 

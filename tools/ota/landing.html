@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Garage BLU: firmware dla bramy garażowej, HomeKit i szyfrowanych urządzeń Shelly BLU. Pobieranie, konfiguracja i diagnostyka.">
+  <title>Garage BLU $version — pobieranie i instrukcje</title>
+  <style>
+    body{font:18px/1.6 system-ui,sans-serif;max-width:920px;margin:40px auto;padding:0 22px;color:#242b35;background:#fff}
+    h1{line-height:1.2}h2{margin-top:2em;line-height:1.3}h3{line-height:1.35}
+    a{color:#075bb5}a:focus-visible{outline:3px solid #075bb5;outline-offset:3px}
+    nav{padding:14px 18px;border-radius:12px;background:#f0f4f8}nav a{display:inline-block;margin:2px 12px 2px 0}
+    .note{padding:14px 18px;border-left:4px solid #3976af;background:#f0f5fa}
+    .table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.92em}
+    th,td{padding:10px 12px;border:1px solid #dce2e8;text-align:left;vertical-align:top}thead{background:#f0f4f8}
+    code{font-size:.9em;overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:14px;background:#f3f5f7;border-radius:10px}
+    footer{margin:40px 0 24px;border-top:1px solid #dce2e8;padding-top:18px;font-size:.9em}
+    @media(max-width:600px){body{font-size:16px;margin-top:24px}th,td{padding:8px}}
+  </style>
+</head>
+<body>
+<main>
+<h1>Shelly HomeKit Garage BLU</h1>
+<p><strong>$version · $published_models</strong><br>Dokumentacja aktualna na 2026-10-24. Panel urządzenia jest po angielsku; poniższe instrukcje zachowują nazwy jego pól.</p>
+<p>Garage BLU łączy bramę garażową z Apple HomeKit przez Wi-Fi. Dwa bezprzewodowe
+Shelly BLU Door/Window potwierdzają pełne zamknięcie i otwarcie, a opcjonalne
+Motion, H&amp;T i Button1 dodają odczyty ruchu, temperatury, wilgotności i obecności.</p>
+<nav aria-label="Na tej stronie">
+  <a href="#pobieranie">Pobieranie</a><a href="#sprzet">Sprzęt</a>
+  <a href="#konfiguracja">Pierwsze uruchomienie</a><a href="#aktualizacja">Aktualizacja</a>
+  <a href="#funkcje">Obsługa</a><a href="#problemy">Problemy</a><a href="#dokumentacja">Dokumentacja</a>
+</nav>
+
+<section id="pobieranie">
+<h2>Pobieranie $version</h2>
+<p class="note">$target_notice Pobierz ZIP bez rozpakowywania. Paczka jest dla sterownika,
+a nie dla urządzeń BLU. Nie używaj jej na Mini, 1PM, Gen4 ani innym modelu.</p>
+<ul>$downloads</ul>
+<div class="table-wrap"><table>
+<thead><tr><th>Model</th><th>Build</th><th>ZIP — bajty</th><th>SHA-256</th></tr></thead>
+<tbody>$metadata_rows</tbody>
+</table></div>
+<p><a href="release.json">Metadane wydania</a> · <a href="update.json">Kanał OTA</a>.
+<code>update.json</code> nie jest plikiem do wgrania przez Upload.</p>
+<p>Dla tej paczki sprawdzono kompilację, testy hosta, podgląd WWW oraz publikację ZIP/OTA.
+Wcześniejsze próby na Plus 1 potwierdziły OTA i szyfrowane odczyty Door/Window;
+obserwowano też odczyty Motion i Button1. Pełna próba tego wydania na fizycznej bramie
+pozostaje do wykonania; metadane mają <code>hardware_tested: false</code>.</p>
+</section>
+
+<section id="sprzet">
+<h2>Sprzęt i zakres obsługi</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Urządzenie</th><th>Funkcja</th></tr></thead>
+<tbody>
+<tr><th scope="row">Shelly Plus 1</th><td>Sterownik przekaźnika, BLE, panel WWW i HomeKit. $plus1_status</td></tr>
+<tr><th scope="row">Shelly 1 Gen3</th><td>$gen3_status</td></tr>
+<tr><th scope="row">2 × BLU Door/Window SBDW-002C</th><td>Closing sensor i Opening sensor — dwa odrębne położenia krańcowe.</td></tr>
+<tr><th scope="row">BLU Motion SBMO-003Z</th><td>Ruch w panelu i opcjonalna usługa Motion Sensor w HomeKit.</td></tr>
+<tr><th scope="row">Do 2 × BLU H&amp;T SBHT-003C</th><td>Indoor i Outdoor: temperatura i wilgotność w WWW i HomeKit. Testy fizycznych H&amp;T pozostają do wykonania.</td></tr>
+<tr><th scope="row">BLU Button1</th><td>Pojedynczy nacisk steruje bramą; beacony wskazują obecność przycisku w zasięgu BLE.</td></tr>
+</tbody></table></div>
+<p>Urządzenia BLU zachowują oryginalny firmware Shelly. Door/Window Outdoor ZB
+(SBDW-302C) i czujnik wycieku pozostają w planach. H&amp;T Gen3 z ekranem e-ink jest
+urządzeniem Wi-Fi, a nie obsługiwanym tu BLU H&amp;T.</p>
+</section>
+
+<section id="konfiguracja">
+<h2>Pierwsze uruchomienie</h2>
+<ol>
+<li>Zainstaluj właściwą paczkę i otwórz lokalny panel Shelly.</li>
+<li>W <strong>Security Settings</strong> ustaw hasło i zaloguj się.
+W <strong>General Settings → Mode</strong> wybierz <strong>Garage Door Opener</strong>, a następnie Save.</li>
+<li>Przy Closing sensor kliknij <strong>Pair</strong>. Modal od razu wyszukuje urządzenie.
+Wprowadź BLU w tryb parowania, przytrzymując jego przycisk ponad 10 s, a następnie puszczając.</li>
+<li>Jeden zgodny model zostanie wybrany automatycznie; przy kilku wskaż właściwy MAC.
+PIN nie jest stałym pierwszym krokiem — pojawia się wyłącznie, gdy urządzenie go wymaga.</li>
+<li>Poczekaj na <strong>Device paired successfully</strong>. Powtórz dla Opening sensor.
+Włącz <strong>BLU sensors</strong>, dopasuj Movement Time i Pulse Time do napędu i zapisz Save.</li>
+<li>Sprawdź oba końce ruchu. Opcjonalnie sparuj Motion, H&amp;T i Button1, nadaj Name i zapisz.</li>
+<li>W <strong>HomeKit Settings → Setup</strong> wyświetl kod i użyj go do dodania akcesorium w aplikacji Dom.</li>
+</ol>
+<p><strong>Closed pod czujnikiem oznacza obecność jego magnesu.</strong> Dla Opening sensor
+oznacza więc pełne otwarcie bramy. Dwa aktywne kontaktrony jednocześnie są sprzecznością.
+Zwolnienie jednego czujnika nie potwierdza dotarcia do drugiego końca.</p>
+<p><a href="$repo/blob/master/docs/KONFIGURACJA.md">Pełna konfiguracja krok po kroku</a></p>
+</section>
+
+<section id="aktualizacja">
+<h2>Instalacja i aktualizacja</h2>
+<h3>Z istniejącego Garage BLU</h3>
+<p><strong>Firmware → Update → Check → Install</strong>, jeśli jest nowsza wersja.
+Po restarcie sprawdź Version, Build i odczyty BLU. Up to date oznacza brak nowszej
+paczki dla tego modelu. Publikacja instrukcji nie wymaga instalowania firmware ponownie.</p>
+<h3>Z Shelly-HomeKit lub przez ZIP</h3>
+<p>Pobierz ZIP bez rozpakowywania. W <strong>Firmware → Update from file</strong>
+wskaż plik i kliknij <strong>Upload</strong>. Poczekaj na zapis i restart.
+Revert to Stock jest powrotem do firmware fabrycznego, a nie aktualizacją Garage BLU.</p>
+<details>
+<summary>Pierwsza konwersja z fabrycznego firmware</summary>
+<p>Otwórz fabryczny panel i użyj instalacji własnego ZIP-u lub URL, jeśli jest dostępna.
+Alternatywą jest fabryczne RPC Shelly.Update z parametrem url. Przykład dotyczy
+<strong>$example_model</strong>; po podstawieniu ADRES_IP i otwarciu adresu rozpoczyna aktualizację:</p>
+<pre>http://ADRES_IP/rpc/Shelly.Update?url=$update_url</pre>
+<p>Przy haśle użyj uwierzytelnionego panelu lub klienta RPC. Samo istnienie tego RPC
+nie potwierdza zgodności z każdą fabryczną wersją lub partycjonowaniem.
+<a href="$repo/blob/master/docs/AKTUALIZACJA.md">Pełna instrukcja i stan weryfikacji konwersji</a>.</p>
+</details>
+<p>Aktualizuj przy zatrzymanej bramie i stabilnym zasilaniu; nie odłączaj go w trakcie
+zapisu. Zwykła aktualizacja nie wymaga resetu sterownika, HomeKit ani urządzeń BLU.</p>
+</section>
+
+<section id="funkcje">
+<h2>Obsługa w blu38</h2>
+<ul>
+<li><strong>Name:</strong> pod Pair każdego sparowanego BLU. Save zapisuje nazwę.
+Motion i Button1 używają jej na kafelkach, H&amp;T przy odczytach, a nazwy krańcówek są w ustawieniach.
+Nazwa głównego kafelka pochodzi z Name w sekcji Garage Door.</li>
+<li><strong>Obstruction:</strong> stan przeszkody w panelu i HomeKit. Przy błędzie animacja
+pokazuje umowne 50%; świeże i zgodne potwierdzenie krańcówki usuwa timeout.</li>
+<li><strong>Button1:</strong> pojedynczy nacisk: otwórz / stop / zamknij. Nowy zaszyfrowany
+pakiet pokazuje auto; brak pakietów przez 45 s je ukrywa. Ręczny przełącznik obrazu działa
+do następnego pakietu lub zmiany obecności. Beacon nie uruchamia przekaźnika.</li>
+<li><strong>Continue previous direction after stop:</strong> wyłączone — zmiana kierunku po
+zatrzymaniu; włączone — kontynuacja poprzedniego. Dopasuj tę opcję do działania napędu.</li>
+<li><strong>Wizualizacja:</strong> Day / Night / Auto, ruch, Button1 i H&amp;T. Krańcówki są
+w ustawieniach, nie nad garażem. Scena czeka na komplet aktualnych grafik.
+Przy ustawionym haśle jest dostępna po zalogowaniu; podczas OTA pozostaje ukryta.</li>
+</ul>
+<p>Procent ruchu jest estymacją czasu, a zasięg przycisku nie potwierdza miejsca
+zaparkowania. Blokowanie poleceń przy niewiarygodnych krańcówkach nie zatrzymuje
+napędu już będącego w ruchu ani nie zastępuje jego zabezpieczeń.</p>
+</section>
+
+<section id="problemy">
+<h2>Typowe problemy</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Objaw</th><th>Od czego zacząć</th></tr></thead>
+<tbody>
+<tr><th scope="row">Waiting for encrypted beacon</th><td>Obudź BLU lub wywołaj normalny odczyt. Długie przytrzymanie jest potrzebne, gdy modal wyraźnie prosi o tryb parowania.</td></tr>
+<tr><th scope="row">BLE security failed / rozłączenie</th><td>Zapisz błąd, sprawdź etap modala i świeże odczyty. Nieudana nowa sesja może współistnieć z działającym zapisanym kluczem.</td></tr>
+<tr><th scope="row">No data / Obstruction</th><td>Sprawdź oba MAC-i, wiek danych i stan magnesów. Nieaktualne lub sprzeczne krańcówki nie potwierdzą położenia.</td></tr>
+<tr><th scope="row">Uploading... / timeout</th><td>Żądanie wysłania ma limit 120 s. Sprawdź rzeczywistą wersję i postęp zapisu przed ponowieniem — zapis mógł się już rozpocząć.</td></tr>
+</tbody></table></div>
+<p><a href="$repo/blob/master/docs/ROZWIAZYWANIE_PROBLEMOW.md">Pełna diagnostyka parowania, OTA, nazw i widoczności auta</a></p>
+</section>
+
+<section id="dokumentacja">
+<h2>Dokumentacja i zgłoszenia</h2>
+<ul>
+<li><a href="$repo/blob/master/docs/AKTUALIZACJA.md">Instalacja i aktualizacje</a> · <a href="AKTUALIZACJA.md">plik Markdown</a></li>
+<li><a href="$repo/blob/master/docs/KONFIGURACJA.md">Konfiguracja i obsługa</a> · <a href="KONFIGURACJA.md">plik Markdown</a></li>
+<li><a href="$repo/blob/master/docs/ROZWIAZYWANIE_PROBLEMOW.md">Rozwiązywanie problemów</a> · <a href="ROZWIAZYWANIE_PROBLEMOW.md">plik Markdown</a></li>
+<li><a href="$repo/blob/master/docs/HISTORIA_ZMIAN.md">Historia zmian blu20–blu38</a> · <a href="HISTORIA_ZMIAN.md">plik Markdown</a></li>
+<li><a href="$repo/blob/master/README-BLU.md">Dokumentacja techniczna i budowanie (EN)</a></li>
+<li><a href="$repo">Repozytorium Garage BLU</a> · <a href="$repo/issues">Zgłoszenia błędów i propozycje</a></li>
+</ul>
+<p>W zgłoszeniu podaj model sterownika, Version i Build, model oraz firmware BLU,
+etap modala i dokładny błąd. Nie publikuj haseł, PIN-ów, kluczy ani kodu HomeKit.</p>
+</section>
+</main>
+<footer>Garage BLU bazuje na <a href="https://github.com/mongoose-os-apps/shelly-homekit">Shelly-HomeKit</a>.
+Autorzy: <a href="$repo/blob/master/AUTHORS.md">Shelly-HomeKit contributors</a>.
+Licencja: <a href="$repo/blob/master/LICENSE">Apache 2.0</a>.</footer>
+</body>
+</html>
