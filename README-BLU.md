@@ -2,7 +2,7 @@
 
 Garage BLU adds encrypted Shelly BLU devices and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu42 for Shelly Plus 1 and Shelly 1 Gen3**,
+The current OTA release is **2.16.1-blu43 for Shelly Plus 1 and Shelly 1 Gen3**,
 with separate model-specific ZIPs and checksums. The Gen3 image targets ESP32-C3;
 its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
@@ -144,6 +144,17 @@ Motion and occupancy expose typed readings, Status Fault and Status Active even
 before a fresh beacon. During a reception failure they retain their last reading
 with a fault and inactive status. They do not report a valid absence from a stopped
 scanner. The programmable button's read value remains null as required for IP HomeKit.
+
+Since blu43, a securely paired BLU Motion also adds **Light sensor** to the same
+garage accessory. It reads BTHome 0x05 (uint24, 0.01 lux) only from that Motion's
+authenticated packets. Door/Window light readings do not create HomeKit services.
+Illuminance has its own freshness timestamp: packets without lux retain the last
+sample without renewing its age. Missing/stale samples or unavailable reception
+set Status Fault and inactive status. HomeKit values are bounded to 0.0001–100000 lx.
+The update adds a new service at IID 0x1b00 and refreshes the configuration number
+once; the existing garage, motion, car and button identities remain unchanged.
+No new BLE pairing or HomeKit reset is needed. Physical light reporting in this
+release remains to be verified after installation.
 
 Event mapping follows the [BTHome event definitions](https://bthome.io/format/#events)
 and [Apple programmable switch events](https://github.com/apple/HomeKitADK/blob/master/HAP/HAPCharacteristicTypes.h).

@@ -529,8 +529,10 @@ void GarageDoorOpener::RunOnce() {
 
 #ifdef SHELLY_GARAGE_BLE
 void GarageDoorOpener::AddBLUServices(mgos::hap::Accessory *accessory) {
-  if (blu::SensorPaired(2))
+  if (blu::SensorPaired(2)) {
     blu_sensors_.push_back(blu::CreateMotionService());
+    blu_sensors_.push_back(blu::CreateMotionLightService());
+  }
   for (int role = 3; role <= 4; role++) {
     if (!blu::SensorPaired(role)) continue;
     blu_sensors_.push_back(blu::CreateHTService(role, true));

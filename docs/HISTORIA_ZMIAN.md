@@ -1,6 +1,6 @@
 # Historia zmian Garage BLU
 
-Bieżące opisy i instrukcje dotyczą **2.16.1-blu42** (stan: 2026-10-24).
+Bieżące opisy i instrukcje dotyczą **2.16.1-blu43** (stan: 2026-10-24).
 Zobacz [instalację i aktualizacje](AKTUALIZACJA.md), [konfigurację](KONFIGURACJA.md)
 i [rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md).
 
@@ -289,3 +289,20 @@ trzy usługi mają właściwe typy i oddzielne identyfikatory, oba źródła BLU
 W aplikacji Dom potwierdzono cztery pozycje: bramę, gotowy i aktywny ruch, wykrytą
 obecność oraz przycisk z pojedynczym, podwójnym i długim naciśnięciem do konfiguracji.
 Pełne próby fizycznych naciśnięć i pracy bramy pozostają do wykonania.
+
+## blu43 — natężenie światła z BLU Motion w HomeKit
+
+Sparowany BLU Motion dodaje usługę Light sensor w istniejącym akcesorium Shelly.
+Odczyt LUX pochodzi z uwierzytelnionego obiektu BTHome 0x05, z przeliczeniem uint24
+na luksy ze skalą 0,01. Nie dodano usług światła z Door/Window.
+
+Pomiar ma oddzielny znacznik czasu: pakiet ruchu bez LUX zachowuje odczyt, lecz nie
+odświeża jego ważności. Brak pomiaru, przeterminowanie lub niedostępność źródła
+ustawiają Status Fault i nieaktywny status. Wartość HomeKit mieści się w zakresie
+0,0001–100000 lx i wysyła powiadomienia o zmianie.
+
+Nowa usługa ma IID 0x1b00. Zachowano identyfikatory bramy, ruchu, obecności i przycisku;
+jednorazowe odświeżenie konfiguracji nie resetuje parowań. Testy obejmują skalowanie,
+brakujące/przeterminowane pomiary, granice HomeKit, powiadomienia oraz prawdziwą
+ścieżkę odczytu i serializacji Apple ADK. Próba nowego pomiaru na sprzęcie pozostaje
+do wykonania po instalacji.

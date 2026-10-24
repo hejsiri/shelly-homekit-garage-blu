@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1-blu42 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Instrukcja dla **2.16.1-blu43 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -81,7 +81,7 @@ nazw ani statusów nad grafiką garażu.
 
 | Pole w panelu | Co pojawia się po sparowaniu |
 | --- | --- |
-| Motion sensor | Status Motion / No motion, kafelek Motion detected / No motion i usługa ruchu w HomeKit. |
+| Motion sensor | Status Motion / No motion, kafelek Motion detected / No motion oraz usługi ruchu i oświetlenia w HomeKit. |
 | Indoor H&T | Temperatura i wilgotność wewnątrz, odczyt nad garażem i usługi w HomeKit. |
 | Outdoor H&T | Temperatura i wilgotność na zewnątrz, odczyt nad garażem i usługi w HomeKit. |
 | BLU Button1 | In range / Out of range, kafelek obecności i wskaźnik naciśnięcia. Dwie usługi HomeKit w akcesorium Shelly: czujnik obecności auta i przycisk programowalny. Pojedynczy nacisk steruje także istniejącą bramą. |
@@ -89,6 +89,16 @@ nazw ani statusów nad grafiką garażu.
 Usługi Motion i H&T są dodawane do HomeKit po bezpiecznym sparowaniu. Chwilowy brak
 odczytów nie usuwa ich z HomeKit; są raportowane jako niedostępne. Po sparowaniu
 Button1 pojawiają się usługi obecności auta i przycisku programowalnego w tym samym akcesorium Shelly.
+
+Od blu43 sparowany BLU Motion udostępnia dodatkowo usługę **Light sensor** w tym
+samym akcesorium Shelly. Pomiar pochodzi wyłącznie z jego szyfrowanych pakietów,
+nie z krańcówek Door/Window. HomeKit podaje natężenie w luksach. Nazwę nowej usługi
+możesz zmienić w aplikacji Dom. Aktualizacja odświeża listę usług, zachowując
+identyfikatory dotychczasowych usług i parowania.
+
+Oświetlenie ma własny czas ważności równy Sensor timeout. Pakiet bez pomiaru LUX
+nie przedłuża tego czasu; brak świeżego pomiaru zgłasza błąd i nieaktywny status.
+HomeKit wymaga zakresu 0,0001–100000 lx, więc całkowita ciemność ma wartość minimalną.
 
 ## Własne nazwy
 

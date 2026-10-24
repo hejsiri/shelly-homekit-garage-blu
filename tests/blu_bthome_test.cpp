@@ -57,11 +57,12 @@ int main() {
   // BLU Motion uses 0x21, never the inverted window-contact interpretation.
   const uint8_t motion_on[] = {0x40,0x00,1,0x01,85,0x05,0x10,0x27,0,0x21,1};
   assert(Decode(motion_on, sizeof(motion_on), &r, true));
-  assert(r.motion && r.battery == 85);
+  assert(r.motion && r.battery == 85 && r.illuminance100 == 10000);
   assert(!Decode(motion_on, sizeof(motion_on), &r));
   Sensor motion_sensor;
   motion_sensor.Update(r, 200, -55, true);
   assert(motion_sensor.active);
+  assert(motion_sensor.illuminance100 == 10000 && motion_sensor.IlluminanceFresh(200,180));
   auto motion_off = std::vector<uint8_t>(motion_on, motion_on + sizeof(motion_on));
   motion_off.back() = 0;
   assert(Decode(motion_off.data(), motion_off.size(), &r, true));
@@ -70,6 +71,20 @@ int main() {
   motion_off.back() = 2;
   assert(!Decode(motion_off.data(), motion_off.size(), &r, true));
   assert(!Decode(motion_on, sizeof(motion_on)-1, &r, true));
+
+  // Light has an independent age: motion-only packets must not refresh it.
+  const uint8_t motion_only[] = {0x40,0x21,0};
+  assert(Decode(motion_only,sizeof(motion_only),&r,true)&&r.illuminance100==-1);
+  motion_sensor.Update(r,400,-55,1);
+  assert(motion_sensor.Fresh(400,180)&&!motion_sensor.IlluminanceFresh(400,180));
+  assert(motion_sensor.illuminance100==10000);
+  const uint8_t dark[] = {0x40,0x05,0,0,0,0x21,0};
+  assert(Decode(dark,sizeof(dark),&r,true)&&r.illuminance100==0);
+  motion_sensor.Update(r,401,-55,1);assert(motion_sensor.IlluminanceFresh(401,180));
+  assert(!motion_sensor.IlluminanceFresh(400,180));
+  const uint8_t bright[] = {0x40,0x05,0xff,0xff,0xff,0x21,0};
+  assert(Decode(bright,sizeof(bright),&r,true)&&r.illuminance100==16777215);
+  for(size_t length=2;length<5;length++)assert(!Decode(bright,length,&r,true));
 
   const uint8_t ht[] = {0x40,0x00,1,0x01,90,0x2e,65,0x45,0xcc,0xff}; // -5.2 C
   assert(DecodeHT(ht, sizeof(ht), &r));

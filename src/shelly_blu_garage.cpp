@@ -228,6 +228,10 @@ bool CarPresent() {
          sensors[5].Fresh(mgos_uptime(), mgos_sys_config_get_blu_presence_timeout_s());
 }
 bool MotionReady() { return SensorReady(2); }
+bool MotionLightReady() {
+  return MotionReady() && sensors[2].IlluminanceFresh(
+                              mgos_uptime(), mgos_sys_config_get_blu_stale_after_s());
+}
 std::string GetInfoJSON() {
   std::string result = mgos::JSONPrintStringf(
       "{enable:%B,button_press_seq:%u,button_press_age_ms:%d,presence_timeout_s:%d,stale_after_s:%d,ready:%B", Enabled(),

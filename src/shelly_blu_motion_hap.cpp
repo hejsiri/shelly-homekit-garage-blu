@@ -53,6 +53,62 @@ class MotionService : public mgos::hap::Service {
   mgos::hap::BoolCharacteristic *status_active_ = nullptr;
   mgos::Timer timer_;
 };
+class LightLevelCharacteristic : public mgos::hap::FloatCharacteristic {
+ public:
+  explicit LightLevelCharacteristic(ReadHandler read)
+      : FloatCharacteristic(0x1b02, &kHAPCharacteristicType_CurrentAmbientLightLevel,
+                            0.0001f, 100000.0f, 0, read, true, nullptr,
+                            kHAPCharacteristicDebugDescription_CurrentAmbientLightLevel) {
+    hap_char_.char_.float_.units = kHAPCharacteristicUnits_Lux;
+  }
+};
+class MotionLightService : public mgos::hap::Service {
+ public:
+  MotionLightService()
+      : Service(0x1b00, &kHAPServiceType_LightSensor,
+                kHAPServiceDebugDescription_LightSensor),
+        timer_([this] { Poll(); }) {
+    AddNameChar(0x1b01, "Light sensor");
+    light_ = new LightLevelCharacteristic(
+        [this](HAPAccessoryServerRef *, const HAPFloatCharacteristicReadRequest *, float *value) {
+          const int32_t raw = MotionLightReady() ? MotionReading().illuminance100 : last_lux100_;
+          // HomeKit's valid range excludes zero and is smaller than BTHome's.
+          *value = raw <= 0 ? 0.0001f : raw >= 10000000 ? 100000.0f : raw / 100.0f;
+          return kHAPError_None;
+        });
+    AddChar(light_);
+    fault_ = new mgos::hap::UInt8Characteristic(
+        0x1b03, &kHAPCharacteristicType_StatusFault, 0, 1, 1,
+        [](HAPAccessoryServerRef *, const HAPUInt8CharacteristicReadRequest *, uint8_t *value) {
+          *value = MotionLightReady() ? 0 : 1;
+          return kHAPError_None;
+        }, true, nullptr, kHAPCharacteristicDebugDescription_StatusFault);
+    AddChar(fault_);
+    status_active_ = new mgos::hap::BoolCharacteristic(
+        0x1b04, &kHAPCharacteristicType_StatusActive,
+        [](HAPAccessoryServerRef *, const HAPBoolCharacteristicReadRequest *, bool *value) {
+          *value = MotionLightReady();
+          return kHAPError_None;
+        }, true, nullptr, kHAPCharacteristicDebugDescription_StatusActive);
+    AddChar(status_active_);
+    timer_.Reset(1000, MGOS_TIMER_REPEAT);
+  }
+ private:
+  void Poll() {
+    const bool ready = MotionLightReady();
+    const int32_t raw = MotionReading().illuminance100;
+    if (ready != ready_) { fault_->RaiseEvent(); status_active_->RaiseEvent(); }
+    if (ready && (!ready_ || raw != last_lux100_)) light_->RaiseEvent();
+    ready_ = ready;
+    if (ready) last_lux100_ = raw;
+  }
+  bool ready_ = false;
+  int32_t last_lux100_ = -1;
+  mgos::hap::FloatCharacteristic *light_ = nullptr;
+  mgos::hap::UInt8Characteristic *fault_ = nullptr;
+  mgos::hap::BoolCharacteristic *status_active_ = nullptr;
+  mgos::Timer timer_;
+};
 class HTService : public mgos::hap::Service {
  public:
   HTService(int role, bool temperature)
@@ -166,6 +222,9 @@ class ButtonService : public mgos::hap::Service {
 }
 std::unique_ptr<mgos::hap::Service> CreateMotionService() {
   return std::unique_ptr<mgos::hap::Service>(new MotionService());
+}
+std::unique_ptr<mgos::hap::Service> CreateMotionLightService() {
+  return std::unique_ptr<mgos::hap::Service>(new MotionLightService());
 }
 std::unique_ptr<mgos::hap::Service> CreateHTService(int role, bool temperature) {
   return std::unique_ptr<mgos::hap::Service>(new HTService(role, temperature));

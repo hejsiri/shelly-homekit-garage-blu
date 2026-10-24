@@ -127,6 +127,8 @@ void shelly_debug_write_nc(struct mg_connection *nc) {
                 "button paired %d; presence ready %d present %d\r\n",
               blu::SensorPaired(2), blu::MotionReady(), blu::SensorPaired(5),
               blu::CarPresenceReady(), blu::CarPresent());
+  mg_printf(nc, "BLU Motion light: ready %d lux100 %d\r\n",
+              blu::MotionLightReady(), int(blu::MotionReading().illuminance100));
 #endif
   mg_printf(nc, "HAP connections:\r\n");
   time_t now_wall = mg_time();

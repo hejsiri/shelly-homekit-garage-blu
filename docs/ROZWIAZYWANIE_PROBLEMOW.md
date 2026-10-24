@@ -1,6 +1,6 @@
 # Rozwiązywanie problemów Garage BLU
 
-Dla **2.16.1-blu42 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Dla **2.16.1-blu43 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](KONFIGURACJA.md) · [Historia zmian](HISTORIA_ZMIAN.md)
@@ -138,6 +138,15 @@ zdarzenie 6658. Zestaw to z wersją, gotowością BLU i dokładnym komunikatem z
 
 Powtórzenia, niepoprawne pakiety, beacony bez zdarzenia i naciśnięcia podczas
 parowania nie uruchamiają akcji przycisku w HomeKit.
+
+### Brak odczytu Light sensor
+
+Od blu43 usługa korzysta tylko ze sparowanego BLU Motion. Po restarcie poczekaj
+na jego nowy szyfrowany pakiet z LUX; nie trzeba ponownie parować urządzenia.
+Brakujący lub starszy niż Sensor timeout pomiar daje Status Fault i nieaktywny status.
+Pakiet bez LUX nie odświeża wieku poprzedniego pomiaru. W Shelly.GetDebugInfo
+sekcja BLU Motion light podaje gotowość i lux100 (odczyt podzielony przez 100 daje lx).
+Usługa światła ma IID 6912, a jej odczyt IID 6914 i typ 6B.
 
 ## Aktualizacja zatrzymana na Uploading
 

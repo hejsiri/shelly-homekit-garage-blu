@@ -26,12 +26,22 @@ struct GarageDoorOpener {
 inline bool mgos_conf_str_empty(const char *s){return !s||!*s;}
 inline const char *mgos_sys_config_get_device_sn(){return "test-device";}
 inline void mgos_expand_mac_address_placeholders(char*){}
-inline const char *mgos_sys_ro_vars_get_fw_version(){return "2.16.1-blu42";}
+inline const char *mgos_sys_ro_vars_get_fw_version(){return "2.16.1-blu43";}
 ''')
 (p/'mgos_timers.hpp').write_text('''#pragma once
 #include <functional>
+#include <algorithm>
+#include <vector>
 #define MGOS_TIMER_REPEAT 1
-namespace mgos { struct Timer { explicit Timer(std::function<void()> cb):callback(cb){} void Reset(int,int){} std::function<void()> callback; }; }
+namespace mgos {
+struct Timer;
+inline std::vector<Timer*>& timers(){static std::vector<Timer*> values;return values;}
+struct Timer {
+ explicit Timer(std::function<void()> cb):callback(cb){timers().push_back(this);}
+ ~Timer(){auto &v=timers();v.erase(std::remove(v.begin(),v.end(),this),v.end());}
+ void Reset(int,int){} std::function<void()> callback;
+};
+}
 ''')
 (p/'mgos_hap.hpp').write_text('#pragma once\n#include "mgos_hap_accessory.hpp"\nextern const HAPService mgos_hap_accessory_information_service;\n')
 (p/'shelly_main.hpp').write_text('#pragma once\nnamespace shelly { inline mgos::hap::Accessory::IdentifyCB GetIdentifyCB(){return nullptr;} }\n')
@@ -56,8 +66,12 @@ bool TestFindCharacteristic(HAPAccessoryServerRef *server, uint64_t aid, uint64_
 #include "mgos_hap.hpp"
 #include "shelly_blu_garage.hpp"
 #include "shelly_blu_motion_hap.hpp"
+#include "mgos_timers.hpp"
 
-extern "C" void HAPAccessoryServerRaiseEvent(HAPAccessoryServerRef*,const HAPCharacteristic*,const HAPService*,const HAPAccessory*){}
+std::vector<uint64_t> notifications;
+extern "C" void HAPAccessoryServerRaiseEvent(HAPAccessoryServerRef*,const HAPCharacteristic *ch,const HAPService*,const HAPAccessory*){
+ notifications.push_back(static_cast<const HAPBaseCharacteristic*>(ch)->iid);
+}
 namespace shelly { namespace blu {
 Sensor sensor;
 bool SensorPaired(int role){return role==2||role==5;}
@@ -68,6 +82,7 @@ bool CarPresenceReady(){return ready;}
 bool CarPresent(){return true;}
 bool SensorReady(int){return true;}
 bool MotionReady(){return ready;}
+bool MotionLightReady(){return ready&&sensor.IlluminanceFresh(100,180);}
 const Sensor &MotionReading(){return sensor;}
 const Sensor &ReadingFor(int){return sensor;}
 void SetButtonEventHandler(std::function<void(uint8_t)>){ }
@@ -89,8 +104,12 @@ extern "C" bool HAPAccessoryServerSupportsService(HAPAccessoryServerRef*,HAPTran
 extern "C" bool HAPSessionControllerIsAdmin(const HAPSessionRef*){return true;}
 
 extern "C" bool TestFindCharacteristic(HAPAccessoryServerRef*,uint64_t,uint64_t,const HAPCharacteristic**,const HAPService**,const HAPAccessory**);
-int main(int argc,char**){
- shelly::blu::ready=argc==1;
+int main(int argc,char **argv){
+ const std::string mode=argc==1?"ready":argv[1];
+ shelly::blu::ready=mode!="not-ready";
+ auto &sensor=shelly::blu::sensor;sensor.seen=true;sensor.illuminance_last_seen=100;
+ sensor.illuminance100=mode=="missing"?-1:mode=="dark"?0:mode=="bright"?16777215:12345;
+ if(mode=="stale")sensor.illuminance_last_seen=-100;
  std::vector<std::unique_ptr<mgos::hap::Accessory>> accs;
  accs.emplace_back(new mgos::hap::Accessory(1,kHAPAccessoryCategory_GarageDoorOpeners,"Garage",nullptr,nullptr));
  accs[0]->AddHAPService(&mgos_hap_accessory_information_service);
@@ -103,11 +122,20 @@ int main(int argc,char**){
  shelly::hap::GarageDoorOpener owner;owner.AddBLUServices(accs[0].get());
  const HAPAccessory *bridged[]={nullptr};
  HAPAccessoryServer server={};server.primaryAccessory=accs[0]->GetHAPAccessory();server.ip.bridgedAccessories=bridged;
+ accs[0]->set_server(reinterpret_cast<HAPAccessoryServerRef*>(&server));
+ auto tick=[](){for(auto *timer:mgos::timers())timer->callback();};tick();
+ if(mode=="ready"){
+  const auto before=std::count(notifications.begin(),notifications.end(),0x1b02);
+  sensor.illuminance100++;tick();assert(std::count(notifications.begin(),notifications.end(),0x1b02)==before+1);
+  tick();assert(std::count(notifications.begin(),notifications.end(),0x1b02)==before+1);
+  sensor.illuminance100--;tick();
+ }
+ if(mode=="lost"){shelly::blu::ready=false;sensor.illuminance100=99999;tick();}
  mg_connection diagnostics;WriteHAPDatabase(&diagnostics,server.primaryAccessory);
- for (const char *expected : {"AID 1 service 6144 type 85 name Motion sensor", "AID 1 service 6400 type 86 name Car presence", "AID 1 service 6656 type 89 name Button", "characteristic 6146 type 22", "characteristic 6402 type 71", "characteristic 6658 type 73"})
+ for (const char *expected : {"AID 1 service 6144 type 85 name Motion sensor", "AID 1 service 6400 type 86 name Car presence", "AID 1 service 6656 type 89 name Button", "characteristic 6146 type 22", "characteristic 6402 type 71", "characteristic 6658 type 73", "AID 1 service 6912 type 84 name Light sensor", "characteristic 6914 type 6B"})
   assert(diagnostics.text.find(expected)!=std::string::npos);
  HAPIPSessionDescriptorRef session={};auto *descriptor=reinterpret_cast<HAPIPSessionDescriptor*>(&session);descriptor->server=reinterpret_cast<HAPAccessoryServerRef*>(&server);HAPIPAccessorySerializationContext ctx;HAPIPAccessoryCreateSerializationContext(&ctx);
- for (uint64_t iid : {0x1802,0x1902,0x1a02}) {
+ for (uint64_t iid : {0x1802,0x1902,0x1a02,0x1b02}) {
   const HAPCharacteristic *ch=nullptr;const HAPService *svc=nullptr;const HAPAccessory *acc=nullptr;
   assert(TestFindCharacteristic(reinterpret_cast<HAPAccessoryServerRef*>(&server),1,iid,&ch,&svc,&acc));
   assert(svc->iid==(iid-2)&&acc->aid==1);
@@ -138,13 +166,14 @@ for f in [sdk/'HomeKitADK/HAP/HAPCharacteristicTypes.c',sdk/'HomeKitADK/HAP/HAPS
  *[sdk/'HomeKitADK/PAL'/('HAPBase+'+name+'.c') for name in ['RawBuffer','String','Int','Float','Double','UTF8']],p/'db.c']:
  out=p/(f.stem+'.o');subprocess.run(['clang',*flags,'-c',str(f),'-o',str(out)],check=True);objs.append(str(out))
 subprocess.run(['clang++','-std=c++14',*flags,str(p/'test.cpp'),str(p/'motion.cpp'),str(sdk/'src/mgos_hap_chars.cpp'),str(sdk/'src/mgos_hap_service.cpp'),str(sdk/'src/mgos_hap_accessory.cpp'),*objs,('-Wl,-dead_strip' if sys.platform=='darwin' else '-Wl,--gc-sections'),'-o',str(p/'test')],check=True)
-for ready in [True, False]:
- args=[str(p/'test')]+([] if ready else ['not-ready'])
+for mode in ['ready','not-ready','missing','dark','bright','stale','lost']:
+ ready=mode not in ['not-ready','lost']
+ args=[str(p/'test')]+([] if mode=='ready' else [mode])
  db=json.loads(subprocess.check_output(args))
  assert len(db['accessories'])==1
  accessory=db['accessories'][0];assert accessory['aid']==1
  services={v['type']:v for v in accessory['services']}
- assert set(services)=={'3E','41','85','86','89'}
+ assert set(services)=={'3E','41','85','86','89','84'}
  assert [v['type'] for v in services.values() if v['primary']]==['41']
  assert services['85']['iid']==0x1800 and services['86']['iid']==0x1900 and services['89']['iid']==0x1a00
  ids=[]
@@ -169,5 +198,15 @@ for ready in [True, False]:
  assert chars['73']['value'] is None and chars['73']['maxValue']==2
  assert chars['23']['value']=='Button'
  assert next(c['value'] for c in services['86']['characteristics'] if c['type']=='23')=='Car presence'
+ assert services['84']['iid']==0x1b00
+ light={c['type']:c for c in services['84']['characteristics']}
+ expected=100000 if mode=='bright' else 123.45 if mode in ['ready','lost'] else 0.0001
+ assert abs(light['6B']['value']-expected)<0.00001,(mode,light)
+ assert light['6B']['format']=='float' and light['6B']['unit']=='lux'
+ assert light['6B']['minValue']==0.0001 and light['6B']['maxValue']==100000
+ assert set(light['6B']['perms'])=={'pr','ev'}
+ light_ready=ready and mode not in ['missing','stale']
+ assert light['77']['value']==(0 if light_ready else 1)
+ assert light['75']['value']==(1 if light_ready else 0)
 work.cleanup()
-print('PASS: real Apple SDK routing, reads and /accessories serialization; distinct replacement services, retired IDs, typed values and event semantics')
+print('PASS: real Apple SDK routing, reads and serialization; stable services, light units/range, missing/stale readings, notifications, receiver loss and event semantics')

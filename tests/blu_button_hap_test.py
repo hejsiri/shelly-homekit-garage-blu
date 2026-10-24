@@ -29,10 +29,12 @@ struct HAPUInt8CharacteristicReadRequest {};
 struct HAPFloatCharacteristicReadRequest {};
 const int kHAPError_None=0,kHAPError_Unknown=1,kHAPError_InvalidState=2;
 const int kHAPServiceType_MotionSensor=1,kHAPServiceType_TemperatureSensor=2,
- kHAPServiceType_HumiditySensor=3,kHAPServiceType_OccupancySensor=4,kHAPServiceType_StatelessProgrammableSwitch=5;
+ kHAPServiceType_HumiditySensor=3,kHAPServiceType_OccupancySensor=4,kHAPServiceType_StatelessProgrammableSwitch=5,kHAPServiceType_LightSensor=6;
 const int kHAPCharacteristicType_MotionDetected=1,kHAPCharacteristicType_StatusFault=2,
  kHAPCharacteristicType_CurrentTemperature=3,kHAPCharacteristicType_CurrentRelativeHumidity=4,
- kHAPCharacteristicType_OccupancyDetected=5,kHAPCharacteristicType_ProgrammableSwitchEvent=6,kHAPCharacteristicType_StatusActive=7;
+ kHAPCharacteristicType_OccupancyDetected=5,kHAPCharacteristicType_ProgrammableSwitchEvent=6,kHAPCharacteristicType_StatusActive=7,kHAPCharacteristicType_CurrentAmbientLightLevel=8;
+const int kHAPCharacteristicUnits_Lux=1;
+const char *kHAPServiceDebugDescription_LightSensor="light",*kHAPCharacteristicDebugDescription_CurrentAmbientLightLevel="lux";
 const char *kHAPServiceDebugDescription_MotionSensor="motion",*kHAPServiceDebugDescription_TemperatureSensor="temperature",
  *kHAPServiceDebugDescription_HumiditySensor="humidity",*kHAPServiceDebugDescription_OccupancySensor="occupancy",
  *kHAPServiceDebugDescription_StatelessProgrammableSwitch="button";
@@ -74,6 +76,8 @@ struct BoolCharacteristic : Characteristic {
  template<class F> BoolCharacteristic(uint16_t id,const int *t,F,bool,std::nullptr_t,const char*):Characteristic(id,t){}
 };
 struct FloatCharacteristic : Characteristic {
+ using ReadHandler=std::function<HAPError(HAPAccessoryServerRef*,const HAPFloatCharacteristicReadRequest*,float*)>;
+ struct {struct {struct {int units;} float_;} char_;} hap_char_;
  template<class F> FloatCharacteristic(uint16_t id,const int *t,float,float,float,F,bool,std::nullptr_t,const char*):Characteristic(id,t){}
 };
 struct Service {
@@ -116,6 +120,7 @@ const Sensor &MotionReading(){return sensors[2];}
 const Sensor &ReadingFor(int role){return sensors[role];}
 bool SensorReady(int){return false;}
 bool MotionReady(){return false;}
+bool MotionLightReady(){return false;}
 '''
 for signature in ['void ScanResult(', 'bool ConsumeButtonPress(', 'void SetButtonEventHandler(',
                   'const char *CarName(', 'bool CarPresenceReady(', 'bool CarPresent(']:

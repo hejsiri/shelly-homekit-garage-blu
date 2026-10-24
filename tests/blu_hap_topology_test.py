@@ -40,6 +40,9 @@ bool SensorPaired(int role) { return paired[role]; }
 std::unique_ptr<mgos::hap::Service> CreateMotionService() {
  return std::unique_ptr<mgos::hap::Service>(new mgos::hap::Service{2, false});
 }
+std::unique_ptr<mgos::hap::Service> CreateMotionLightService() {
+ return std::unique_ptr<mgos::hap::Service>(new mgos::hap::Service{2, true});
+}
 std::unique_ptr<mgos::hap::Service> CreateHTService(int role, bool temperature) {
  return std::unique_ptr<mgos::hap::Service>(new mgos::hap::Service{role, temperature});
 }
@@ -74,7 +77,7 @@ int main() {
   int counts[6] = {};
   for (auto *service : accessory.services) counts[service->role]++;
   assert(counts[0] == 0 && counts[1] == 0);
-  assert(counts[2] == (blu::paired[2] ? 1 : 0));
+  assert(counts[2] == (blu::paired[2] ? 2 : 0));
   assert(counts[3] == (blu::paired[3] ? 2 : 0));
   assert(counts[4] == (blu::paired[4] ? 2 : 0));
   assert(counts[5] == (blu::paired[5] ? 2 : 0));

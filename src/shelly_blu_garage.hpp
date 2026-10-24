@@ -18,6 +18,7 @@ const char *SensorName(int role);
 void SetSensorName(int role, const char *name);
 const Sensor &MotionReading();
 bool MotionReady();
+bool MotionLightReady();
 bool ConsumeButtonPress();
 void SetButtonEventHandler(std::function<void(uint8_t)> handler);
 const char *CarName();

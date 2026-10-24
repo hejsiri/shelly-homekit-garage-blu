@@ -14,6 +14,7 @@ struct Reading {
   int packet_id = -1;
   int temperature10 = 0;
   int humidity = -1;
+  int32_t illuminance100 = -1;  // BTHome 0x05: hundredths of a lux, -1 = absent.
 };
 
 // BTHome v2 service payload, after UUID 0xFCD2. Only the objects used by
@@ -49,6 +50,10 @@ inline bool Decode(const uint8_t *data, size_t len, Reading *out, bool motion = 
     if (id == 0x01) {
       if (data[i] > 100) return false;
       result.battery = data[i];
+    }
+    if (id == 0x05) {
+      result.illuminance100 = int32_t(data[i]) | (int32_t(data[i + 1]) << 8) |
+                             (int32_t(data[i + 2]) << 16);
     }
     if (id == (motion ? 0x2d : 0x21)) return false;
     if (id == (motion ? 0x21 : 0x2d)) {
@@ -170,16 +175,26 @@ struct Sensor {
   int rssi = 0;
   int temperature10 = 0;
   int humidity = -1;
+  int32_t illuminance100 = -1;
+  double illuminance_last_seen = 0;
   void Update(const Reading &reading, double now, int signal, int kind = 0) {
     seen = true;
     active = kind == 1 ? reading.motion : kind == 0 ? !reading.window_open : false;
     if (kind == 2) { temperature10 = reading.temperature10; humidity = reading.humidity; }
+    if (reading.illuminance100 >= 0) {
+      illuminance100 = reading.illuminance100;
+      illuminance_last_seen = now;
+    }
     last_seen = now;
     if (reading.battery >= 0) battery = reading.battery;
     rssi = signal;
   }
   bool Fresh(double now, int timeout) const {
     return seen && now >= last_seen && now - last_seen <= timeout;
+  }
+  bool IlluminanceFresh(double now, int timeout) const {
+    return seen && illuminance100 >= 0 && now >= illuminance_last_seen &&
+           now - illuminance_last_seen <= timeout;
   }
 };
 
