@@ -1,6 +1,6 @@
 # Historia zmian Garage BLU
 
-Bieżące opisy i instrukcje dotyczą **2.16.1-blu43** (stan: 2026-10-24).
+Bieżące opisy i instrukcje dotyczą **2.16.1-blu44** (stan: 2026-10-24).
 Zobacz [instalację i aktualizacje](AKTUALIZACJA.md), [konfigurację](KONFIGURACJA.md)
 i [rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md).
 
@@ -306,3 +306,13 @@ jednorazowe odświeżenie konfiguracji nie resetuje parowań. Testy obejmują sk
 brakujące/przeterminowane pomiary, granice HomeKit, powiadomienia oraz prawdziwą
 ścieżkę odczytu i serializacji Apple ADK. Próba nowego pomiaru na sprzęcie pozostaje
 do wykonania po instalacji.
+
+## blu44 — ręczne ukrycie auta wygasza kafelek obecności
+
+Ikona auta i kafelek Car presence korzystają z jednego stanu wizualizacji. Ukrycie
+auta natychmiast wyłącza podświetlenie kafelka i ustawia Not detected. Odpytywanie
+tego samego pakietu nie cofa ręcznego wyboru; nowy beacon Button1 przywraca stan
+obecności. Odczyt obecności w HomeKit nadal pochodzi z BLE.
+
+Zachowanie sprawdzono w istniejących testach panelu i lokalnym podglądzie:
+ukrycie, odświeżenia tego samego pakietu oraz powrót po nowym beaconie.

@@ -116,6 +116,17 @@ aside .dashboard-tile .tile-copy .door-state{display:flex;align-items:baseline;g
 const system=matchMedia('(prefers-color-scheme: dark)'),base=document.querySelector('.interior'),exterior=document.querySelector('.house-background');let mode='auto',car='car';try{mode=localStorage.getItem('garage-theme')||'auto';car=localStorage.getItem('garage-car')||'car';}catch(_){}if(!['day','night','auto'].includes(mode))mode='auto';if(!['car','empty'].includes(car))car='car';
 let themeRequest=0;
 let lastPresenceMAC=null,lastPresencePacket=null,lastPresence=null;
+let presenceData=null;
+function renderCarPresence(){
+ if(!presenceData)return;
+ const presence=document.getElementById('car-presence'),button=presenceData.button;
+ presence.hidden=!(button&&button.secure);
+ const ready=presenceData.car_presence_ready!==false,present=car==='car';
+ presence.querySelector(':scope > div > span').textContent=!ready?'No data':present?'Detected':'Not detected';
+ presence.classList.toggle('active',ready&&present);
+ presence.querySelector('.tile-name').textContent=presenceData.car_name||'Car presence';
+ presence.title='BLU button detected within range — this does not confirm the parking location';
+}
 // A user override lasts until a new authenticated packet or a presence transition.
 // Polling the same packet must not immediately undo the toolbar button.
 function syncCarPresence(blu){
@@ -129,8 +140,10 @@ function syncCarPresence(blu){
  lastPresenceMAC=mac;lastPresencePacket=packet;lastPresence=present;
 }
 window.addEventListener('message',e=>{
- if(e.source===parent&&e.origin===location.origin&&e.data&&e.data.garageTelemetry)
-   syncCarPresence(e.data.garageTelemetry.status.blu||{});
+ if(e.source===parent&&e.origin===location.origin&&e.data&&e.data.garageTelemetry){
+   presenceData=e.data.garageTelemetry.status.blu||{};
+   syncCarPresence(presenceData);renderCarPresence();
+ }
 });
 const assetCache=new Map();
 function readyAsset(src){
@@ -141,7 +154,7 @@ function readyAsset(src){
  }));
  return assetCache.get(src);
 }
-async function apply(){const request=++themeRequest,theme=mode==='auto'?(system.matches?'night':'day'):mode;
+async function apply(){renderCarPresence();const request=++themeRequest,theme=mode==='auto'?(system.matches?'night':'day'):mode;
 const paths=[`garage-v16-${theme}.webp`,`garage-v16-interior-${theme}.webp`,`garage-v16-door-${theme}.webp`,`garage-tesla-s-${theme}.webp`];
 try{await Promise.all(paths.map(readyAsset));}catch(e){console.warn('Cannot load complete garage theme',e);return;}if(request!==themeRequest)return;
 exterior.src=paths[0];base.src=paths[1];document.querySelector('.leaf img').src=paths[2];document.querySelector('.car-layer').src=paths[3];document.documentElement.dataset.car=car;document.querySelector('.car-layer').hidden=car!=='car';document.querySelector('.car-ground').hidden=car!=='car';document.documentElement.dataset.theme=theme;parent.postMessage({garageAction:'theme',theme},location.origin);
@@ -201,11 +214,6 @@ function update(data){
  }
  lastButtonSequence=seq;
  indicator.querySelector('.tile-name').textContent=blu.button&&blu.button.name||'Button';
- const button=blu.button,presence=document.getElementById('car-presence');presence.hidden=!(button&&button.secure);
- const present=typeof blu.car_present==='boolean'?blu.car_present:button&&button.secure&&button.seen&&button.age_s>=0&&button.age_s<=(blu.presence_timeout_s||45);
- presence.querySelector(':scope > div > span').textContent=blu.car_presence_ready===false?'No data':present?'Detected':'Not detected';presence.classList.toggle('active',!!present);
- presence.querySelector('.tile-name').textContent=blu.car_name||'Car presence';
- presence.title='BLU button detected within range — this does not confirm the parking location';
 
 }
 window.addEventListener('message',e=>{if(e.source===parent&&e.origin===location.origin&&e.data&&e.data.garageTelemetry)update(e.data.garageTelemetry);});

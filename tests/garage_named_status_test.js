@@ -11,11 +11,13 @@ class Node {
 }
 const nodes={},scene=new Node(),motion=new Node(),parent={},listeners={};
 const node=id=>nodes[id]||(nodes[id]=new Node());
-const ctx={document:{getElementById:node,querySelectorAll:()=>[motion]},window:{addEventListener:(t,f)=>listeners[t]=f},parent,location:{origin:'http://shelly'},performance:{now:()=>1000},setInterval(){},clearTimeout(){},setTimeout(){},cancelAnimationFrame(){},requestAnimationFrame(){return 1;}};
-parent.postMessage=()=>{};vm.createContext(ctx);vm.runInContext(html.slice(start,end),ctx);
+const ctx={car:'empty',apply(){ctx.renderCarPresence();},document:{getElementById:node,querySelectorAll:()=>[motion]},window:{addEventListener:(t,f)=>(listeners[t]??=[]).push(f)},parent,location:{origin:'http://shelly'},performance:{now:()=>1000},setInterval(){},clearTimeout(){},setTimeout(){},cancelAnimationFrame(){},requestAnimationFrame(){return 1;}};
+parent.postMessage=()=>{};vm.createContext(ctx);
+vm.runInContext(html.slice(html.indexOf('let lastPresenceMAC='),html.indexOf('const assetCache=')),ctx);
+vm.runInContext(html.slice(start,end),ctx);
 const unsafe='<img src=x onerror=alert(1)>',status={name:'Garaż główny',cur_state_str:'stopped',obstruction_detected:true,movement_timed_out:true,blu:{enable:true,ready:true,stale_after_s:180,presence_timeout_s:45}};
 for(const role of ['closed','open','motion','indoor','outdoor','button'])status.blu[role]={name:unsafe,secure:true,seen:true,age_s:0,active:role==='closed',temperature:21.5,humidity:40};
-function send(origin='http://shelly'){listeners.message({source:parent,origin,data:{garageTelemetry:{status}}});}
+function send(origin='http://shelly'){for(const listener of listeners.message)listener({source:parent,origin,data:{garageTelemetry:{status}}});}
 send('http://untrusted');assert.equal(node('status').textContent,'Loading…');
 send();assert.equal(node('status').textContent,'Obstruction');assert(node('garage-control').classes.has('obstructed'));
 assert.equal(node('leaf').style.transform,'translateY(-50%)');assert.equal(node('position').textContent,'50%');
@@ -27,6 +29,11 @@ for(const id of ['weather-indoor','weather-outdoor']){
 }
 assert.equal(node('button-indicator').querySelector('.tile-name').textContent,unsafe);
 assert.equal(node('car-presence').querySelector('.tile-name').textContent,'Car presence');
+ctx.car='empty';ctx.apply();assert(!node('car-presence').classes.has('active'));
+assert.equal(node('car-presence').querySelector(':scope > div > span').textContent,'Not detected');
+send();assert(!node('car-presence').classes.has('active')); // Polling the same beacon preserves manual hide.
+status.blu.button.packet_seq=1;send();assert(node('car-presence').classes.has('active'));
+assert.equal(node('car-presence').querySelector(':scope > div > span').textContent,'Detected');
 status.blu.car_name='Auto „garaż” '+unsafe;send();
 assert.equal(node('car-presence').querySelector('.tile-name').textContent,status.blu.car_name);
 assert.equal(node('car-presence').innerHTML,'');

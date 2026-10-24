@@ -8,7 +8,7 @@ pełne zamknięcie i otwarcie. Sterownik komunikuje się z HomeKit przez Wi-Fi,
 a z urządzeniami BLU przez Bluetooth. Projekt bazuje na
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
 
-**Aktualne wydanie: 2.16.1-blu43 · Shelly Plus 1 i Shelly 1 Gen3 · 2026-10-24.**
+**Aktualne wydanie: 2.16.1-blu44 · Shelly Plus 1 i Shelly 1 Gen3 · 2026-10-24.**
 Dla każdego modelu jest osobny ZIP, suma SHA-256 i wpis w kanale OTA.
 Panel WWW ma angielskie teksty systemowe. Dokumentacja użytkownika jest po polsku,
 a odnośniki do przycisków i pól zachowują ich angielskie nazwy.
@@ -57,14 +57,14 @@ do wykonania.
 
 ## Funkcje
 
-| Funkcja | Zachowanie w blu43 |
+| Funkcja | Zachowanie w blu44 |
 | --- | --- |
 | Parowanie w panelu | Pair otwiera modal i uruchamia wyszukiwanie. Jeden zgodny model jest wybierany automatycznie; PIN pojawia się tylko, gdy jest potrzebny. |
 | Szyfrowane odczyty | AES-CCM BTHome v2, sprawdzanie MAC i klucza oraz ochrona przed ponownym użyciem pakietów. |
 | Wiarygodny stan | Polecenia są blokowane przy brakujących, nieaktualnych lub sprzecznych odczytach krańcówek oraz podczas parowania. |
 | Nazwy akcesoriów | Name pod Pair zapisuje nazwę urządzenia; Motion, Button1 i H&T używają jej na wizualizacji. Oddzielne Car name pod Button1 nazywa kafelek auta. Nazwa bramy pochodzi z Name w sekcji Garage Door. Krańcówki są opisane w ustawieniach. |
 | Wizualizacja | Motywy Day / Night / Auto, animacja bramy, kafelki ruchu i Button1, odczyty temperatury i wilgotności. Przy włączonym haśle widok jest dostępny po zalogowaniu; podczas OTA jest ukryty. |
-| Obecność auta | Nowy poprawnie odszyfrowany pakiet Button1 pokazuje auto, brak pakietów przez 45 s je ukrywa. Ręczny wybór działa do następnego pakietu lub zmiany obecności. |
+| Obecność auta | Nowy poprawnie odszyfrowany pakiet Button1 pokazuje auto, brak pakietów przez 45 s je ukrywa. Ręczny wybór zmienia równocześnie grafikę i kafelek Car presence do następnego pakietu lub zmiany obecności. |
 | Oświetlenie | Light sensor w HomeKit korzysta wyłącznie z LUX sparowanego BLU Motion. Ma oddzielną kontrolę świeżości pomiaru i status dostępności. |
 | Sterowanie Button1 | Pojedynczy nacisk: otwórz / zatrzymaj / zamknij zgodnie ze stanem bramy. W HomeKit: obecność auta i przycisk programowalny (pojedyncze / podwójne / długie naciśnięcie), we wspólnym akcesorium Shelly. Sam beacon nie uruchamia przekaźnika. |
 | Kierunek po zatrzymaniu | Continue previous direction after stop: wyłączony — zmiana kierunku; włączony — kontynuacja poprzedniego. Opcję trzeba dopasować do reakcji napędu. |
@@ -92,17 +92,17 @@ statusy i zachowanie po zatrzymaniu. Przy problemach zacznij od
 ## Pobieranie i aktualizacja
 
 - [Paczki i opis na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/)
-- [ZIP 2.16.1-blu43 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu43.zip)
-- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu43.zip.sha256)
-- [ZIP 2.16.1-blu43 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu43.zip)
-- [SHA-256 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu43.zip.sha256)
+- [ZIP 2.16.1-blu44 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu44.zip)
+- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu44.zip.sha256)
+- [ZIP 2.16.1-blu44 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu44.zip)
+- [SHA-256 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu44.zip.sha256)
 - [Instrukcja instalacji, aktualizacji i kontroli po restarcie](docs/AKTUALIZACJA.md)
 
 Obie paczki zostały skompilowane; wspólny kod sprawdzono testami hosta i podglądem WWW;
 zweryfikowano też publiczne ZIP-y, sumy SHA-256 i kanał OTA. Wcześniejsze wydania
 potwierdziły OTA i szyfrowane odczyty na Plus 1. W blu42 potwierdzono na tym modelu
 migrację i widoczność bramy, ruchu, obecności oraz przycisku w aplikacji Dom;
-ruch był aktywny i gotowy, a obecność odpowiadała odczytowi BLE. Metadane blu43 nadal mają
+ruch był aktywny i gotowy, a obecność odpowiadała odczytowi BLE. Metadane blu44 nadal mają
 `hardware_tested: false`: pełna próba tego wydania na fizycznej bramie pozostaje
 do wykonania. Test na fizycznym Shelly 1 Gen3 nie został jeszcze wykonany.
 
@@ -111,7 +111,7 @@ do wykonania. Test na fizycznym Shelly 1 Gen3 nie został jeszcze wykonany.
 - [Repozytorium Garage BLU](https://github.com/hejsiri/shelly-homekit-garage-blu)
 - [Zgłoszenia błędów i propozycje](https://github.com/hejsiri/shelly-homekit-garage-blu/issues)
 - [Budowanie, testy i publikowanie (EN)](README-BLU.md)
-- [Historia zmian blu20–blu43](docs/HISTORIA_ZMIAN.md)
+- [Historia zmian blu20–blu44](docs/HISTORIA_ZMIAN.md)
 - [Projekt bazowy Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit)
 
 W zgłoszeniu podaj wersję sterownika, model i firmware urządzenia BLU oraz dokładny

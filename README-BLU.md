@@ -2,7 +2,7 @@
 
 Garage BLU adds encrypted Shelly BLU devices and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu43 for Shelly Plus 1 and Shelly 1 Gen3**,
+The current OTA release is **2.16.1-blu44 for Shelly Plus 1 and Shelly 1 Gen3**,
 with separate model-specific ZIPs and checksums. The Gen3 image targets ESP32-C3;
 its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
@@ -108,6 +108,9 @@ it does not reprogram the motor controller.
 Button1 beacons update the car picture and a HomeKit occupancy service. A new authenticated packet
 shows it; exceeding the presence timeout (default 45 seconds) hides it. The
 manual show/hide button lasts until the next packet or presence transition.
+It updates both the car picture and the dashboard's Car presence tile immediately:
+hiding the car makes the tile inactive with Not detected. This temporary dashboard
+choice does not change the actual HomeKit occupancy reading.
 Repeated status polls of the same packet preserve that manual choice. Presence
 means the button is in BLE range, not proof of an exact parking location.
 Beacons never trigger the relay. A fresh single press can trigger the normal

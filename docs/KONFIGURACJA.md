@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1-blu43 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Instrukcja dla **2.16.1-blu44 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -149,6 +149,10 @@ pakietu obecność znika. Sam sygnał BLE potwierdza zasięg przycisku, nie miej
 
 Ręczne pokazanie lub ukrycie auta obowiązuje do następnego pakietu albo zmiany
 obecności. Odświeżenie panelu z tym samym pakietem nie cofa od razu ręcznego wyboru.
+Od blu44 ikona auta w prawym górnym rogu zmienia jednocześnie grafikę i kafelek
+Car presence: ukrycie auta wygasza kafelek i pokazuje Not detected. Nowy beacon
+przywraca stan wynikający z BLE. Ten ręczny wybór dotyczy panelu WWW; czujnik
+obecności w HomeKit nadal korzysta z rzeczywistych pakietów.
 Sensor timeout dotyczy świeżości danych czujników i nie zmienia limitu obecności Button1.
 
 Wskaźnik Button1 miga po nowym pojedynczym naciśnięciu, a nie od zwykłego beacona.
