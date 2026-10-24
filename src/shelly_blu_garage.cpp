@@ -39,12 +39,12 @@ void ScanResult(int, void *event_data, void *) {
   if (index < 0) return;
   if (XiaomiFor(index, result->addr.addr)) {
     Reading reading;
-    if (!DecodeXiaomiAdvertisement(
+    if (!AcceptXiaomi(index, result->addr.addr,
             reinterpret_cast<const uint8_t *>(result->adv_data.p),
-            result->adv_data.len, result->addr.addr, &reading) &&
-        !DecodeXiaomiAdvertisement(
+            result->adv_data.len, &reading) &&
+        !AcceptXiaomi(index, result->addr.addr,
             reinterpret_cast<const uint8_t *>(result->scan_rsp.p),
-            result->scan_rsp.len, result->addr.addr, &reading)) return;
+            result->scan_rsp.len, &reading)) return;
     sensors[index].Update(reading, mgos_uptime(), result->rssi, 2);
     ++packet_sequence[index];
     if (SensorReady(index)) PairingVerified(index);
@@ -226,7 +226,18 @@ bool HTReady(int role, bool temperature) {
   return (role == 3 || role == 4) && SensorPaired(role) &&
          mgos_bt_get_status() == MGOS_BT_STARTED &&
          sensors[role].HTFresh(temperature, mgos_uptime(),
-                              mgos_sys_config_get_blu_stale_after_s());
+                              SensorTimeout(role));
+}
+int SensorTimeout(int role) {
+  const int timeout = mgos_sys_config_get_blu_stale_after_s();
+  // Stock LYWSD03MMC measurements can be ten minutes apart.
+  return known[role] && XiaomiSecureFor(role, addresses[role].addr) && timeout < 1800 ?
+             1800 : timeout;
+}
+void SetThermometerReading(int role, const Sensor &reading) {
+  if (role != 3 && role != 4) return;
+  sensors[role] = reading;
+  ++packet_sequence[role];
 }
 bool ConsumeButtonPress() {
   bool result = button_pending && mgos_uptime() - button_press_time <= 1;
@@ -268,12 +279,14 @@ std::string GetInfoJSON() {
   for (int i = 0; i < 6; i++) {
     const auto &sensor = sensors[i];
     result += mgos::JSONPrintStringf(
-        ",%Q:%Q,%Q:{name:%Q,packet_seq:%u,paired:%B,protocol:%Q,ready:%B,temperature_ready:%B,humidity_ready:%B,secure:%B,seen:%B,active:%B,battery:%d,rssi:%d,age_s:%d,temperature:%.1f,humidity:%d}",
+        ",%Q:%Q,%Q:{name:%Q,packet_seq:%u,paired:%B,protocol:%Q,timeout_s:%d,ready:%B,temperature_ready:%B,humidity_ready:%B,secure:%B,seen:%B,active:%B,battery:%d,rssi:%d,age_s:%d,temperature:%.1f,humidity:%d}",
         (std::string(roles[i]) + "_mac").c_str(), SensorMAC(i) ? SensorMAC(i) : "", roles[i],
         SensorName(i), packet_sequence[i],
-        SensorPaired(i), known[i] && XiaomiFor(i, addresses[i].addr) ? "xiaomi" : "bthome",
+        SensorPaired(i), known[i] && XiaomiSecureFor(i, addresses[i].addr) ? "xiaomi_encrypted" :
+                        known[i] && XiaomiFor(i, addresses[i].addr) ? "xiaomi" : "bthome",
+        SensorTimeout(i),
         SensorReady(i), HTReady(i, true), HTReady(i, false),
-        known[i] && SecureFor(i, addresses[i].addr), sensor.seen, sensor.active,
+        known[i] && (SecureFor(i, addresses[i].addr) || XiaomiSecureFor(i, addresses[i].addr)), sensor.seen, sensor.active,
         sensor.battery, sensor.rssi, sensor.seen ? int(mgos_uptime() - sensor.last_seen) : -1,
         sensor.temperature10 / 10.0, sensor.humidity);
   }

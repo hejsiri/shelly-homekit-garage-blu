@@ -29,6 +29,7 @@ harness = r'''
 #define SHELLY_GARAGE_BLE
 #include "shelly_blu_keys.hpp"
 #include "shelly_blu_xiaomi.hpp"
+#include "shelly_blu_secure.hpp"
 #define BLE_HS_ATT_ERR(x) (0x100 + (x))
 #define BLE_ATT_ERR_INSUFFICIENT_AUTHEN 5
 #define BLE_ATT_ERR_INSUFFICIENT_ENC 15
@@ -94,15 +95,15 @@ bool Authorized(mg_rpc_request_info *) { return authorized; }
 int rpc_error=0,responses=0;
 void mg_rpc_send_errorf(mg_rpc_request_info *,int code,const char *,...) { rpc_error=code; }
 void mg_rpc_send_responsef(mg_rpc_request_info *,const char *,...) { responses++; }
-struct {int role;const char *mac,*pin,*current_pin;} request;
+struct {int role;const char *mac,*pin,*current_pin,*bindkey=nullptr;} request;
 void json_scanf(const char *,size_t,const char *fmt,...) {
  va_list args;va_start(args,fmt);
  if(strcmp(fmt,"{pin:%Q}")==0) {
   *va_arg(args,char **)=request.pin?strdup(request.pin):nullptr;
  } else {
-  assert(strcmp(fmt,"{role:%d,mac:%Q,pin:%Q,current_pin:%Q}")==0);
+  assert(strcmp(fmt,"{role:%d,mac:%Q,pin:%Q,current_pin:%Q,bindkey:%Q}")==0);
   *va_arg(args,int *)=request.role;
-  for(const char *s : {request.mac,request.pin,request.current_pin})
+  for(const char *s : {request.mac,request.pin,request.current_pin,request.bindkey})
    *va_arg(args,char **)=s?strdup(s):nullptr;
  }
  va_end(args);
@@ -129,6 +130,18 @@ double mgos_uptime() { return now; }
 namespace shelly { namespace blu {
 SecureRecord persisted = {}, previous = {};
 bool have_previous = false;
+bool decrypt_ok=true;
+bool DecryptXiaomi(const uint8_t *data,size_t size,const uint8_t mac[6],const uint8_t key[16],Reading *out,uint32_t *counter){
+ XiaomiFrame frame;
+ if(!decrypt_ok||!ParseXiaomiFrame(data,size,mac,&frame)||!frame.encrypted||key[0]!=0xe9)return false;
+ Reading reading;
+ reading.temperature_present=frame.packet_id==0x51;
+ if(reading.temperature_present)reading.temperature10=245;
+ else reading.humidity=47;
+ *counter=frame.counter;*out=reading;return true;
+}
+void SetThermometerReading(int,const Sensor &reading){assert(reading.temperature10==245&&reading.humidity==47);}
+
 bool LoadRecord(int, SecureRecord *out) { *out = previous; return have_previous; }
 bool SaveRecord(int, const SecureRecord &record) { persisted = record; saved++; return true; }
 }}
@@ -159,6 +172,7 @@ std::array<uint8_t,16> pending_key={};
 uint32_t new_pin = 123456;
 int role = 2;
 int discovery_model=0;
+SecureRecord xiaomi_pending={};Sensor xiaomi_readings;
 uint16_t conn = 1, key_handle = 10, pin_handle=11,beacon_handle=0;
 double deadline = 0;
 bool Active() { return state != "idle" && state != "done" && state != "error"; }
@@ -173,7 +187,7 @@ void QueueKeyRead();
 void StoreKey(const std::array<uint8_t,16> &key);
 '''
 harness += '\n'.join(extract(sig) for sig in [
-    'bool ResumeSecurityAfterDisconnect(', 'void WaitForSecurityRetryWake() {', 'bool ResumeKeyAfterDisconnect() {', 'void ConfigureReconnectAuthentication(', 'bool ResumePairingWindow() {', 'void WaitForUserPairing() {', 'int WriteResult(', 'int KeyWriteResult(', 'void ConfigureEncryption() {', 'int KeyResult(', 'void StoreKey(const std::array<uint8_t, 16> &key) {', 'void QueueKeyRead() {', 'void ReadKey() {', 'int Characteristic(', 'bool ParsePIN(', 'void EncryptionPINRPC(', 'void StoreXiaomi(', 'void PairRPC(', 'void PairingAdvertisement(', 'bool PairingScan() {', 'void PairingVerified(', 'void PairingTimeout() {'])
+    'bool ResumeSecurityAfterDisconnect(', 'void WaitForSecurityRetryWake() {', 'bool ResumeKeyAfterDisconnect() {', 'void ConfigureReconnectAuthentication(', 'bool ResumePairingWindow() {', 'void WaitForUserPairing() {', 'int WriteResult(', 'int KeyWriteResult(', 'void ConfigureEncryption() {', 'int KeyResult(', 'void StoreKey(const std::array<uint8_t, 16> &key) {', 'void QueueKeyRead() {', 'void ReadKey() {', 'int Characteristic(', 'bool ParsePIN(', 'void EncryptionPINRPC(', 'void StoreXiaomi(', 'void PairRPC(', 'void ReceiveXiaomiPairing(', 'void PairingAdvertisement(', 'bool PairingBusy() {', 'bool PairingScan() {', 'void PairingVerified(', 'void PairingTimeout() {'])
 harness += r'''
 void Drain() {
  while (!mgos::callbacks.empty()) {
@@ -188,7 +202,7 @@ void Tick() {
 }
 void Reset() {
  generation++; state = "reading_key"; error.clear(); traces.clear();
- now=100;discovery_model=0;authorized=true;rpc_error=responses=service_restarts=0;connection_attempts=0;candidates.clear();
+ now=100;xiaomi_pending={};xiaomi_readings={};decrypt_ok=true;discovery_model=0;authorized=true;rpc_error=responses=service_restarts=0;connection_attempts=0;candidates.clear();
  request={1,"01:02:03:04:05:06",nullptr,nullptr};
  reads = writes = terminations = saved = reset_readings = 0;
  key_writes=0;written_key.clear();key_writable=key_provision_used=false;pending_key.fill(0);pin_handle=11;
@@ -236,6 +250,23 @@ int main() {
  Reset();state="scanning";request.role=3;discovery_model=3;
  candidates.push_back({peer,-45,false,0x01aa,now});PairRPC(nullptr,nullptr,nullptr,{});
  assert(rpc_error==400&&saved==0);
+ // Manual MAC + bindkey waits for authenticated measurements, preserving an existing slot.
+ Reset();state="scanning";discovery_model=0x055b;request.role=4;
+ request.bindkey="e9ea895fac7cca6d30532432a516f3a8";
+ PairRPC(nullptr,nullptr,nullptr,{});
+ assert(!rpc_error&&state=="waiting_xiaomi_beacon"&&connections==0&&saved==0&&!PairingBusy());
+ const char encrypted[]={26,0x16,char(0x95),char(0xfe),0x58,0x58,0x5b,5,0x50,6,5,4,3,2,1,1,2,3,4,5,0x26,0,0,1,2,3,4};
+ mgos_bt_gap_scan_result secure_adv{peer,-50,{}, {encrypted,sizeof(encrypted)}};
+ PairingAdvertisement(&secure_adv);assert(saved==0&&state=="waiting_xiaomi_beacon");
+ auto temperature=std::vector<char>(encrypted,encrypted+sizeof(encrypted));temperature[8]=0x51;
+ secure_adv.adv_data={temperature.data(),temperature.size()};PairingAdvertisement(&secure_adv);Drain();
+ assert(state=="done"&&saved==1&&persisted.protocol==kProtocolXiaomiEncrypted&&persisted.counter==0x2651&&service_restarts==1);
+ Reset();state="scanning";discovery_model=0x055b;request.role=4;request.bindkey="bad";
+ PairRPC(nullptr,nullptr,nullptr,{});assert(rpc_error==400&&saved==0&&state=="scanning");
+ request.bindkey="e9ea895fac7cca6d30532432a516f3a8";PairRPC(nullptr,nullptr,nullptr,{});
+ decrypt_ok=false;PairingAdvertisement(&secure_adv);assert(state=="error"&&saved==0&&connections==0);
+ Reset();state="scanning";discovery_model=0x055b;request.role=0;request.bindkey="e9ea895fac7cca6d30532432a516f3a8";
+ PairRPC(nullptr,nullptr,nullptr,{});assert(rpc_error==400&&saved==0);
  // Pair accepts no new PIN; current PIN remains mandatory only for legacy auth.
  Reset();state="scanning";candidates.push_back({peer,-45,false,2,now});
  PairRPC(nullptr,nullptr,nullptr,{});

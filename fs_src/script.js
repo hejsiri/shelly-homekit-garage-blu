@@ -544,6 +544,8 @@ function bluPairClearPINs(c) {
   c.bluPairCredentials = null;
   el(c, "blu_pair_pin").value = "";
   el(c, "blu_pair_current_pin").value = "";
+  el(c, "blu_pair_bindkey").value = "";
+  el(c, "blu_pair_xiaomi_mac").value = "";
 }
 
 function bluPairNeedsCurrentPIN(c) {
@@ -562,14 +564,23 @@ function bluPairHasRecentReadings(c) {
     sensor.age_s <= Math.min(15, blu.stale_after_s || 180));
 }
 
+function bluPairXiaomiMAC(c) {
+  const mac = el(c, "blu_pair_xiaomi_mac").value.trim();
+  return /^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(mac) && mac !== "00:00:00:00:00:00" ? mac : "";
+}
+function bluPairHasBindkey(c) {
+  return /^[0-9a-f]{32}$/i.test(el(c, "blu_pair_bindkey").value.trim());
+}
 function bluPairRender(c) {
   const state = c.bluPairState;
+  const stock = c.bluPairModel === 1371;
   const needsSetup = state === "waiting_encryption_pin";
   const scanning = state === "scanning";
   const needsCurrent = scanning && bluPairNeedsCurrentPIN(c);
-  const choosing = scanning && c.bluPairCandidates.length > 1;
+  const choosing = scanning && c.bluPairCandidates.length > 1 && !(stock && bluPairXiaomiMAC(c));
   const finished = ["done", "error", "idle"].includes(state);
   const show = (id, visible) => { el(c, id).style.display = visible ? "" : "none"; };
+  show("blu_pair_xiaomi_container", stock && scanning && !c.bluPairClosing);
   show("blu_pair_new_container", needsSetup && !c.bluPairClosing);
   show("blu_pair_current_container", needsCurrent && !c.bluPairClosing);
   show("blu_pair_candidate_container", choosing && !c.bluPairClosing);
@@ -580,11 +591,12 @@ function bluPairRender(c) {
   updateInnerText(el(c, "blu_pair_current_summary"), needsCurrent ? "Current PIN required" : "Device already has a PIN?");
   updateInnerText(el(c, "blu_pair_selected"), c.bluPairSelected ? `Device detected: ${c.bluPairSelected.mac}` : "");
   const finding = ["starting", "scanning"].includes(state);
-  const xiaomi = c.bluPairModel === 426;
+  const xiaomi = c.bluPairModel === 426 || stock;
   updateInnerText(el(c, "blu_pair_step"), finding ? "Step 1 of 2 · Find device" : state === "done" ? "Pairing complete" :
     finished ? "Pairing stopped" : "Step 2 of 2 · Set up device");
   let help = needsSetup ? "This device needs a six-digit PIN to enable encrypted readings. Enter a new PIN to finish setup." :
     needsCurrent ? "This device requires its existing PIN to connect. Enter it once to continue." :
+    stock && finding ? "Enter the stock Xiaomi bindkey once. Keep the thermometer powered near Shelly. Enter its MAC to skip discovery; otherwise discovery can take up to 15 minutes. No PIN or pairing mode is needed." :
     choosing ? "More than one matching device is nearby. Select the one you want to pair." :
     finding && xiaomi ? "Keep the Xiaomi LYWSDCGQ/01ZM powered on near Shelly. It broadcasts automatically; no pairing mode or PIN is needed. One detected device is added automatically. If several match, select yours." :
     finding ? "Hold the device button for more than 10 seconds, then release it. Keep it near Shelly. Pairing continues automatically when one matching device is detected." :
@@ -592,6 +604,7 @@ function bluPairRender(c) {
     state === "waiting_security_retry" ? "Keep the device near Shelly. The connection will resume automatically if the device is still in pairing mode." :
     state === "waiting_pairing_mode" ? "Keep the device near Shelly. Pairing will continue when it is detected again." :
     state === "waiting_encrypted_beacon" ? "Wake the device or trigger a reading to confirm that encrypted data is received." :
+    state === "waiting_xiaomi_beacon" ? "Waiting for authenticated temperature and humidity. Stock Xiaomi broadcasts can be several minutes apart. This may take up to 15 minutes; the existing device assignment stays in use until verification finishes." :
     state === "waiting_beacon" ? "Keep the thermometer near Shelly while temperature and humidity readings arrive. No button press or PIN is needed." :
     state === "done" ? "The device is ready to use. You can close this window." :
     state === "error" && bluPairHasRecentReadings(c) ? "Recent encrypted readings are available from this device using its saved key. This new pairing attempt did not finish. Close this window and check the device status before retrying." :
@@ -609,17 +622,18 @@ function bluPairRender(c) {
     reconnecting: "Restoring the connection…", reconnecting_secure: "Restoring the connection…",
     waiting_security_retry: "Device closed the connection. Waiting to reconnect…",
     waiting_user_pairing: "Hold the device button again for more than 10 seconds, then release it.", waiting_pairing_mode: "Waiting for the same device…",
-    waiting_encrypted_beacon: "Waiting for encrypted beacon", waiting_beacon: "Waiting for temperature and humidity", done: "Device paired successfully.", idle: "Ready",
+    waiting_encrypted_beacon: "Waiting for encrypted beacon", waiting_beacon: "Waiting for temperature and humidity", waiting_xiaomi_beacon: "Waiting for encrypted Xiaomi measurements", done: "Device paired successfully.", idle: "Ready",
   };
   const message = c.bluPairClosing ? "Cancelling…" : c.bluPairValidationError || c.bluPairError || (state in labels ? labels[state] : state);
   const tone = c.bluPairValidationError || c.bluPairError || state === "error" ? "error" : state === "done" ? "success" :
-    ["scanning", "waiting_encryption_pin", "waiting_user_pairing", "waiting_pairing_mode", "waiting_security_retry", "waiting_encrypted_beacon", "waiting_beacon"].includes(state) ? "waiting" : "progress";
+    ["scanning", "waiting_encryption_pin", "waiting_user_pairing", "waiting_pairing_mode", "waiting_security_retry", "waiting_encrypted_beacon", "waiting_beacon", "waiting_xiaomi_beacon"].includes(state) ? "waiting" : "progress";
   bluPairStatus(c, message, tone);
   show("blu_pair_status", !!message);
-  const action = needsSetup ? "Enable encryption" : needsCurrent ? "Continue pairing" : choosing ? "Pair selected device" : "";
+  const action = stock && scanning ? "Add device" : needsSetup ? "Enable encryption" : needsCurrent ? "Continue pairing" : choosing ? "Pair selected device" : "";
   show("blu_pair_confirm", !!action && !c.bluPairClosing);
   updateInnerText(el(c, "blu_pair_confirm"), action);
-  el(c, "blu_pair_confirm").disabled = !!c.bluPairAction || (choosing && !c.bluPairSelected);
+  el(c, "blu_pair_confirm").disabled = !!c.bluPairAction || (choosing && !c.bluPairSelected) ||
+    (stock && scanning && (!bluPairHasBindkey(c) || (!bluPairXiaomiMAC(c) && !c.bluPairSelected)));
   updateInnerText(el(c, "blu_pair_cancel"), c.bluPairClosing ? "Cancelling…" : c.bluPairCancelFailed ? "Retry cancel" : finished ? "Close" : "Cancel");
   el(c, "blu_pair_cancel").disabled = !!c.bluPairClosing;
 }
@@ -635,7 +649,7 @@ function bluPairStart(c, role) {
   c.bluPairRevision = 0;
   c.bluPairRole = role;
   c.bluPairModel = role === 3 || role === 4 ?
-    (el(c, role === 3 ? "blu_indoor_type" : "blu_outdoor_type").value === "xiaomi" ? 426 : 3) : 0;
+    ({xiaomi:426, xiaomi03:1371}[el(c, role === 3 ? "blu_indoor_type" : "blu_outdoor_type").value] || 3) : 0;
   c.bluPairState = "starting";
   c.bluPairCandidates = [];
   c.bluPairListSignature = "";
@@ -646,7 +660,7 @@ function bluPairStart(c, role) {
   c.bluPairValidationError = "";
   bluPairClearPINs(c);
   c.bluPairCredentials = {current: ""};
-  for (const id of ["blu_pair_pin", "blu_pair_current_pin"]) {
+  for (const id of ["blu_pair_pin", "blu_pair_current_pin", "blu_pair_bindkey", "blu_pair_xiaomi_mac"]) {
     el(c, id).oninput = () => { c.bluPairValidationError = ""; bluPairRender(c); };
   }
   el(c, "blu_pair_current_container").open = false;
@@ -684,11 +698,15 @@ function bluPairRun(c, method, params, success) {
 }
 
 function bluPairSubmit(c) {
+  const stock = c.bluPairModel === 1371;
+  if (stock && bluPairXiaomiMAC(c)) c.bluPairSelected = {mac:bluPairXiaomiMAC(c), model:1371, encrypted:false};
+  if (stock && !bluPairHasBindkey(c)) return;
   if (c.bluPairState !== "scanning" || c.bluPairAction || c.bluPairClosing || !c.bluPairSelected ||
       !c.bluPairCredentials || bluPairNeedsCurrentPIN(c)) return;
   const params = {role: c.bluPairRole, mac: c.bluPairSelected.mac,
     current_pin: c.bluPairCredentials.current};
-  c.bluPairState = "connecting";
+  if (stock) params.bindkey = el(c, "blu_pair_bindkey").value.trim();
+  c.bluPairState = stock ? "waiting_xiaomi_beacon" : "connecting";
   bluPairRun(c, "Shelly.BLU.Pair", params, () => { bluPairClearPINs(c); });
 }
 
@@ -716,8 +734,9 @@ function bluPairRefresh(c) {
         (c.bluPairRole === 5 ? candidate.model === 1 : c.bluPairRole >= 3 ? candidate.model === c.bluPairModel : candidate.model === (c.bluPairRole === 2 ? 5 : 2)))
         .sort((a, b) => a.mac.localeCompare(b.mac));
       c.bluPairCandidates = entries;
+      const manual = c.bluPairModel === 1371 && bluPairXiaomiMAC(c);
       const selected = c.bluPairSelected && c.bluPairSelected.mac;
-      c.bluPairSelected = entries.length === 1 ? entries[0] : entries.find(item => item.mac === selected) || null;
+      c.bluPairSelected = manual ? {mac:manual, model:1371, encrypted:false} : entries.length === 1 ? entries[0] : entries.find(item => item.mac === selected) || null;
       const select = el(c, "blu_pair_candidate");
       const signature = entries.map(candidate => candidate.mac).join(",");
       // Polling RSSI must not rebuild an open sensor dropdown under the user.
@@ -741,7 +760,8 @@ function bluPairRefresh(c) {
         c.bluPairValidationError = "";
         bluPairRender(c);
       };
-      if (entries.length === 1 && !bluPairNeedsCurrentPIN(c)) {
+      if (entries.length === 1 && !bluPairNeedsCurrentPIN(c) &&
+          (c.bluPairModel !== 1371 || bluPairHasBindkey(c))) {
         bluPairSubmit(c);
         return;
       }
@@ -1260,10 +1280,10 @@ function updateComponent(cd) {
           const sensor = cd.blu[role];
           el(c, "blu_" + role + "_name_row").style.display = sensor && (sensor.paired ?? sensor.secure) ? "" : "none";
           if (!sensor) continue;
-          if (["indoor", "outdoor"].includes(role)) selectIfNotModified(el(c, "blu_" + role + "_type"), sensor.protocol === "xiaomi" ? "xiaomi" : "shelly");
+          if (["indoor", "outdoor"].includes(role)) selectIfNotModified(el(c, "blu_" + role + "_type"), sensor.protocol === "xiaomi_encrypted" ? "xiaomi03" : sensor.protocol === "xiaomi" ? "xiaomi" : "shelly");
           const name = role === "button" ? cd.blu.button_name ?? sensor.name ?? "" : sensor.name || "";
           setValueIfNotModified(el(c, "blu_" + role + "_name"), name);
-          bluSensorStatus(el(c, "blu_" + role + "_status"), sensor, role === "button" ? cd.blu.presence_timeout_s || 45 : cd.blu.stale_after_s, role === "button" ? "button" : role === "motion" ? true : ["indoor", "outdoor"].includes(role) ? "ht" : false);
+          bluSensorStatus(el(c, "blu_" + role + "_status"), sensor, role === "button" ? cd.blu.presence_timeout_s || 45 : sensor.timeout_s || cd.blu.stale_after_s, role === "button" ? "button" : role === "motion" ? true : ["indoor", "outdoor"].includes(role) ? "ht" : false);
         }
         el(c, "blu_car_name_row").style.display = cd.blu.button && cd.blu.button.secure ? "" : "none";
         setValueIfNotModified(el(c, "blu_car_name"), cd.blu.car_name || "");

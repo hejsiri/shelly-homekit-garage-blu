@@ -837,7 +837,7 @@
             <p id="blu_motion_status" class="blu-sensor"></p>
             <div class="form-control">
               <label style="white-space:nowrap">Indoor H&T:</label>
-              <select id="blu_indoor_type" aria-label="Indoor thermometer type"><option value="shelly">Shelly BLU H&amp;T</option><option value="xiaomi">Xiaomi LYWSDCGQ/01ZM</option></select>
+              <select id="blu_indoor_type" aria-label="Indoor thermometer type"><option value="shelly">Shelly BLU H&amp;T</option><option value="xiaomi">Xiaomi LYWSDCGQ/01ZM</option><option value="xiaomi03">Xiaomi LYWSD03MMC (stock)</option></select>
             </div>
             <div class="form-control">
               <label>Device:</label>
@@ -851,7 +851,7 @@
             <p id="blu_indoor_status" class="blu-sensor"></p>
             <div class="form-control">
               <label style="white-space:nowrap">Outdoor H&T:</label>
-              <select id="blu_outdoor_type" aria-label="Outdoor thermometer type"><option value="shelly">Shelly BLU H&amp;T</option><option value="xiaomi">Xiaomi LYWSDCGQ/01ZM</option></select>
+              <select id="blu_outdoor_type" aria-label="Outdoor thermometer type"><option value="shelly">Shelly BLU H&amp;T</option><option value="xiaomi">Xiaomi LYWSDCGQ/01ZM</option><option value="xiaomi03">Xiaomi LYWSD03MMC (stock)</option></select>
             </div>
             <div class="form-control">
               <label>Device:</label>
@@ -899,6 +899,13 @@
                   <input id="blu_pair_current_pin" aria-label="Current device PIN" type="password" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Existing 6-digit PIN">
                 </div>
               </details>
+              <div id="blu_pair_xiaomi_container" style="display:none">
+                <div class="form-control"><label for="blu_pair_bindkey">Xiaomi bindkey:</label>
+                  <input id="blu_pair_bindkey" aria-label="Xiaomi bindkey" type="password" autocomplete="off" spellcheck="false" maxlength="32" placeholder="32 hexadecimal characters"></div>
+                <div class="form-control"><label for="blu_pair_xiaomi_mac">Device MAC (optional):</label>
+                  <input id="blu_pair_xiaomi_mac" aria-label="Xiaomi device MAC" type="text" autocomplete="off" spellcheck="false" maxlength="17" placeholder="AA:BB:CC:DD:EE:FF"></div>
+                <p class="help">Use the bindkey from your Xiaomi Home account, not a PIN. Enter the MAC to skip discovery, or wait for a detected device. Keep the original sensor firmware. <a href="https://www.home-assistant.io/integrations/xiaomi_ble/#encryption" target="_blank" rel="noopener">How to obtain a bindkey</a></p>
+              </div>
               <p id="blu_pair_status" role="status" aria-live="polite"></p>
               <div class="button-container">
                 <button type="button" id="blu_pair_confirm">Start pairing</button>

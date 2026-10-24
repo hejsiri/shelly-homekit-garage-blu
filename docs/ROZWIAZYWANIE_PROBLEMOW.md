@@ -1,6 +1,6 @@
 # Rozwiązywanie problemów Garage BLU
 
-Dla **2.16.1-blu45 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Dla **2.16.1-blu46 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](KONFIGURACJA.md) · [Historia zmian](HISTORIA_ZMIAN.md)
@@ -186,11 +186,27 @@ z takimi danymi. MAC można zamaskować, zachowując możliwość rozróżnienia
   **Indoor H&T** albo **Outdoor H&T**, zanim klikniesz **Pair**.
 - Włącz czujnik i zbliż go do Shelly. Odbiór jest pasywny: nie uruchamiaj trybu
   parowania i nie wpisuj PIN-u. Poczekaj na zwykłe beacony z pomiarami.
-- Przy kilku czujnikach wybierz właściwy MAC. LYWSD03MMC i modele Zigbee/Mesh
-  nie są obsługiwane przez tę opcję.
+- Przy kilku czujnikach wybierz właściwy MAC. LYWSD03MMC wymaga osobnej opcji **Xiaomi LYWSD03MMC (stock)**; modele Zigbee/Mesh
+  nie są obsługiwane przez te opcje.
 - Sprawdź baterię i czy inna aplikacja nie utrzymuje aktywnego połączenia z czujnikiem;
   zamknij podgląd czujnika w aplikacji Xiaomi na czas próby.
 - **Waiting for temperature and humidity** wymaga obu pomiarów, nie samej baterii.
   Pakiet baterii nie odświeża ważności temperatury ani wilgotności.
 - W zgłoszeniu podaj Version, rolę Indoor/Outdoor i tekst modalu. Debug Info zawiera
   dla obu ról stan przypisania i osobną gotowość temperatury/wilgotności.
+
+## Xiaomi LYWSD03MMC (stock): oczekiwanie albo błąd bindkey
+
+- Wybierz **Xiaomi LYWSD03MMC (stock)**, nie LYWSDCGQ. Potrzebny jest aktualny
+  32-znakowy bindkey urządzenia aktywowanego w Xiaomi Home.
+- Odszyfrowanie weryfikuje MAC i klucz. **Cannot decrypt Xiaomi readings** zwykle
+  oznacza bindkey innego urządzenia lub klucz zmieniony po ponownym dodaniu do Xiaomi.
+- Możesz wpisać MAC ręcznie, aby pominąć wykrywanie. Nadal trzeba poczekać na
+  zaszyfrowane pomiary: okno wynosi 15 minut, pakiety mogą być oddalone o kilka minut.
+- Zbliż czujnik, sprawdź baterię i zamknij aktywne połączenie z nim w aplikacji Xiaomi.
+  Nie resetuj czujnika tylko po to, aby rozpocząć odbiór na Shelly.
+- Po wymianie baterii lub resecie licznika stare pakiety z tym samym kluczem mogą
+  być odrzucane przez ochronę przed powtórzeniami. Wtedy potrzebna może być
+  ponowna aktywacja z nowym bindkey. Samo ponowne Pair nie zeruje ochrony.
+- PVVX/ATC, pakiety nieszyfrowane i inne modele nie są obsługiwane przez opcję stock.
+- Do zgłoszenia dołącz komunikat oraz wersję firmware, bez bindkey, haseł i PIN-ów.

@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1-blu45 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Instrukcja dla **2.16.1-blu46 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -112,11 +112,38 @@ HomeKit wymaga zakresu 0,0001–100000 lx, więc całkowita ciemność ma warto�
 
 Odczyty pojawiają się nad garażem i jako temperatura oraz wilgotność w HomeKit,
 w tym samym akcesorium Shelly. Możesz mieszać Xiaomi i Shelly BLU H&T w dwóch
-istniejących rolach. Ten wybór obsługuje tylko LYWSDCGQ/01ZM (MJ_HT_V1), nie dowolny Xiaomi.
+istniejących rolach. Wybór LYWSDCGQ/01ZM obsługuje tylko ten model (MJ_HT_V1); LYWSD03MMC ma oddzielną opcję.
 Czujnik Xiaomi nadaje bez szyfrowania; **Pair** zapisuje odbiornik wybranego MAC,
 nie zestawia połączenia BLE. Nie zmienia to szyfrowania krańcówek ani przycisku.
 Temperatura ma rozdzielczość 0,1 °C, wilgotność jest zaokrąglana do całego procenta.
 Każdy pomiar ma własny czas ważności; sam beacon baterii nie odświeża pomiarów.
+
+## Xiaomi LYWSD03MMC — oryginalny firmware
+
+1. W aplikacji Xiaomi Home dodaj czujnik, jeśli nie był jeszcze aktywowany.
+   Pozostaw jego fabryczny firmware.
+2. Uzyskaj istniejący **bindkey** czujnika z konta Xiaomi. Metody opisuje
+   [dokumentacja Xiaomi BLE](https://www.home-assistant.io/integrations/xiaomi_ble/#encryption).
+   Bindkey ma 32 znaki szesnastkowe — nie jest to PIN ani hasło konta Xiaomi.
+3. Przy **Indoor H&T** albo **Outdoor H&T** wybierz **Xiaomi LYWSD03MMC (stock)**
+   i kliknij **Pair**. Wpisz bindkey raz w modalu.
+4. Możesz wpisać **Device MAC (optional)** i kliknąć **Add device**, aby pominąć
+   wykrywanie, albo poczekać na wykrycie czujnika. Przy kilku wybierz właściwy MAC.
+5. Zostaw włączony czujnik blisko Shelly. Nie trzeba przytrzymywać przycisku ani
+   wprowadzać go w tryb parowania. **Waiting for encrypted Xiaomi measurements**
+   może trwać do 15 minut. Po odszyfrowaniu temperatury i wilgotności modal zakończy dodawanie.
+6. Wpisz nazwę w **Name** i zapisz przez **Save**. Pomiary pojawią się w WWW i HomeKit.
+
+Klucz pozostaje na Shelly i nie jest zwracany w statusie; pole modalu jest
+czyszczone po wysłaniu lub anulowaniu. Nie wysyłaj klucza w zgłoszeniach.
+Nieprawidłowy bindkey powoduje błąd odszyfrowania. Poprzednie przypisanie pozostaje
+aktywne do potwierdzenia nowych pomiarów; długie wykrywanie Xiaomi nie blokuje
+krańcówek i Button1. Są nadal tylko dwa miejsca na termometry Indoor/Outdoor.
+
+Ten model nadaje pomiary rzadziej. Jego efektywny timeout wynosi minimum
+30 minut, niezależnie od krótszego **Sensor timeout** czujników bramy. Dłuższa
+ustawiona wartość jest respektowana. Bateria może przyjść później i do tego czasu
+ma „—”; pakiet baterii nie odświeża temperatury/wilgotności.
 
 ## Własne nazwy
 

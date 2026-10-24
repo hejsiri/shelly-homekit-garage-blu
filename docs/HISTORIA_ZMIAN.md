@@ -1,6 +1,6 @@
 # Historia zmian Garage BLU
 
-Bieżące opisy i instrukcje dotyczą **2.16.1-blu45** (stan: 2026-10-24).
+Bieżące opisy i instrukcje dotyczą **2.16.1-blu46** (stan: 2026-10-24).
 Zobacz [instalację i aktualizacje](AKTUALIZACJA.md), [konfigurację](KONFIGURACJA.md)
 i [rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md).
 
@@ -333,3 +333,21 @@ Status Fault z poprawnie typowaną wartością HomeKit.
 Sprawdzono opublikowaną próbkę LYWSDCGQ, pakiety częściowe i uszkodzone, restart,
 izolację od chronionych ról, regresje BLU, prawdziwy odczyt/serializację Apple ADK
 oraz lokalny podgląd modalu. Fizyczna próba Xiaomi i Gen3 pozostaje do wykonania.
+
+## blu46 — Xiaomi LYWSD03MMC na fabrycznym firmware
+
+Dodano szyfrowany MiBeacon v4/v5 modelu 0x055b. Indoor/Outdoor H&T mają opcję
+Xiaomi LYWSD03MMC (stock); modal przyjmuje jeden bindkey i opcjonalny ręczny MAC.
+Nie zmienia firmware ani klucza czujnika. Odszyfrowana temperatura i wilgotność trafiają do panelu i istniejących usług
+H&T HomeKit. Poziom baterii jest pokazywany w panelu WWW.
+
+Przypisanie jest zapisywane po weryfikacji obu pomiarów. Wcześniejsze urządzenie
+pozostaje aktywne do tego momentu. Okno wykrywania/weryfikacji wynosi 15 minut,
+bez blokowania dotychczasowego sterowania BLU. Efektywny timeout tego termometru
+wynosi minimum 30 minut, z osobną ważnością temperatury i wilgotności.
+
+Testy obejmują prawdziwe AES-CCM i opublikowaną próbkę stock Xiaomi, ochronę
+przed powtórzeniem po restarcie, walidację MAC/klucza, częściowe pomiary oraz
+odrzucanie nieszyfrowanych danych. Bindkey nie jest zwracany w statusie.
+Sprawdzono modal w lokalnym podglądzie; fizyczna próba LYWSD03MMC jest do wykonania.
+W blu45 potwierdzono na fizycznym Plus1 odczyty LYWSDCGQ/01ZM wraz z baterią 36 %.

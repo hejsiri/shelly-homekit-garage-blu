@@ -115,20 +115,25 @@ bool AcceptSecure(int,const uint8_t*,const uint8_t *data,size_t n,uint8_t *plain
  if(!authenticated||n<2||n-2>*len)return false;
  memcpy(plain,data+2,n-2);*len=n-2;return true;
 }
-bool xiaomi=false;
+bool xiaomi=false,xiaomiEncrypted=false;
 bool SensorPaired(int role){return (role==5&&paired)||(role==3&&xiaomi);}
 const char *SensorName(int){return button_name.c_str();}
 const Sensor &MotionReading(){return sensors[2];}
 const Sensor &ReadingFor(int role){return sensors[role];}
 bool SensorReady(int role);
 bool HTReady(int role,bool temperature);
+int SensorTimeout(int role);
 bool SecureFor(int,const uint8_t*){return false;}
 bool XiaomiFor(int role,const uint8_t*){return role==3&&xiaomi;}
+bool XiaomiSecureFor(int role,const uint8_t*){return role==3&&xiaomiEncrypted;}
+bool AcceptXiaomi(int role,const uint8_t *mac,const uint8_t *data,size_t length,Reading *out){
+ return XiaomiFor(role,mac)&&DecodeXiaomiAdvertisement(data,length,mac,out);
+}
 int mgos_sys_config_get_blu_stale_after_s(){return 180;}
 bool MotionReady(){return false;}
 bool MotionLightReady(){return false;}
 '''
-for signature in ['bool SensorReady(', 'bool HTReady(', 'void ScanResult(', 'bool ConsumeButtonPress(', 'void SetButtonEventHandler(',
+for signature in ['bool SensorReady(', 'int SensorTimeout(', 'bool HTReady(', 'void ScanResult(', 'bool ConsumeButtonPress(', 'void SetButtonEventHandler(',
                   'const char *CarName(', 'bool CarPresenceReady(', 'bool CarPresent(']:
     harness += extract(signature) + '\n'
 harness += '\n}}\n'
@@ -202,6 +207,8 @@ int main(){
  therm.addr=addresses[3];therm.scan_rsp=therm.adv_data;therm.adv_data={};now=221;
  ScanResult(0,&therm,nullptr);assert(packet_sequence[3]==2); // Scan-response path.
  now=402;assert(!SensorReady(3));
+ xiaomiEncrypted=true;assert(SensorTimeout(3)==1800&&SensorTimeout(0)==180);
+ assert(SensorReady(3));now=2022;assert(!SensorReady(3));xiaomiEncrypted=false;
  bluetooth=false;now=222;assert(!SensorReady(3));bluetooth=true;
  xiaomi=false;ScanResult(0,&therm,nullptr);assert(packet_sequence[3]==2); // Explicit binding is required.
 

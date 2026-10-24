@@ -55,6 +55,8 @@ int mgos_sys_config_get_blu_stale_after_s() { return 180; }
 double mgos_uptime() { return 150; }
 bool SecureFor(int role, const unsigned char *) { return role!=3; }
 bool XiaomiFor(int role, const unsigned char *) { return role==3; }
+bool XiaomiSecureFor(int,const unsigned char*){return false;}
+int SensorTimeout(int){return 180;}
 bool SensorPaired(int role) { return role!=4; }
 bool SensorReady(int role) { return role!=4; }
 bool HTReady(int role,bool) { return role==3; }

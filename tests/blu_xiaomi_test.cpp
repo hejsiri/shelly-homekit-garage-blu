@@ -56,6 +56,11 @@ int main() {
   for(size_t n=0;n<adv.size();n++)assert(!DecodeXiaomiAdvertisement(adv.data(),n,mac,&r));
   auto duplicate=adv;duplicate.insert(duplicate.end(),adv.begin()+3,adv.end());
   assert(!DecodeXiaomiAdvertisement(duplicate.data(),duplicate.size(),mac,&r));
+  uint8_t key[16];
+  assert(ParseXiaomiBindkey("e9ea895fac7cca6d30532432a516f3a8",key)&&key[0]==0xe9);
+  assert(ParseXiaomiBindkey("E9EA895FAC7CCA6D30532432A516F3A8",key));
+  for(const char *invalid:{"", "123456", "e9ea895fac7cca6d30532432a516f3ag", " e9ea895fac7cca6d30532432a516f3a8"})
+    assert(!ParseXiaomiBindkey(invalid,key));
   std::mt19937 random(73);
   for(int n=0;n<100000;n++) {
     std::vector<uint8_t> bytes(random()%80);
