@@ -2,8 +2,9 @@
 
 Garage BLU adds encrypted Shelly BLU devices and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu38 for Shelly Plus 1**. Shelly 1 Gen3
-support remains in the source; new Gen3 builds and hardware checks are paused.
+The current OTA release is **2.16.1-blu38 for Shelly Plus 1 and Shelly 1 Gen3**,
+with separate model-specific ZIPs and checksums. The Gen3 image targets ESP32-C3;
+its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
 
 User documentation (Polish, with the English UI labels):
@@ -23,8 +24,8 @@ A preview does not demonstrate successful BLE pairing or relay operation.
 
 | Device | Function |
 | --- | --- |
-| Shelly Plus 1 | Garage relay, BLE receiver, web panel and HomeKit connection; current build target. |
-| Shelly 1 Gen3 | Separate ESP32-C3 target retained in source; no new release package. |
+| Shelly Plus 1 | Garage relay, BLE receiver, web panel and HomeKit connection; ESP32 / Plus1 image. |
+| Shelly 1 Gen3 | Current separate ESP32-C3 / S1G3 image with the same Garage BLU features; physical tests pending. |
 | Two BLU Door/Window, SBDW-002C | Fully closed and fully open endpoints. |
 | One BLU Motion, SBMO-003Z | Motion in the panel and an optional HomeKit Motion Sensor service. |
 | Two BLU H&T, SBHT-003C | Indoor/outdoor temperature and humidity in the panel and HomeKit. |
@@ -164,8 +165,8 @@ python3 tests/garage_http_assets_test.py
 The helper uses `~/.mos/bin/mos`, stages sources under
 `~/.mos/work/shelly-garage-blu` to avoid spaces in the build path, and copies
 `build_ShellyPlus1/fw.zip` back to the checkout. It forces application and web
-panel regeneration while retaining the SDK cache. To build the retained Gen3
-source, set `SHELLY_BLU_MODEL=Shelly1Gen3`; its image goes to
+panel regeneration while retaining the SDK cache. To build the Gen3
+target, set `SHELLY_BLU_MODEL=Shelly1Gen3`; its image goes to
 `build_Shelly1Gen3/fw.zip`. Never interchange these targets.
 
 Host checks cover the actual decoder and AES-CCM/replay implementation,
@@ -184,7 +185,19 @@ and beacons here are simulated and do not contact Shelly.
 
 ## Publish OTA
 
-Run `python3 tools/ota/prepare.py --model ShellyPlus1` after a successful build.
+Build both models before preparing a release:
+
+```sh
+bash tools/build-blu.sh
+SHELLY_BLU_MODEL=Shelly1Gen3 bash tools/build-blu.sh
+python3 tests/ota_release_models_test.py
+python3 tools/ota/prepare.py
+```
+
+The publisher selects both models by default. Explicit `--model` options can
+select a subset, but the public channel should keep both model URLs. It validates
+model/platform, part hashes, slot/filesystem sizes and matching versions before
+writing any release artifact or metadata.
 It generates versioned ZIP/SHA-256 files, channel JSON, release metadata,
 the download page, current user guides and CORS settings under
 `releases/hosting/garage-blu/`. The output contains no device configuration,
@@ -216,4 +229,4 @@ Check the complete pairing flow on Door/Window and Button1 1.0.23, sleep/wake
 recovery, encrypted packets after reboot, name persistence and HomeKit labels,
 button presence transitions, late endpoint recovery after a timeout, OTA,
 Wi-Fi/BLE coexistence, runtime heap and reception near the metal door.
-New Gen3 hardware validation remains paused.
+The Gen3 build and archive are checked; physical Gen3 installation, BLE and relay validation remain pending.

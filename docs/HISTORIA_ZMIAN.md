@@ -211,3 +211,15 @@ https://github.com/hejsiri/shelly-homekit-garage-blu oraz jego Issues.
 Pomoc dla Garage Door i Firmware prowadzi do dokumentacji Garage BLU.
 Usunięto komunikat Donation odsyłający do projektu bazowego.
 Stopka zachowuje wskazanie autorów Shelly-HomeKit z listą AUTHORS.md w tym repozytorium.
+
+
+## blu38 — paczka Shelly 1 Gen3
+
+Dodano osobny ZIP S1G3/ESP32-C3 z tymi samymi funkcjami blu38 co Plus1.
+Build: 20261024-150713; ZIP: 2,255,644 bajtów.
+SHA-256: `59170d3bf0ad317b11e6ea3a7947dc03142201683d87910caad7c0845c78812e`.
+
+Kanał OTA zawiera oba modele i wybiera adres ZIP-u według identyfikatora urządzenia.
+Paczka Plus1 pozostała bez zmian. Publikator domyślnie uwzględnia oba targety
+i odrzuca niezgodne wersje, platformy lub sumy części przed zapisaniem metadanych.
+Test na fizycznym Gen3 pozostaje do wykonania.

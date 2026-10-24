@@ -42,7 +42,8 @@ a nie dla urządzeń BLU. Nie używaj jej na Mini, 1PM, Gen4 ani innym modelu.</
 </table></div>
 <p><a href="release.json">Metadane wydania</a> · <a href="update.json">Kanał OTA</a>.
 <code>update.json</code> nie jest plikiem do wgrania przez Upload.</p>
-<p>Dla tej paczki sprawdzono kompilację, testy hosta, podgląd WWW oraz publikację ZIP/OTA.
+<p>Dla obu paczek sprawdzono kompilacje, wspólne testy hosta, podgląd WWW oraz publikację ZIP/OTA.
+Weryfikacja na fizycznym Shelly 1 Gen3 pozostaje do wykonania.
 Wcześniejsze próby na Plus 1 potwierdziły OTA i szyfrowane odczyty Door/Window;
 obserwowano też odczyty Motion i Button1. Pełna próba tego wydania na fizycznej bramie
 pozostaje do wykonania; metadane mają <code>hardware_tested: false</code>.</p>
@@ -99,9 +100,9 @@ Revert to Stock jest powrotem do firmware fabrycznego, a nie aktualizacją Garag
 <details>
 <summary>Pierwsza konwersja z fabrycznego firmware</summary>
 <p>Otwórz fabryczny panel i użyj instalacji własnego ZIP-u lub URL, jeśli jest dostępna.
-Alternatywą jest fabryczne RPC Shelly.Update z parametrem url. Przykład dotyczy
-<strong>$example_model</strong>; po podstawieniu ADRES_IP i otwarciu adresu rozpoczyna aktualizację:</p>
-<pre>http://ADRES_IP/rpc/Shelly.Update?url=$update_url</pre>
+Alternatywą jest fabryczne RPC Shelly.Update z parametrem url. Wybierz przykład dla
+dokładnego modelu. Po podstawieniu ADRES_IP i otwarciu adresu rozpoczyna aktualizację:</p>
+$stock_update_examples
 <p>Przy haśle użyj uwierzytelnionego panelu lub klienta RPC. Samo istnienie tego RPC
 nie potwierdza zgodności z każdą fabryczną wersją lub partycjonowaniem.
 <a href="$repo/blob/master/docs/AKTUALIZACJA.md">Pełna instrukcja i stan weryfikacji konwersji</a>.</p>

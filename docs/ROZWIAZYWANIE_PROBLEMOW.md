@@ -1,6 +1,6 @@
 # Rozwiązywanie problemów Garage BLU
 
-Dla **2.16.1-blu38 / Shelly Plus 1**, stan: **2026-10-24**.
+Dla **2.16.1-blu38 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](KONFIGURACJA.md) · [Historia zmian](HISTORIA_ZMIAN.md)
@@ -122,7 +122,7 @@ usługi przycisku w HomeKit — w tej wersji Button1 steruje usługą bramy.
 1. Poczekaj na odpowiedź lub komunikat błędu. W blu38 wysłanie ma limit 120 s i panel nie ponawia go automatycznie.
 2. Sprawdź, czy Shelly nadal odpowiada, czy trwa aktualizacja i jaka jest Version po ponownym otwarciu strony. Timeout może wystąpić już po rozpoczęciu zapisu.
 3. Po zakończeniu zapisu i restarcie odśwież stronę. Jeśli nowa wersja jest obecna, nie wysyłaj paczki ponownie.
-4. Gdy wersja się nie zmieniła, zapisz błąd. Sprawdź ZIP dla Plus1, zalogowanie i połączenie; możesz użyć Update from file → Upload.
+4. Gdy wersja się nie zmieniła, zapisz błąd. Sprawdź ZIP dla swojego modelu, zalogowanie i połączenie; możesz użyć Update from file → Upload.
 
 W starszym panelu sam napis Uploading... mógł pozostać po nieudanym żądaniu.
 Zawsze weryfikuj rzeczywistą Version i stan urządzenia, zamiast opierać się na spinnerze.

@@ -2,14 +2,14 @@
 
 # Shelly HomeKit Garage BLU
 
-Firmware dla **Shelly Plus 1**, który łączy bramę garażową z Apple HomeKit
+Firmware dla **Shelly Plus 1** i **Shelly 1 Gen3**, który łączy bramę garażową z Apple HomeKit
 bez dodatkowego mostka. Dwa bezprzewodowe **Shelly BLU Door/Window** potwierdzają
 pełne zamknięcie i otwarcie. Sterownik komunikuje się z HomeKit przez Wi-Fi,
 a z urządzeniami BLU przez Bluetooth. Projekt bazuje na
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
 
-**Aktualne wydanie: 2.16.1-blu38 · Shelly Plus 1 · 2026-10-24.**
-Kod dla Shelly 1 Gen3 pozostaje w repozytorium; nowe paczki i testy Gen3 są wstrzymane.
+**Aktualne wydanie: 2.16.1-blu38 · Shelly Plus 1 i Shelly 1 Gen3 · 2026-10-24.**
+Dla każdego modelu jest osobny ZIP, suma SHA-256 i wpis w kanale OTA.
 Panel WWW ma angielskie teksty systemowe. Dokumentacja użytkownika jest po polsku,
 a odnośniki do przycisków i pól zachowują ich angielskie nazwy.
 
@@ -31,8 +31,8 @@ napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 
 | Urządzenie | Funkcja i status |
 | --- | --- |
-| **Shelly Plus 1 (Plus1)** | Bieżący target i jedyna paczka publikowana dla blu38. Sterowanie przekaźnikiem, WWW, BLE i HomeKit. |
-| **Shelly 1 Gen3 (S1G3)** | Kod zachowany; kompilacje i testy sprzętowe tego targetu są wstrzymane. |
+| **Shelly Plus 1 (Plus1)** | Paczka Plus1 dla ESP32. Sterowanie przekaźnikiem, WWW, BLE i HomeKit. |
+| **Shelly 1 Gen3 (S1G3)** | Osobna paczka S1G3 dla ESP32-C3, te same funkcje Garage BLU. Test na fizycznym Gen3 pozostaje do wykonania. |
 | **BLU Door/Window SBDW-002C — 2 sztuki** | Role Closing sensor i Opening sensor. Szyfrowane odczyty dwóch fizycznych czujników potwierdzono we wcześniejszych próbach. |
 | **BLU Motion SBMO-003Z — 1 sztuka** | Ruch w WWW i usługa Motion Sensor w HomeKit; odczyty obserwowano na sprzęcie. |
 | **BLU H&T SBHT-003C — do 2 sztuk** | Role Indoor i Outdoor; temperatura i wilgotność w WWW i HomeKit. Obsługa zaimplementowana, testy fizycznych H&T pozostają do wykonania. |
@@ -40,7 +40,7 @@ napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 
 BLU urządzenia zachowują fabryczny firmware Shelly. Paczkę Garage BLU instaluje się
 na sterowniku, a urządzenia BLU paruje w jego panelu WWW.
-**Nie używaj paczki Plus1 na Mini, 1PM, Gen3, Gen4 ani innych modelach.**
+**Paczki Plus1 i S1G3 nie są zamienne. Nie używaj ich na Mini, 1PM, Gen4 ani innych modelach.**
 Door/Window Outdoor ZB (SBDW-302C) i czujnik wycieku BLU pozostają w planach.
 H&T Gen3 z ekranem e-ink korzysta z Wi-Fi i nie jest obsługiwanym tu BLU H&T.
 
@@ -66,7 +66,7 @@ jego zabezpieczeń.
 
 ## Szybki start
 
-1. [Zainstaluj właściwy ZIP](docs/AKTUALIZACJA.md) na Shelly Plus 1.
+1. [Zainstaluj właściwy ZIP](docs/AKTUALIZACJA.md) na właściwym Shelly Plus 1 lub Shelly 1 Gen3.
 2. W Security Settings ustaw hasło panelu. W General Settings wybierz Mode → Garage Door Opener i Save.
 3. W sekcji bramy sparuj Closing sensor i Opening sensor przez Pair. Czujniki mają wykrywać swoje magnesy wyłącznie w odpowiednich skrajnych położeniach.
 4. Włącz BLU sensors, ustaw czasy zgodnie z napędem i zapisz Save. Sprawdź wskazania obu krańcówek.
@@ -81,14 +81,16 @@ statusy i zachowanie po zatrzymaniu. Przy problemach zacznij od
 
 - [Paczki i opis na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/)
 - [ZIP 2.16.1-blu38 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu38.zip)
-- [SHA-256 paczki](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu38.zip.sha256)
+- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu38.zip.sha256)
+- [ZIP 2.16.1-blu38 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu38.zip)
+- [SHA-256 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu38.zip.sha256)
 - [Instrukcja instalacji, aktualizacji i kontroli po restarcie](docs/AKTUALIZACJA.md)
 
-Bieżąca paczka została skompilowana, sprawdzona testami hosta i podglądem WWW;
-zweryfikowano też publiczny ZIP, sumę SHA-256 i kanał OTA. Wcześniejsze wydania
+Obie paczki zostały skompilowane; wspólny kod sprawdzono testami hosta i podglądem WWW;
+zweryfikowano też publiczne ZIP-y, sumy SHA-256 i kanał OTA. Wcześniejsze wydania
 potwierdziły OTA i szyfrowane odczyty na Plus 1. Metadane blu38 nadal mają
 `hardware_tested: false`: pełna próba tego wydania na fizycznej bramie pozostaje
-do wykonania.
+do wykonania. Test na fizycznym Shelly 1 Gen3 nie został jeszcze wykonany.
 
 ## Projekt, zgłoszenia i rozwój
 
