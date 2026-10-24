@@ -5,30 +5,33 @@
 #include "shelly_blu_garage.hpp"
 namespace shelly { namespace blu {
 namespace {
-// Stable instance IDs; optional services exist only for securely paired sensors.
+// The old 0x1400 service is already stored as Occupancy Sensor by some
+// controllers, even though the firmware uses it for Motion Sensor. Retire the
+// affected blu40/41 identities so controllers create fresh services rather than
+// retaining the conflicting records. These replacement IDs must remain stable.
 class MotionService : public mgos::hap::Service {
  public:
   MotionService()
-      : Service(0x1400, &kHAPServiceType_MotionSensor,
+      : Service(0x1800, &kHAPServiceType_MotionSensor,
                 kHAPServiceDebugDescription_MotionSensor),
         timer_([this] { Poll(); }) {
-    AddNameChar(0x1401, SensorName(2));
+    AddNameChar(0x1801, SensorName(2));
     motion_ = new mgos::hap::BoolCharacteristic(
-        0x1402, &kHAPCharacteristicType_MotionDetected,
+        0x1802, &kHAPCharacteristicType_MotionDetected,
         [this](HAPAccessoryServerRef *, const HAPBoolCharacteristicReadRequest *, bool *value) {
           *value = MotionReady() ? MotionReading().active : active_;
           return kHAPError_None;
         }, true, nullptr, kHAPCharacteristicDebugDescription_MotionDetected);
     AddChar(motion_);
     fault_ = new mgos::hap::UInt8Characteristic(
-        0x1403, &kHAPCharacteristicType_StatusFault, 0, 1, 1,
+        0x1803, &kHAPCharacteristicType_StatusFault, 0, 1, 1,
         [](HAPAccessoryServerRef *, const HAPUInt8CharacteristicReadRequest *, uint8_t *value) {
           *value = MotionReady() ? 0 : 1;
           return kHAPError_None;
         }, true, nullptr, kHAPCharacteristicDebugDescription_StatusFault);
     AddChar(fault_);
     status_active_ = new mgos::hap::BoolCharacteristic(
-        0x1404, &kHAPCharacteristicType_StatusActive,
+        0x1804, &kHAPCharacteristicType_StatusActive,
         [](HAPAccessoryServerRef *, const HAPBoolCharacteristicReadRequest *, bool *value) {
           *value = MotionReady();
           return kHAPError_None;
@@ -96,26 +99,26 @@ class HTService : public mgos::hap::Service {
 class CarPresenceService : public mgos::hap::Service {
  public:
   CarPresenceService()
-      : Service(0x1600, &kHAPServiceType_OccupancySensor,
+      : Service(0x1900, &kHAPServiceType_OccupancySensor,
                 kHAPServiceDebugDescription_OccupancySensor),
         timer_([this] { Poll(); }) {
-    AddNameChar(0x1601, CarName());
+    AddNameChar(0x1901, CarName());
     presence_ = new mgos::hap::UInt8Characteristic(
-        0x1602, &kHAPCharacteristicType_OccupancyDetected, 0, 1, 1,
+        0x1902, &kHAPCharacteristicType_OccupancyDetected, 0, 1, 1,
         [this](HAPAccessoryServerRef *, const HAPUInt8CharacteristicReadRequest *, uint8_t *value) {
           *value = (CarPresenceReady() ? CarPresent() : present_) ? 1 : 0;
           return kHAPError_None;
         }, true, nullptr, kHAPCharacteristicDebugDescription_OccupancyDetected);
     AddChar(presence_);
     fault_ = new mgos::hap::UInt8Characteristic(
-        0x1603, &kHAPCharacteristicType_StatusFault, 0, 1, 1,
+        0x1903, &kHAPCharacteristicType_StatusFault, 0, 1, 1,
         [](HAPAccessoryServerRef *, const HAPUInt8CharacteristicReadRequest *, uint8_t *value) {
           *value = CarPresenceReady() ? 0 : 1;
           return kHAPError_None;
         }, true, nullptr, kHAPCharacteristicDebugDescription_StatusFault);
     AddChar(fault_);
     status_active_ = new mgos::hap::BoolCharacteristic(
-        0x1604, &kHAPCharacteristicType_StatusActive,
+        0x1904, &kHAPCharacteristicType_StatusActive,
         [](HAPAccessoryServerRef *, const HAPBoolCharacteristicReadRequest *, bool *value) {
           *value = CarPresenceReady();
           return kHAPError_None;
@@ -139,11 +142,11 @@ class CarPresenceService : public mgos::hap::Service {
 class ButtonService : public mgos::hap::Service {
  public:
   ButtonService()
-      : Service(0x1700, &kHAPServiceType_StatelessProgrammableSwitch,
+      : Service(0x1a00, &kHAPServiceType_StatelessProgrammableSwitch,
                 kHAPServiceDebugDescription_StatelessProgrammableSwitch) {
-    AddNameChar(0x1701, SensorName(5));
+    AddNameChar(0x1a01, SensorName(5));
     event_ = new mgos::hap::UInt8Characteristic(
-        0x1702, &kHAPCharacteristicType_ProgrammableSwitchEvent, 0, 2, 1,
+        0x1a02, &kHAPCharacteristicType_ProgrammableSwitchEvent, 0, 2, 1,
         [this](HAPAccessoryServerRef *, const HAPUInt8CharacteristicReadRequest *, uint8_t *value) {
           if (last_event_ < 0) return kHAPError_InvalidState;
           *value = static_cast<uint8_t>(last_event_);

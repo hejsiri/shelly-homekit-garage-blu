@@ -1,6 +1,6 @@
 # Instalacja i aktualizacja Garage BLU
 
-Instrukcja dla **2.16.1-blu41**, stan: **2026-10-24**. Dostępne są osobne paczki
+Instrukcja dla **2.16.1-blu42**, stan: **2026-10-24**. Dostępne są osobne paczki
 dla **Shelly Plus 1 (Plus1)** i **Shelly 1 Gen3 (S1G3 / ESP32-C3)**.
 Wybierz dokładny model — paczki Plus1 i S1G3 nie są zamienne.
 
@@ -23,24 +23,24 @@ Publikacja nowej paczki na serwerze nie uruchamia aktualizacji urządzenia.
 ## Pobieranie
 
 - [Strona pobierania](https://hejsiri.pl/firmware/garage-blu/)
-- [ZIP 2.16.1-blu41 — Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu41.zip)
-- [SHA-256 — Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu41.zip.sha256)
-- [ZIP 2.16.1-blu41 — Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu41.zip)
-- [SHA-256 — Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu41.zip.sha256)
+- [ZIP 2.16.1-blu42 — Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu42.zip)
+- [SHA-256 — Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu42.zip.sha256)
+- [ZIP 2.16.1-blu42 — Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu42.zip)
+- [SHA-256 — Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu42.zip.sha256)
 
 | Parametr paczki | Shelly Plus 1 | Shelly 1 Gen3 |
 | --- | --- | --- |
 | Model / aplikacja | ShellyPlus1 / Plus1 | Shelly1Gen3 / S1G3 |
-| Wersja | 2.16.1-blu41 | 2.16.1-blu41 |
-| Build | 20261024-162518 | 20261024-162848 |
-| Rozmiar ZIP | 1 821 265 bajtów | 2 257 964 bajtów |
-| SHA-256 | `ff3e261bd7938ce3620d835252835676d46d60460bad717ee83e7699bab89478` | `e07f841f942a81b4f93c4ffc5abca8361420e3114ae95b9fc0d3b1c1c4046c05` |
+| Wersja | 2.16.1-blu42 | 2.16.1-blu42 |
+| Build | 20261024-171723 | 20261024-172323 |
+| Rozmiar ZIP | 1 821 713 bajtów | 2 258 492 bajtów |
+| SHA-256 | `0f18a31bfcc3dcc99d40c0d02559662301c3c640205624dbf1607bc6e167fd07` | `89a2c98f98462d28bb6c2c693334a4ddccef18009fc7e1da3b0d2c4e238e1198` |
 
 Pobierz ZIP **bez rozpakowywania**. Na macOS sumę można sprawdzić poleceniem:
 
 ```sh
-shasum -a 256 shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu41.zip
-shasum -a 256 shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu41.zip
+shasum -a 256 shelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu42.zip
+shasum -a 256 shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu42.zip
 ```
 
 `update.json` opisuje kanał aktualizacji; nie jest plikiem firmware do Upload.
@@ -67,13 +67,13 @@ Obraz Plus1 jest dla ESP32, a S1G3 dla ESP32-C3. Nie używaj ich zamiennie.
    **Shelly Plus 1:**
 
    ```text
-   http://ADRES_IP/rpc/Shelly.Update?url=https%3A%2F%2Fhejsiri.pl%2Ffirmware%2Fgarage-blu%2Fshelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu41.zip
+   http://ADRES_IP/rpc/Shelly.Update?url=https%3A%2F%2Fhejsiri.pl%2Ffirmware%2Fgarage-blu%2Fshelly-homekit-garage-blu-ShellyPlus1-2.16.1-blu42.zip
    ```
 
    **Shelly 1 Gen3:**
 
    ```text
-   http://ADRES_IP/rpc/Shelly.Update?url=https%3A%2F%2Fhejsiri.pl%2Ffirmware%2Fgarage-blu%2Fshelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu41.zip
+   http://ADRES_IP/rpc/Shelly.Update?url=https%3A%2F%2Fhejsiri.pl%2Ffirmware%2Fgarage-blu%2Fshelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu42.zip
    ```
 
 4. Przy włączonym haśle użyj uwierzytelnionego panelu lub klienta RPC. Nie wyłączaj ochrony w celu obejścia błędu.
@@ -83,14 +83,14 @@ Obraz Plus1 jest dla ESP32, a S1G3 dla ESP32-C3. Nie używaj ich zamiennie.
 Parametr url jest opisany w [oficjalnej dokumentacji Shelly.Update](https://shelly-api-docs.shelly.cloud/gen2/ComponentsAndServices/Shelly/#shellyupdate).
 Dostępność tego RPC nie potwierdza zgodności konwersji z każdą fabryczną wersją lub
 partycjonowaniem. Wcześniejsza instalacja na fizycznym Plus 1 została wykonana;
-konwersja na fizycznym Gen3 oraz przejście z fabrycznego 2.1.0 do blu41 nie zostały jeszcze potwierdzone.
+konwersja na fizycznym Gen3 oraz przejście z fabrycznego 2.1.0 do blu42 nie zostały jeszcze potwierdzone.
 
 ## Aktualizacja z istniejącego Shelly-HomeKit
 
 1. Pobierz ZIP dla swojego modelu bez rozpakowywania.
 2. W Firmware → Update from file wskaż plik i kliknij Upload.
 3. Poczekaj na odpowiedź, zapis i restart. Panel może na ten czas utracić połączenie.
-4. Otwórz go ponownie i sprawdź, czy Version pokazuje 2.16.1-blu41.
+4. Otwórz go ponownie i sprawdź, czy Version pokazuje 2.16.1-blu42.
 
 Revert to Stock oznacza powrót do firmware fabrycznego; nie służy do aktualizacji Garage BLU.
 
@@ -102,7 +102,7 @@ Revert to Stock oznacza powrót do firmware fabrycznego; nie służy do aktualiz
 4. Poczekaj na restart, odśwież stronę i sprawdź wersję oraz odczyty urządzeń BLU.
 
 Up to date oznacza, że kanał nie zawiera nowszej paczki dla tego modelu.
-Dla zainstalowanego blu41 samo odświeżenie dokumentacji nie tworzy nowszego firmware.
+Dla zainstalowanego blu42 samo odświeżenie dokumentacji nie tworzy nowszego firmware.
 Dashboard jest ukryty w trakcie OTA; po błędzie aktualizacji odśwież panel po
 sprawdzeniu stanu urządzenia.
 
@@ -123,10 +123,16 @@ nie wymuszaj obrazu innego modelu.
 
 ## Stan weryfikacji
 
-Dla blu41 sprawdzono kompilacje Plus1 i S1G3, testy hosta, podgląd UI, ZIP-y i sumy części,
+Na fizycznym Plus 1 potwierdzono instalację blu42, właściwe identyfikatory i typy
+usług w działającej bazie HAP oraz cztery pozycje w aplikacji Dom: bramę, ruch,
+obecność i przycisk. Ruch był gotowy i aktywny, obecność zgadzała się ze stanem BLE,
+a przycisk udostępniał trzy rodzaje naciśnięcia do przypisania akcji. Ta próba
+nie obejmowała wyzwalania przekaźnika ani fizycznego testu wszystkich naciśnięć.
+
+Dla blu42 sprawdzono kompilacje Plus1 i S1G3, testy hosta, podgląd UI, ZIP-y i sumy części,
 publiczny SHA-256, CORS, żądania Range oraz metadane kanału. Wcześniej potwierdzono
 OTA i szyfrowane odczyty Door/Window na fizycznym Plus 1; obserwowano też odczyty
-Motion i Button1. Pełna weryfikacja blu41 na rzeczywistej bramie i fizycznych H&T
+Motion i Button1. Pełna weryfikacja blu42 na rzeczywistej bramie i fizycznych H&T
 pozostaje do wykonania (`hardware_tested: false`).
 
 Paczka Gen3 zachowuje układ partycji wcześniejszej paczki S1G3. Kompilacja i testy

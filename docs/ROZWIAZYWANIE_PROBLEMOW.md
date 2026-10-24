@@ -1,6 +1,6 @@
 # Rozwiązywanie problemów Garage BLU
 
-Dla **2.16.1-blu41 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Dla **2.16.1-blu42 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](KONFIGURACJA.md) · [Historia zmian](HISTORIA_ZMIAN.md)
@@ -119,16 +119,22 @@ klik wysyłają zdarzenia HomeKit, bez bezpośredniego sterowania przekaźnikiem
 
 ### Nie widać przycisku lub obecności w aplikacji Dom
 
-1. Zainstaluj blu41 lub nowszy i sprawdź, czy Button1 ma bezpieczne przypisanie w panelu. W blu40 występował mieszany układ usług i akcesoriów mostkowanych.
+1. Zainstaluj blu42 lub nowszy i sprawdź bezpieczne przypisanie Motion i Button1 w panelu. W blu40 występował mieszany układ usług i akcesoriów mostkowanych; w logach Domu po blu41 wykryto obecność przypisaną do identyfikatora ruchu. Blu42 zastępuje te trzy usługi nowymi identyfikatorami, zachowując samą bramę i parowania.
 2. Po aktualizacji uruchom sterownik ponownie i pozwól aplikacji Dom odświeżyć konfigurację.
    Już sparowanego Button1 nie trzeba parować ponownie. Nie resetuj HomeKit.
 3. Otwórz ustawienia akcesorium Shelly i jego listę Akcesoria. Czujnik obecności używa Car name, a przycisk Name pod Button1; bez własnych nazw
    szukaj Car presence i Button. Dom może zachować wcześniej nadane własne nazwy.
-4. W ustawieniach przycisku w Domu przypisz akcje do pojedynczego, podwójnego i długiego
+4. Po migracji sprawdź automatyzacje ruchu i obecności. W ustawieniach przycisku przypisz akcje do pojedynczego, podwójnego i długiego
    naciśnięcia. Zdarzenia HomeKit nie wymagają gotowości krańcówek; bezpośrednie sterowanie
    bramą pojedynczym kliknięciem nadal jej wymaga.
 5. Brak obecności po 45 sekundach bez beacona jest prawidłowy. Ręczne pokazanie auta
    na grafice nie zmienia stanu czujnika w Domu. Brak Bluetooth lub nasłuchu BLE daje błąd odczytu.
+
+Jeśli usługi nadal są niedostępne, nie resetuj HomeKit. Uwierzytelnione
+`Shelly.GetDebugInfo` zawiera od blu42 sekcję HAP database z rzeczywistymi usługami
+uruchomionymi na sterowniku. Dla AID 1 oczekiwane są: Motion Sensor — usługa 6144,
+odczyt 6146; Occupancy Sensor — usługa 6400, odczyt 6402; Button — usługa 6656,
+zdarzenie 6658. Zestaw to z wersją, gotowością BLU i dokładnym komunikatem z Domu.
 
 Powtórzenia, niepoprawne pakiety, beacony bez zdarzenia i naciśnięcia podczas
 parowania nie uruchamiają akcji przycisku w HomeKit.

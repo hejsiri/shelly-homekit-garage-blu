@@ -124,7 +124,7 @@ zapisu. Zwykła aktualizacja nie wymaga resetu sterownika, HomeKit ani urządze�
 </section>
 
 <section id="funkcje">
-<h2>Obsługa w blu41</h2>
+<h2>Obsługa w blu42</h2>
 <ul>
 <li><strong>Name:</strong> pod Pair każdego sparowanego BLU. Save zapisuje nazwę.
 Motion i Button1 używają jej na kafelkach, H&amp;T przy odczytach, a nazwy krańcówek są w ustawieniach.
@@ -137,8 +137,12 @@ pakiet pokazuje auto; brak pakietów przez 45 s je ukrywa. Ręczny przełącznik
 do następnego pakietu lub zmiany obecności. Beacon nie uruchamia przekaźnika.
 HomeKit otrzymuje usługi obecności auta i przycisku programowalnego w istniejącym akcesorium Shelly
 (pojedyncze, podwójne i długie naciśnięcie). Nazwy pochodzą z Car name i Name.
-Już sparowany Button1 nie wymaga ponownego parowania. Blu41 odświeża układ usług HomeKit;
-po przejściu z blu40 sprawdź przypisane w Domu akcje przycisku.</li>
+Już sparowany Button1 nie wymaga ponownego parowania. Blu42 zastępuje usługi ruchu,
+obecności i przycisku nowymi identyfikatorami, aby usunąć błędne przypisania typów w Domu.
+Po migracji sprawdź akcje przycisku oraz automatyzacje ruchu i obecności.
+Identyfikatory bramy i parowania pozostają zachowane. Na Plus 1 potwierdzono po
+migracji cztery pozycje w Domu, gotowy ruch, wykrytą obecność i przycisk z trzema
+rodzajami naciśnięcia do konfiguracji.</li>
 <li><strong>Continue previous direction after stop:</strong> wyłączone — zmiana kierunku po
 zatrzymaniu; włączone — kontynuacja poprzedniego. Dopasuj tę opcję do działania napędu.</li>
 <li><strong>Wizualizacja:</strong> Day / Night / Auto, ruch, Button1 i H&amp;T. Krańcówki są
@@ -170,7 +174,7 @@ napędu już będącego w ruchu ani nie zastępuje jego zabezpieczeń.</p>
 <li><a href="$repo/blob/master/docs/AKTUALIZACJA.md">Instalacja i aktualizacje</a> · <a href="AKTUALIZACJA.md">plik Markdown</a></li>
 <li><a href="$repo/blob/master/docs/KONFIGURACJA.md">Konfiguracja i obsługa</a> · <a href="KONFIGURACJA.md">plik Markdown</a></li>
 <li><a href="$repo/blob/master/docs/ROZWIAZYWANIE_PROBLEMOW.md">Rozwiązywanie problemów</a> · <a href="ROZWIAZYWANIE_PROBLEMOW.md">plik Markdown</a></li>
-<li><a href="$repo/blob/master/docs/HISTORIA_ZMIAN.md">Historia zmian blu20–blu41</a> · <a href="HISTORIA_ZMIAN.md">plik Markdown</a></li>
+<li><a href="$repo/blob/master/docs/HISTORIA_ZMIAN.md">Historia zmian blu20–blu42</a> · <a href="HISTORIA_ZMIAN.md">plik Markdown</a></li>
 <li><a href="$repo/blob/master/README-BLU.md">Dokumentacja techniczna i budowanie (EN)</a></li>
 <li><a href="$repo">Repozytorium Garage BLU</a> · <a href="$repo/issues">Zgłoszenia błędów i propozycje</a></li>
 </ul>

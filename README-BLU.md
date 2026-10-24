@@ -2,7 +2,7 @@
 
 Garage BLU adds encrypted Shelly BLU devices and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu41 for Shelly Plus 1 and Shelly 1 Gen3**,
+The current OTA release is **2.16.1-blu42 for Shelly Plus 1 and Shelly 1 Gen3**,
 with separate model-specific ZIPs and checksums. The Gen3 image targets ESP32-C3;
 its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
@@ -125,11 +125,20 @@ Shelly garage accessory, alongside Motion and H&T:
   events. Beacon packets and unsupported press types do not trigger button events.
 
 Already paired Button1 devices gain these services after updating and restarting
-the controller. No HomeKit reset or new BLU pairing is required. Garage and Motion
-IDs are preserved. The blu41 layout migration increments the HomeKit configuration
-number once, so controllers refresh the database. It replaces the bridged Button1
-accessories introduced in blu40; check and reassign any button actions configured
-in that version. Apple Home may keep its previously assigned names.
+the controller. No HomeKit reset or new BLU pairing is required. The garage's IDs
+are preserved. The blu42 migration replaces Motion, Car presence and Button with
+fresh service identities, retiring records that Apple Home has mixed between
+Motion and Occupancy. It increments the configuration number once. Check and
+reassign button actions and motion/presence automations after this migration.
+On the affected Plus 1, blu42 was installed and the live database was inspected:
+Apple Home now shows the garage, active/ready Motion, detected Car presence and
+Button with single/double/long actions available. Physical press delivery for all
+three event types and a full garage operation check remain pending.
+
+Authenticated `Shelly.GetDebugInfo` now includes the actual running HAP database:
+accessory/service/characteristic IDs, types, names and BLU source readiness.
+It does not include pairing keys or credentials. This lets diagnostics distinguish
+missing firmware services from conflicting controller records.
 
 Motion and occupancy expose typed readings, Status Fault and Status Active even
 before a fresh beacon. During a reception failure they retain their last reading

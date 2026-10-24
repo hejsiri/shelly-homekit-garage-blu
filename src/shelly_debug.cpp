@@ -33,7 +33,9 @@
 
 #include "HAPAccessoryServer+Internal.h"
 #include "HAPPlatformTCPStreamManager+Init.h"
+#include "HAPUUID.h"
 
+#include "shelly_blu_garage.hpp"
 #include "shelly_main.hpp"
 
 namespace shelly {
@@ -41,6 +43,31 @@ namespace shelly {
 static HAPAccessoryServerRef *s_svr;
 static HAPPlatformKeyValueStoreRef s_kvs;
 static HAPPlatformTCPStreamManagerRef s_tcpm;
+
+static void WriteHAPDatabase(struct mg_connection *nc,
+                             const HAPAccessory *accessory) {
+  if (accessory == nullptr || accessory->services == nullptr) return;
+  for (size_t i = 0; accessory->services[i] != nullptr; i++) {
+    const HAPService *service = accessory->services[i];
+    char type[37];
+    if (HAPUUIDGetDescription(service->serviceType, type, sizeof(type)) !=
+        kHAPError_None) continue;
+    mg_printf(nc, "  AID %llu service %llu type %s name %s primary %d\r\n",
+              (unsigned long long) accessory->aid,
+              (unsigned long long) service->iid, type,
+              service->name != nullptr ? service->name : "-",
+              service->properties.primaryService);
+    if (service->characteristics == nullptr) continue;
+    for (size_t j = 0; service->characteristics[j] != nullptr; j++) {
+      const auto *characteristic =
+          static_cast<const HAPBaseCharacteristic *>(service->characteristics[j]);
+      if (HAPUUIDGetDescription(characteristic->characteristicType, type,
+                                sizeof(type)) != kHAPError_None) continue;
+      mg_printf(nc, "    characteristic %llu type %s\r\n",
+                (unsigned long long) characteristic->iid, type);
+    }
+  }
+}
 
 struct EnumHAPSessionsContext {
   struct mg_connection *nc;
@@ -86,6 +113,21 @@ void shelly_debug_write_nc(struct mg_connection *nc) {
             (unsigned) tcpm_stats.numPendingTCPStreams,
             (unsigned) tcpm_stats.numActiveTCPStreams,
             (unsigned) tcpm_stats.maxNumTCPStreams);
+  mg_printf(nc, "HAP database:\r\n");
+  const auto *server = reinterpret_cast<const HAPAccessoryServer *>(s_svr);
+  WriteHAPDatabase(nc, server->primaryAccessory);
+#if HAP_IP
+  if (server->ip.bridgedAccessories != nullptr) {
+    for (size_t i = 0; server->ip.bridgedAccessories[i] != nullptr; i++)
+      WriteHAPDatabase(nc, server->ip.bridgedAccessories[i]);
+  }
+#endif
+#ifdef SHELLY_GARAGE_BLE
+  mg_printf(nc, "BLU HomeKit source: motion paired %d ready %d; "
+                "button paired %d; presence ready %d present %d\r\n",
+              blu::SensorPaired(2), blu::MotionReady(), blu::SensorPaired(5),
+              blu::CarPresenceReady(), blu::CarPresent());
+#endif
   mg_printf(nc, "HAP connections:\r\n");
   time_t now_wall = mg_time();
   int64_t now_micros = mgos_uptime_micros();

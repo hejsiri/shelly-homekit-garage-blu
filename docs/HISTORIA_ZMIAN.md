@@ -1,6 +1,6 @@
 # Historia zmian Garage BLU
 
-Bieżące opisy i instrukcje dotyczą **2.16.1-blu41** (stan: 2026-10-24).
+Bieżące opisy i instrukcje dotyczą **2.16.1-blu42** (stan: 2026-10-24).
 Zobacz [instalację i aktualizacje](AKTUALIZACJA.md), [konfigurację](KONFIGURACJA.md)
 i [rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md).
 
@@ -266,3 +266,26 @@ rodzaje zdarzeń. Sprawdź akcje przypisane do osobnego przycisku z blu40 po mig
 Dodano test rzeczywistych klas mgos::hap i serializacji /accessories przez Apple ADK,
 w tym unikalności identyfikatorów, jednej usługi głównej, typów odczytów,
 statusów dostępności i układu jednego akcesorium garażu.
+
+## blu42 — wymiana błędnie przypisanych usług BLU
+
+W logach aplikacji Dom wykryto próbę odczytu obecności (typ 0x71, charakterystyka
+5634) z usługi 5120, której firmware używał dla ruchu. HomeKit nie potrafił
+dopasować charakterystyki i zgłaszał HMErrorDomain 2/3. Blu41 nie usunęło tego
+przypisania mimo odświeżenia numeru konfiguracji.
+
+Blu42 wycofuje stare identyfikatory usług ruchu, obecności i przycisku. Zastępuje
+je nowymi: 0x1800, 0x1900 i 0x1a00. Pozostają one usługami akcesorium bramy,
+którego identyfikatory i parowania nie zmieniają się. Jednorazowa migracja z blu41
+lub starszych wersji zwiększa numer konfiguracji. Sprawdź ponownie akcje przycisku
+i automatyzacje korzystające z ruchu lub obecności.
+
+Diagnostyka Shelly.GetDebugInfo pokazuje faktycznie uruchomioną bazę HomeKit:
+identyfikatory i typy usług/charakterystyk oraz gotowość źródeł BLU. Nie zawiera
+kluczy parowania ani haseł. Test bazy obejmuje teraz rzeczywistą ścieżkę wyszukiwania
+i odczytu w Apple ADK oraz serializację porcjami takimi jak na sterowniku.
+Na fizycznym Plus 1 z tym błędem zainstalowano blu42 i odczytano uruchomioną bazę:
+trzy usługi mają właściwe typy i oddzielne identyfikatory, oba źródła BLU są gotowe.
+W aplikacji Dom potwierdzono cztery pozycje: bramę, gotowy i aktywny ruch, wykrytą
+obecność oraz przycisk z pojedynczym, podwójnym i długim naciśnięciem do konfiguracji.
+Pełne próby fizycznych naciśnięć i pracy bramy pozostają do wykonania.

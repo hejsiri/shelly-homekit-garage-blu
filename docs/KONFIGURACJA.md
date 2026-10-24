@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1-blu41 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
+Instrukcja dla **2.16.1-blu42 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-24**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -147,7 +147,7 @@ pozwala na sterowanie. Beacon nigdy nie uruchamia przekaźnika.
 
 ### Obecność i przycisk w aplikacji Dom
 
-W blu41 sparowany Button1 udostępnia dwie usługi w istniejącym akcesorium Shelly,
+W blu42 sparowany Button1 udostępnia dwie usługi w istniejącym akcesorium Shelly,
 razem z bramą i pozostałymi czujnikami. Są dostępne przez jego listę Akcesoria:
 
 - **Czujnik obecności auta (Occupancy Sensor)** — nazwa z Car name. Obecność oznacza
@@ -162,10 +162,13 @@ razem z bramą i pozostałymi czujnikami. Są dostępne przez jego listę Akceso
 
 Jeśli Button1 jest już bezpiecznie sparowany, wystarczy aktualizacja i restart
 sterownika. Nie resetuj HomeKit ani nie paruj BLU ponownie. Nowe akcesoria
-pojawią się po odświeżeniu konfiguracji w Domu. Blu41 wykonuje jednorazową migrację
-układu usług i zwiększa numer konfiguracji HomeKit. Identyfikatory bramy i ruchu
-pozostają zachowane. Usługi Button1 zastępują osobne akcesoria mostkowane z blu40;
-sprawdź i ewentualnie przypisz ponownie akcje przycisku ustawione w tamtej wersji.
+powinny pojawić się po odświeżeniu konfiguracji w Domu. Blu42 zastępuje usługi
+ruchu, obecności i przycisku nowymi identyfikatorami oraz jednorazowo zwiększa numer
+konfiguracji HomeKit. Zachowuje identyfikatory samej bramy i parowania.
+Po tej migracji sprawdź i ewentualnie przypisz ponownie akcje przycisku oraz
+automatyzacje korzystające z ruchu lub obecności. Na Plus 1 z tym błędem potwierdzono
+po migracji widoczność wszystkich czterech pozycji w Domu, gotowość ruchu, odczyt
+obecności oraz dostępność trzech rodzajów naciśnięcia przycisku.
 Brak beaconów lub zmiana nazwy nie usuwa usług. Dom może zachować własne, ręcznie
 nadane nazwy.
 

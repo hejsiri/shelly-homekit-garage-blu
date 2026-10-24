@@ -1,10 +1,23 @@
 #!/usr/bin/env python3
-"""Verify real SDK /accessories serialization with mocked transport and device state."""
+"""Verify production services through real SDK serialization, routing and reads."""
 from pathlib import Path
 import json, os, subprocess, sys, tempfile
 root=Path(__file__).resolve().parents[1]
 sdk=Path(os.environ.get('SHELLY_HOMEKIT_ADK_SOURCE',str(Path.home()/'.mos/work/shelly-garage-blu/deps/homekit-adk')))
 work=tempfile.TemporaryDirectory(prefix='shelly-hap-database-');p=Path(work.name)
+def extract(path, signature):
+ source=(root/path).read_text();start=source.index(signature)
+ end=source.index('{',start)+1;depth=1
+ while depth:
+  depth+=(source[end]=='{')-(source[end]=='}');end+=1
+ return source[start:end]
+(p/'debug-database.hpp').write_text(extract('src/shelly_debug.cpp','static void WriteHAPDatabase('))
+(p/'select-services.hpp').write_text('''namespace shelly { namespace hap {
+struct GarageDoorOpener {
+ std::vector<std::unique_ptr<mgos::hap::Service>> blu_sensors_;
+ void AddBLUServices(mgos::hap::Accessory *);
+};
+'''+extract('src/shelly_hap_garage_door_opener.cpp','void GarageDoorOpener::AddBLUServices(')+'\n}}')
 (p/'mgos_utils.hpp').write_text('#pragma once\n#define UNUSED_ARG __attribute__((unused))\n')
 (p/'mgos.hpp').write_text('''#pragma once
 #include <cstdio>
@@ -13,7 +26,7 @@ work=tempfile.TemporaryDirectory(prefix='shelly-hap-database-');p=Path(work.name
 inline bool mgos_conf_str_empty(const char *s){return !s||!*s;}
 inline const char *mgos_sys_config_get_device_sn(){return "test-device";}
 inline void mgos_expand_mac_address_placeholders(char*){}
-inline const char *mgos_sys_ro_vars_get_fw_version(){return "2.16.1-blu41";}
+inline const char *mgos_sys_ro_vars_get_fw_version(){return "2.16.1-blu42";}
 ''')
 (p/'mgos_timers.hpp').write_text('''#pragma once
 #include <functional>
@@ -25,6 +38,13 @@ namespace mgos { struct Timer { explicit Timer(std::function<void()> cb):callbac
 (p/'motion.cpp').write_text((root/'src/shelly_blu_motion_hap.cpp').read_text())
 (p/'mgos_hap.h').write_text('#include \"HAP.h\"\n')
 (p/'db.c').write_text((sdk/'src/mgos_homekit_adk_db.c').read_text().split('/* HAP Protocol Information service. */')[0])
+(p/'ip-server.c').write_text('#include "' + str(sdk/'HomeKitADK/HAP/HAPIPAccessoryServer.c') + '"\n' + r'''
+bool TestFindCharacteristic(HAPAccessoryServerRef *server, uint64_t aid, uint64_t iid,
+ const HAPCharacteristic **ch, const HAPService **svc, const HAPAccessory **acc) {
+ get_db_ctx(server, aid, iid, ch, svc, acc);
+ return *ch != NULL;
+}
+''')
 (p/'test.cpp').write_text(r'''
 #include <cassert>
 #include "HAP+Internal.h"
@@ -32,6 +52,7 @@ namespace mgos { struct Timer { explicit Timer(std::function<void()> cb):callbac
 #include "HAPIPCharacteristic.h"
 #include <iostream>
 #include <cstring>
+#include <cstdarg>
 #include "mgos_hap.hpp"
 #include "shelly_blu_garage.hpp"
 #include "shelly_blu_motion_hap.hpp"
@@ -39,7 +60,7 @@ namespace mgos { struct Timer { explicit Timer(std::function<void()> cb):callbac
 extern "C" void HAPAccessoryServerRaiseEvent(HAPAccessoryServerRef*,const HAPCharacteristic*,const HAPService*,const HAPAccessory*){}
 namespace shelly { namespace blu {
 Sensor sensor;
-bool SensorPaired(int role){return role==5;}
+bool SensorPaired(int role){return role==2||role==5;}
 const char *SensorName(int role){return role==2?"Motion sensor":"Button";}
 const char *CarName(){return "Car presence";}
 bool ready=true;
@@ -51,22 +72,23 @@ const Sensor &MotionReading(){return sensor;}
 const Sensor &ReadingFor(int){return sensor;}
 void SetButtonEventHandler(std::function<void(uint8_t)>){ }
 }}
+#include "select-services.hpp"
+
+struct mg_connection {std::string text;};
+int mg_printf(mg_connection *nc,const char *format,...){
+ char buf[512];va_list args;va_start(args,format);int n=vsnprintf(buf,sizeof(buf),format,args);va_end(args);
+ assert(n>=0&&n<int(sizeof(buf)));nc->text.append(buf,n);return n;
+}
+#include "debug-database.hpp"
 
 extern "C" const char *HAPGetVersion(){return "test";}
 extern "C" const char *HAPGetBuild(){return "test";}
 extern "C" void *HAPAccessoryServerGetClientContext(HAPAccessoryServerRef*){return nullptr;}
 extern "C" bool HAPAccessoryServerSupportsService(HAPAccessoryServerRef*,HAPTransportType,const HAPService *s){return memcmp(s->serviceType,&kHAPServiceType_Pairing,sizeof(HAPUUID))!=0;}
-extern "C" bool HAPIPSessionAreEventNotificationsEnabled(HAPIPSessionDescriptorRef*,const HAPCharacteristic*,const HAPService*,const HAPAccessory*){return false;}
-extern "C" void HAPIPSessionHandleReadRequest(HAPIPSessionDescriptorRef*,HAPIPSessionContext,const HAPCharacteristic *ch,const HAPService *s,const HAPAccessory *a,HAPIPSessionReadResult *result,HAPIPByteBuffer *buf){
- auto *base=static_cast<const HAPBaseCharacteristic*>(ch);result->status=0;HAPError err=kHAPError_None;HAPAccessoryServerRef server={};
- switch(base->format){
-  case kHAPCharacteristicFormat_Bool:{auto *c=static_cast<const HAPBoolCharacteristic*>(ch);HAPBoolCharacteristicReadRequest req={};req.characteristic=c;req.service=s;req.accessory=a;bool v=false;err=c->callbacks.handleRead(&server,&req,&v,nullptr);result->value.unsignedIntValue=v;break;}
-  case kHAPCharacteristicFormat_UInt8:{auto *c=static_cast<const HAPUInt8Characteristic*>(ch);HAPUInt8CharacteristicReadRequest req={};req.characteristic=c;req.service=s;req.accessory=a;uint8_t v=0;err=c->callbacks.handleRead(&server,&req,&v,nullptr);result->value.unsignedIntValue=v;break;}
-  case kHAPCharacteristicFormat_String:{auto *c=static_cast<const HAPStringCharacteristic*>(ch);HAPStringCharacteristicReadRequest req={};req.characteristic=c;req.service=s;req.accessory=a;err=c->callbacks.handleRead(&server,&req,buf->data,buf->capacity,nullptr);result->value.stringValue.bytes=buf->data;result->value.stringValue.numBytes=strlen(buf->data);break;}
-  default:result->status=-70402;
- }
- if(err)result->status=-70402;
-}
+
+extern "C" bool HAPSessionControllerIsAdmin(const HAPSessionRef*){return true;}
+
+extern "C" bool TestFindCharacteristic(HAPAccessoryServerRef*,uint64_t,uint64_t,const HAPCharacteristic**,const HAPService**,const HAPAccessory**);
 int main(int argc,char**){
  shelly::blu::ready=argc==1;
  std::vector<std::unique_ptr<mgos::hap::Accessory>> accs;
@@ -78,15 +100,28 @@ int main(int argc,char**){
  garage->AddChar(new mgos::hap::UInt8Characteristic(0x603,&kHAPCharacteristicType_TargetDoorState,0,1,1,[](HAPAccessoryServerRef*,const HAPUInt8CharacteristicReadRequest*,uint8_t *v){*v=1;return kHAPError_None;},true,[](HAPAccessoryServerRef*,const HAPUInt8CharacteristicWriteRequest*,uint8_t){return kHAPError_None;}));
  garage->AddChar(new mgos::hap::BoolCharacteristic(0x604,&kHAPCharacteristicType_ObstructionDetected,[](HAPAccessoryServerRef*,const HAPBoolCharacteristicReadRequest*,bool *v){*v=false;return kHAPError_None;},true));
  accs[0]->AddService(std::move(garage));
- accs[0]->AddService(shelly::blu::CreateMotionService());
- accs[0]->AddService(shelly::blu::CreateCarPresenceService());
- accs[0]->AddService(shelly::blu::CreateButtonService());
+ shelly::hap::GarageDoorOpener owner;owner.AddBLUServices(accs[0].get());
  const HAPAccessory *bridged[]={nullptr};
  HAPAccessoryServer server={};server.primaryAccessory=accs[0]->GetHAPAccessory();server.ip.bridgedAccessories=bridged;
- HAPIPSessionDescriptorRef session={};HAPIPAccessorySerializationContext ctx;HAPIPAccessoryCreateSerializationContext(&ctx);
+ mg_connection diagnostics;WriteHAPDatabase(&diagnostics,server.primaryAccessory);
+ for (const char *expected : {"AID 1 service 6144 type 85 name Motion sensor", "AID 1 service 6400 type 86 name Car presence", "AID 1 service 6656 type 89 name Button", "characteristic 6146 type 22", "characteristic 6402 type 71", "characteristic 6658 type 73"})
+  assert(diagnostics.text.find(expected)!=std::string::npos);
+ HAPIPSessionDescriptorRef session={};auto *descriptor=reinterpret_cast<HAPIPSessionDescriptor*>(&session);descriptor->server=reinterpret_cast<HAPAccessoryServerRef*>(&server);HAPIPAccessorySerializationContext ctx;HAPIPAccessoryCreateSerializationContext(&ctx);
+ for (uint64_t iid : {0x1802,0x1902,0x1a02}) {
+  const HAPCharacteristic *ch=nullptr;const HAPService *svc=nullptr;const HAPAccessory *acc=nullptr;
+  assert(TestFindCharacteristic(reinterpret_cast<HAPAccessoryServerRef*>(&server),1,iid,&ch,&svc,&acc));
+  assert(svc->iid==(iid-2)&&acc->aid==1);
+  HAPIPSessionReadResult result={};char bytes[128]={};HAPIPByteBuffer buf={};buf.data=bytes;buf.capacity=sizeof(bytes);buf.limit=sizeof(bytes);
+  HAPIPSessionHandleReadRequest(&session,kHAPIPSessionContext_GetAccessories,ch,svc,acc,&result,&buf);
+  assert(result.status==0);
+ }
+ for (uint64_t retired : {0x1402,0x1602,0x1702}) {
+  const HAPCharacteristic *ch=nullptr;const HAPService *svc=nullptr;const HAPAccessory *acc=nullptr;
+  assert(!TestFindCharacteristic(reinterpret_cast<HAPAccessoryServerRef*>(&server),1,retired,&ch,&svc,&acc));
+ }
  std::string json;
  while(!HAPIPAccessorySerializationIsComplete(&ctx)){char data[1536]={};size_t n=0;
-  auto err=HAPIPAccessorySerializeReadResponse(&ctx,reinterpret_cast<HAPAccessoryServerRef*>(&server),&session,data,1,sizeof(data),&n);
+  auto err=HAPIPAccessorySerializeReadResponse(&ctx,reinterpret_cast<HAPAccessoryServerRef*>(&server),&session,data,sizeof(data)/2,sizeof(data),&n);
   assert(err==kHAPError_None);json.append(data,n);
  }
  std::cout<<json;
@@ -94,11 +129,11 @@ int main(int argc,char**){
 
 ''')
 flags=['-DHAP_IP=1','-DHAP_BLE=0','-DSHELLY_GARAGE_BLE','-DHAP_DISABLE_ASSERTS=1','-DHAP_DISABLE_PRECONDITIONS=1','-DHAP_LOG_LEVEL=0','-ffunction-sections','-fdata-sections','-Wno-nullability-completeness','-Wno-unknown-pragmas']
-for inc in [p,root/'src',sdk/'include',sdk/'HomeKitADK/HAP',sdk/'HomeKitADK/PAL',sdk/'HomeKitADK/External/HTTP',sdk/'HomeKitADK/External/JSON']:
+for inc in [p,root/'src',sdk/'include',sdk/'HomeKitADK/HAP',sdk/'HomeKitADK/PAL',sdk/'HomeKitADK/External/HTTP',sdk/'HomeKitADK/External/JSON',sdk/'HomeKitADK/External/Base64']:
  flags+=['-I',str(inc)]
 objs=[]
 for f in [sdk/'HomeKitADK/HAP/HAPCharacteristicTypes.c',sdk/'HomeKitADK/HAP/HAPServiceTypes.c',
- sdk/'HomeKitADK/HAP/HAPIPAccessory.c',sdk/'HomeKitADK/HAP/HAPIPCharacteristic.c',sdk/'HomeKitADK/HAP/HAPUUID.c',
+ p/'ip-server.c',sdk/'HomeKitADK/HAP/HAPCharacteristic.c',sdk/'HomeKitADK/HAP/HAPTLV.c',sdk/'HomeKitADK/HAP/HAPTLVWriter.c',sdk/'HomeKitADK/External/Base64/util_base64.c',sdk/'HomeKitADK/HAP/HAPIPAccessory.c',sdk/'HomeKitADK/HAP/HAPIPCharacteristic.c',sdk/'HomeKitADK/HAP/HAPUUID.c',
  sdk/'HomeKitADK/HAP/HAPJSONUtils.c',sdk/'HomeKitADK/PAL/HAPAssert.c',sdk/'HomeKitADK/PAL/HAPBase+Crypto.c',sdk/'HomeKitADK/PAL/HAPLog.c',sdk/'HomeKitADK/PAL/Mock/HAPPlatformAbort.c',sdk/'HomeKitADK/PAL/Mock/HAPPlatformLog.c',sdk/'HomeKitADK/HAP/HAPRequestHandlers+AccessoryInformation.c',
  *[sdk/'HomeKitADK/PAL'/('HAPBase+'+name+'.c') for name in ['RawBuffer','String','Int','Float','Double','UTF8']],p/'db.c']:
  out=p/(f.stem+'.o');subprocess.run(['clang',*flags,'-c',str(f),'-o',str(out)],check=True);objs.append(str(out))
@@ -111,12 +146,19 @@ for ready in [True, False]:
  services={v['type']:v for v in accessory['services']}
  assert set(services)=={'3E','41','85','86','89'}
  assert [v['type'] for v in services.values() if v['primary']]==['41']
- assert services['85']['iid']==0x1400 and services['86']['iid']==0x1600 and services['89']['iid']==0x1700
+ assert services['85']['iid']==0x1800 and services['86']['iid']==0x1900 and services['89']['iid']==0x1a00
  ids=[]
  for service in services.values():
   ids.append(service['iid']);ids.extend(c['iid'] for c in service['characteristics'])
   assert not service['hidden']
  assert len(ids)==len(set(ids))
+ # Retire identities seen under conflicting service types in Apple Home logs.
+ assert not set(ids).intersection(range(0x1400,0x1405))
+ assert not set(ids).intersection(range(0x1600,0x1605))
+ assert not set(ids).intersection(range(0x1700,0x1703))
+ assert {c['type'] for c in services['85']['characteristics']}=={'23','22','77','75'}
+ assert {c['type'] for c in services['86']['characteristics']}=={'23','71','77','75'}
+ assert {c['type'] for c in services['89']['characteristics']}=={'23','73'}
  for service_type,value_type in [('85','22'),('86','71')]:
   chars={c['type']:c for c in services[service_type]['characteristics']}
   assert chars[value_type]['value'] in [0,1] and chars[value_type]['value'] is not None
@@ -128,4 +170,4 @@ for ready in [True, False]:
  assert chars['23']['value']=='Button'
  assert next(c['value'] for c in services['86']['characteristics'] if c['type']=='23')=='Car presence'
 work.cleanup()
-print('PASS: real HAP wrappers and Apple /accessories serialization, one garage accessory, unique IDs, occupancy/motion typed values, faults, active state and null switch events')
+print('PASS: real Apple SDK routing, reads and /accessories serialization; distinct replacement services, retired IDs, typed values and event semantics')

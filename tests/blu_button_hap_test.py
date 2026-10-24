@@ -145,7 +145,7 @@ int main(){
  auto *presence=characteristic(*accessory,&kHAPCharacteristicType_OccupancyDetected);
  auto *fault=characteristic(*accessory,&kHAPCharacteristicType_StatusFault);
  auto *event=characteristic(*accessory,&kHAPCharacteristicType_ProgrammableSwitchEvent);
- assert(presence->iid==0x1602&&event->iid==0x1702);
+ assert(presence->iid==0x1902&&event->iid==0x1a02);
  uint8_t value=99;assert(event->read(nullptr,nullptr,&value)==kHAPError_InvalidState);
  assert(presence->read(nullptr,nullptr,&value)==kHAPError_None&&value==0);
  tick();beacon(1,0);tick();assert(CarPresent()&&presence->values.back()==1&&event->values.empty()&&!ConsumeButtonPress());

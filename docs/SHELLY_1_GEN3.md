@@ -1,6 +1,6 @@
 # Shelly 1 Gen3 — Garage BLU
 
-Dla **2.16.1-blu41**, stan: **2026-10-24**.
+Dla **2.16.1-blu42**, stan: **2026-10-24**.
 
 Od blu38 dostępna jest osobna paczka Garage BLU dla **Shelly 1 Gen3**. Korzysta
 z platformy **ESP32-C3**, ma nazwę aplikacji **S1G3**, a w kanale OTA jest
@@ -12,8 +12,8 @@ rozpoznawana jako **Shelly1Gen3**.
 
 ## Właściwa paczka
 
-- [Pobierz ZIP 2.16.1-blu41 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu41.zip)
-- [Pobierz sumę SHA-256](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu41.zip.sha256)
+- [Pobierz ZIP 2.16.1-blu42 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu42.zip)
+- [Pobierz sumę SHA-256](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1-blu42.zip.sha256)
 - [Strona pobierania i metadane](https://hejsiri.pl/firmware/garage-blu/)
 
 | Parametr | Wartość |
@@ -21,10 +21,10 @@ rozpoznawana jako **Shelly1Gen3**.
 | Sterownik | Shelly 1 Gen3 |
 | Identyfikator OTA / aplikacja | Shelly1Gen3 / S1G3 |
 | Platforma | ESP32-C3 |
-| Wersja | 2.16.1-blu41 |
-| Build | 20261024-162848 |
-| ZIP | 2,257,964 bajtów |
-| SHA-256 | `e07f841f942a81b4f93c4ffc5abca8361420e3114ae95b9fc0d3b1c1c4046c05` |
+| Wersja | 2.16.1-blu42 |
+| Build | 20261024-172323 |
+| ZIP | 2,258,492 bajtów |
+| SHA-256 | `89a2c98f98462d28bb6c2c693334a4ddccef18009fc7e1da3b0d2c4e238e1198` |
 
 ZIP jest dla **Shelly 1 Gen3**, nie dla **Shelly 1 Mini Gen3**, **1PM Gen3**, innych
 Gen3 ani Gen4. Paczka S1G3 nie jest zamienna z paczką Plus1 dla Shelly Plus 1.
@@ -32,7 +32,7 @@ Firmware wgrywa się na sterownik; urządzenia BLU zachowują fabryczny firmware
 
 ## Co obsługuje Gen3
 
-Paczka zawiera te same funkcje Garage BLU blu41 co wersja Plus1:
+Paczka zawiera te same funkcje Garage BLU blu42 co wersja Plus1:
 
 - sterowanie bramą i odczyt stanu w Apple HomeKit przez Wi-Fi;
 - dwie szyfrowane krańcówki BLU Door/Window: Closing sensor i Opening sensor;
@@ -48,7 +48,7 @@ Paczka zawiera te same funkcje Garage BLU blu41 co wersja Plus1:
 ## Instalacja i pierwsze uruchomienie
 
 1. Sprawdź na urządzeniu dokładny model Shelly 1 Gen3 i pobierz ZIP S1G3 bez rozpakowywania.
-2. Jeśli działa już Shelly-HomeKit, użyj Firmware → Update from file → Upload. W starszym Garage BLU można też wybrać Check → Install, gdy kanał zgłosi blu41 dla tego modelu.
+2. Jeśli działa już Shelly-HomeKit, użyj Firmware → Update from file → Upload. W starszym Garage BLU można też wybrać Check → Install, gdy kanał zgłosi blu42 dla tego modelu.
 3. Przy fabrycznym firmware użyj [procedury konwersji](AKTUALIZACJA.md#pierwsza-instalacja-z-fabrycznego-firmware-gen3--plus) i przykładu RPC oznaczonego Shelly 1 Gen3.
 4. Poczekaj na restart i sprawdź Version oraz Build w panelu.
 5. Ustaw hasło w Security Settings, a w General Settings wybierz Mode → Garage Door Opener i Save.
