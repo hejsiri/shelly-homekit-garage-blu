@@ -57,4 +57,3 @@ jobs:
           python3 tests/garage_endpoint_recovery_test.py
           python3 tests/blu_names_config_test.py
           python3 tests/garage_http_assets_test.py
-          python3 tests/ota_release_models_test.py

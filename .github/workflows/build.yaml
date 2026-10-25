@@ -43,3 +43,23 @@ jobs:
           path: build_${{ matrix.model }}/fw.zip
           if-no-files-found: error
           retention-days: 7
+
+  verify-ota:
+    name: Verify both OTA packages
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: garage-blu-ShellyPlus1
+          path: build_ShellyPlus1
+      - uses: actions/download-artifact@v8
+        with:
+          name: garage-blu-Shelly1Gen3
+          path: build_Shelly1Gen3
+      - name: Check model mapping, hashes and rejected packages
+        run: python3 tests/ota_release_models_test.py
