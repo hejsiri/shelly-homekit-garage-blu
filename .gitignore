@@ -20,3 +20,6 @@ tools/simulator/__pycache__/
 # Local design concepts and Python caches are not repository artifacts.
 design/
 __pycache__/
+
+# Temporary host-test dependency checkouts.
+.ci/

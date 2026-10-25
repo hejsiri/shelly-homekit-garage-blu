@@ -16,9 +16,19 @@ jobs:
   validate:
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    env:
+      SHELLY_MOS_SOURCE: ${{ github.workspace }}/.ci/mongoose-os
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
+      - name: Checkout Frozen JSON test dependency
+        uses: actions/checkout@v6
+        with:
+          repository: markirb/mongoose-os
+          ref: 0a0bba9651cb606c7c8ba444a91d239c8c126c67
+          path: .ci/mongoose-os
+          sparse-checkout: src/frozen
           persist-credentials: false
       - uses: actions/setup-node@v7
         with:
