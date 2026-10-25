@@ -1,0 +1,50 @@
+name: Validate Garage BLU
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Check tooling and panel
+        run: |
+          bash -n tools/build-blu.sh tools/simulator/start.sh tests/run-blu-tests.sh
+          python3 -m compileall -q tools tests
+          node --check fs_src/script.js
+          for test in tests/*.js; do node "$test"; done
+      - name: Check decoders and device logic
+        run: |
+          test_dir="$(mktemp -d)"
+          trap 'rm -rf "$test_dir"' EXIT
+          for test in blu_bthome blu_button blu_xiaomi; do
+            clang++ -std=c++14 -Wall -Wextra -Werror -fsanitize=address,undefined -I src "tests/${test}_test.cpp" -o "$test_dir/$test"
+            "$test_dir/$test"
+          done
+          python3 tests/blu_xiaomi_gatt_test.py
+          python3 tests/blu_xiaomi_garage_test.py
+          python3 tests/blu_key_read_test.py
+          python3 tests/blu_bond_reset_test.py
+          python3 tests/blu_security_start_test.py
+          python3 tests/garage_stop_behavior_test.py
+          python3 tests/garage_endpoint_recovery_test.py
+          python3 tests/blu_names_config_test.py
+          python3 tests/garage_http_assets_test.py
+          python3 tests/ota_release_models_test.py

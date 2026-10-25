@@ -260,6 +260,18 @@ Protocol references:
 
 ## Build and test
 
+The repository maintains only **ShellyPlus1** and **Shelly1Gen3** hardware profiles.
+Both reuse `src/ShellyPlus1`; their GPIO assignments, configuration and partition
+layouts remain separate in `mos.yml`. Shared HomeKit, migration, sensor and reset
+code is retained. `make build` builds both supported controllers; the helper below
+defaults to Plus 1. It synchronizes source and asset deletions into its private
+build directory, so obsolete images cannot remain in a later build by accident.
+
+GitHub Actions validates the panel and device logic and builds only these two
+models. Firmware artifacts expire after seven days; the official OTA packages
+and checksums remain at hejsiri.pl. Local design concepts and generated files
+are excluded from Git.
+
 Start Docker Desktop. The current default target is Shelly Plus 1:
 
 ```sh

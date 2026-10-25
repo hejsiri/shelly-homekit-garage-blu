@@ -1,7 +1,6 @@
 MAKEFLAGS += --warn-undefined-variables --no-builtin-rules
 
-.PHONY: build check-format format release upload \
-        Shelly1 Shelly1L Shelly1PM Shelly25 Shelly2 ShellyColorBulb ShellyDuo ShellyI3 ShellyPlug ShellyPlugS ShellyPlusPlugS ShellyPlus1 ShellyPlus1PM ShellyPlus2PM ShellyPlusI4 ShellyRGBW2 ShellyVintage ShellyU ShellyU25 ShellyUDuo ShellyURGBW2 ShellyUNI ShellyPlus1Mini ShellyPlusRGBWPM ShellyMini1Gen3 ShellyMini1PMGen3 Shelly2PMGen3 Shelly1PMGen3 Shelly1Gen3 ShellyI4Gen3 ShellyPlugSGen3 ShellyPlusUni
+.PHONY: build check-format format release ShellyPlus1 Shelly1Gen3
 .SUFFIXES:
 
 MOS ?= mos
@@ -27,134 +26,21 @@ ifneq "$(VERBOSE)$(V)" "00"
   MOS_BUILD_FLAGS_FINAL += --verbose
 endif
 
-build: Shelly1 Shelly1L Shelly1PM Shelly25 Shelly2 ShellyColorBulb ShellyDuo ShellyI3 ShellyPlug ShellyPlugS ShellyPlusPlugS ShellyPlus1 ShellyPlus1PM ShellyPlus2PM ShellyPlusI4 ShellyRGBW2 ShellyVintage ShellyU ShellyU25 ShellyURGBW2 ShellyUNI ShellyPlus1Mini ShellyPlusRGBWPM ShellyMini1Gen3 ShellyMini1PMGen3 Shelly2PMGen3 Shelly1PMGen3 Shelly1Gen3 ShellyI4Gen3
+# These are the only controller profiles maintained by Garage BLU.
+SUPPORTED_MODELS := ShellyPlus1 Shelly1Gen3
+build: $(SUPPORTED_MODELS)
 
 release:
 	$(MAKE) build CLEAN=1 RELEASE=1
 
-PLATFORM ?= esp8266
+PLATFORM ?= esp32
 
-Shelly1: build-Shelly1
-	@true
-
-Shelly1L: build-Shelly1L
-	@true
-
-Shelly1PM: build-Shelly1PM
-	@true
-
-Shelly2: build-Shelly2
-	@true
-
-Shelly25: build-Shelly25
-	@true
-
-ShellyColorBulb: build-ShellyColorBulb
-	@true
-
-ShellyDuo: build-ShellyDuo
-	@true
-
-ShellyI3: build-ShellyI3
-	@true
-
-ShellyPlug: build-ShellyPlug
-	@true
-
-ShellyPlugS: build-ShellyPlugS
-	@true
-
-ShellyPlusPlugS: PLATFORM=esp32
-ShellyPlusPlugS: build-ShellyPlusPlugS
-	@true
-
-ShellyPlus1: PLATFORM=esp32
+ShellyPlus1 build-ShellyPlus1: PLATFORM=esp32
 ShellyPlus1: build-ShellyPlus1
 	@true
 
-ShellyPlus1PM: PLATFORM=esp32
-ShellyPlus1PM: build-ShellyPlus1PM
-	@true
-
-ShellyPlus2PM: PLATFORM=esp32
-ShellyPlus2PM: build-ShellyPlus2PM
-	@true
-
-ShellyPlusRGBWPM: PLATFORM=esp32
-ShellyPlusRGBWPM: build-ShellyPlusRGBWPM
-	@true
-
-ShellyPlusI4: PLATFORM=esp32
-ShellyPlusI4: build-ShellyPlusI4
-	@true
-
-ShellyPlus1PMMini: PLATFORM=esp32c3
-ShellyPlus1PMMini: build-ShellyPlus1PMMini
-	@true
-
-ShellyPlus1Mini: PLATFORM=esp32c3
-ShellyPlus1Mini: build-ShellyPlus1Mini
-	@true
-
-Shelly1PMGen3: PLATFORM=esp32c3
-Shelly1PMGen3: build-Shelly1PMGen3
-	@true
-
-Shelly1Gen3: PLATFORM=esp32c3
+Shelly1Gen3 build-Shelly1Gen3: PLATFORM=esp32c3
 Shelly1Gen3: build-Shelly1Gen3
-	@true
-
-ShellyI4Gen3: PLATFORM=esp32c3
-ShellyI4Gen3: build-ShellyI4Gen3
-	@true
-
-Shelly2PMGen3: PLATFORM=esp32c3
-Shelly2PMGen3: build-Shelly2PMGen3
-	@true
-
-ShellyPlugSGen3: PLATFORM=esp32c3
-ShellyPlugSGen3: build-ShellyPlugSGen3
-	@true
-
-ShellyMini1Gen3: PLATFORM=esp32c3
-ShellyMini1Gen3: build-ShellyMini1Gen3
-	@true
-
-ShellyMini1PMGen3: PLATFORM=esp32c3
-ShellyMini1PMGen3: build-ShellyMini1PMGen3
-	@true
-
-ShellyRGBW2: build-ShellyRGBW2
-	@true
-
-ShellyUNI: build-ShellyUNI
-	@true
-
-ShellyPlusUni: PLATFORM=esp32
-ShellyPlusUni: build-ShellyPlusUni
-	@true
-
-ShellyVintage: build-ShellyVintage
-	@true
-
-ShellyU: PLATFORM=ubuntu
-ShellyU: build-ShellyU
-	@true
-
-ShellyU25: PLATFORM=ubuntu
-ShellyU25: build-ShellyU25
-	@true
-
-ShellyUDuo: PLATFORM=ubuntu
-ShellyUDuo: build-ShellyUDuo
-	@true
-
-ShellyURGBW2: PLATFORM=ubuntu
-ShellyURGBW2: build-ShellyURGBW2
-	@true
-
-ShellyT32: PLATFORM=esp32
-ShellyT32: build-ShellyT32
 	@true
 
 fs/garage.html.gz: fs_src/garage.html
@@ -170,10 +56,8 @@ fs/index.html.gz: $(wildcard fs_src/*) Makefile fs/garage.html.gz
 	sed "s/.*<script src=\"script.js\".*/<script data-src=\"script.js\">/g" | sed -e '/<script data-src=\"script.js\">/ r fs_src/script.js' | \
 	sed -e '/.*<img.*src=".\/logo.svg".*/ {' -e 'r fs_src/logo.svg' -e 'd' -e '}' > $(BUILD_DIR)/index.html
 	gzip -9 -c $(BUILD_DIR)/index.html > $@
-#	zopfli -c -i30 $(BUILD_DIR)/index.html > $@
-#	brotli --best -c $(BUILD_DIR)/index.html > $@
 
-build-%: fs/index.html.gz Makefile
+$(addprefix build-,$(SUPPORTED_MODELS)): build-%: fs/index.html.gz Makefile
 ifneq "$(ALLOW_DIRTY_FS)" "1"
 	@[ -z "$(wildcard fs/conf*.json fs/kvs.json)" ] || { echo; echo "XXX No configs in fs allowed, or set ALLOW_DIRTY_FS=1"; echo; exit 1; }
 endif
@@ -196,6 +80,3 @@ format:
 
 check-format: format
 	@git diff --exit-code || { printf "\n== Please format your code (run make format) ==\n\n"; exit 1; }
-
-upload:
-	rsync -azv releases/* rojer.me:www/files/shelly/

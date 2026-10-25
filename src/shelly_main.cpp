@@ -725,10 +725,7 @@ static void HTTPHandler(struct mg_connection *nc, int ev, void *ev_data,
         "/garage-v16-door-day.webp", "/garage-v16-door-night.webp",
         "/garage-v16-interior-day.webp", "/garage-v16-interior-night.webp",
         "/garage-tesla-s-day.webp", "/garage-tesla-s-night.webp",
-        "/garage-house-day.webp", "/garage-house-night.webp",
-        "/garage-interior-car.webp", "/garage-interior-empty.webp",
-        "/garage-interior-car-night.webp", "/garage-interior-empty-night.webp",
-        "/garage-car.webp", "/garage-car-night.webp", "/garage-door-night.webp", "/garage-door.webp", "/garage-icon-open.svg", "/garage-icon-closed.svg"};
+        "/garage-icon-open.svg", "/garage-icon-closed.svg"};
     for (const char *uri : assets) {
       if (mg_vcmp(&hm->uri, uri) != 0) continue;
       file = uri + 1;

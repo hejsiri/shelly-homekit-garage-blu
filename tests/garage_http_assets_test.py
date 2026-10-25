@@ -26,9 +26,10 @@ void mg_http_serve_file(mg_connection *,http_message *,const char *f,mg_str t,mg
 void Request(const char *path,const char *method="GET") {file.clear();type.clear();headers.clear();error=0;mg_connection c;http_message hm{mg_mk_str(method),mg_mk_str(path)};HTTPHandler(&c,1,&hm,nullptr);}
 int main(){
  Request("/garage.html");assert(file=="garage.html.gz"&&type=="text/html"&&headers.find("gzip")!=std::string::npos);
- for(const char *p:{"/garage-house-day.webp","/garage-house-night.webp","/garage-interior-car.webp","/garage-interior-empty.webp","/garage-interior-car-night.webp","/garage-interior-empty-night.webp","/garage-car.webp","/garage-car-night.webp","/garage-door-night.webp","/garage-door.webp"}){Request(p);assert(type=="image/webp"&&headers.find("gzip")==std::string::npos&&error==0);}
+ for(const char *p:{"/garage-v16-day.webp","/garage-v16-night.webp","/garage-v16-interior-day.webp","/garage-v16-interior-night.webp","/garage-v16-door-day.webp","/garage-v16-door-night.webp","/garage-tesla-s-day.webp","/garage-tesla-s-night.webp"}){Request(p);assert(type=="image/webp"&&headers.find("gzip")==std::string::npos&&error==0);}
+ for(const char *p:{"/garage-house-day.webp","/garage-car.webp","/garage-only-preview.webp"}){Request(p);assert(error==404&&file.empty());}
  Request("/garage-icon-closed.svg");assert(type=="image/svg+xml");
- Request("/conf9.json");assert(error==404&&file.empty());Request("/../conf9.json");assert(error==404);Request("/garage-house-day.webp","POST");assert(error==404);
+ Request("/conf9.json");assert(error==404&&file.empty());Request("/../conf9.json");assert(error==404);Request("/garage-v16-day.webp","POST");assert(error==404);
  Request("/");assert(file=="index.html.gz"&&headers.find("gzip")!=std::string::npos);
 }
 '''

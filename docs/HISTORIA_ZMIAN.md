@@ -440,3 +440,19 @@ uchwyty oraz kolejność cech, brak i duplikaty UUID, odmowę odczytu, zapasową
 timeout i spóźnione odpowiedzi po anulowaniu. Sprawdzono też wspólne testy BLU,
 HomeKit i panelu. Odczyt T/H na fizycznym B1.4 / 2.1.1_0159 nadal czeka na próbę
 blu50; obie paczki zachowują `hardware_tested: false`.
+
+## Porządki w repozytorium — 2026-10-25
+
+Usunięto nieużywane profile innych sterowników, ich sterowniki pomiarowe i dawny
+kod mock dla Ubuntu, stare grafiki garażu, niepodłączony obraz dokumentacji oraz
+odziedziczone narzędzia masowego flashowania i serwera aktualizacji upstream.
+Zostały wspólne funkcje HomeKit, migracje, reset, czujniki i aktywny symulator.
+
+Makefile i GitHub Actions obejmują tylko Plus 1 oraz 1 Gen3. Usunięto dawny bot
+zamykania zgłoszeń i pomocnicze pliki starego CI; obecne zadania sprawdzają panel,
+logikę urządzeń i budowanie obu paczek. Materiały koncepcyjne oraz cache pozostają
+lokalne. Kopiowanie źródeł do katalogu kompilacji usuwa też wycofane pliki, aby
+stare obrazy nie trafiały ponownie do firmware. Profile GPIO, schemat konfiguracji
+i układ partycji obu modeli zostały zachowane.
+
+To porządkowanie kodu na GitHubie, bez zastępowania opublikowanych paczek blu50.

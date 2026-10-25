@@ -102,6 +102,9 @@ jego zabezpieczeń.
 statusy i zachowanie po zatrzymaniu. Przy problemach zacznij od
 [diagnostyki](docs/ROZWIAZYWANIE_PROBLEMOW.md).
 
+Repozytorium zawiera profile sprzętu tylko dla **Shelly Plus 1** i **Shelly 1 Gen3**.
+Instrukcje budowania, testów i struktura kodu są w [README-BLU.md](README-BLU.md#build-and-test).
+
 ## Pobieranie i aktualizacja
 
 - [Paczki i opis na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/)

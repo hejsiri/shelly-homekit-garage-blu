@@ -16,7 +16,11 @@ if [[ "$build_root" == *[[:space:]]* || "$build_root" == "$project_root" ]]; the
   exit 1
 fi
 rsync -a --exclude='.git/' --exclude='build*/' --exclude='deps/' --exclude='binlibs/' \
-  --exclude='releases/' "$project_root/" "$build_root/"
+  --exclude='releases/' --exclude='design/' --exclude='__pycache__/' "$project_root/" "$build_root/"
+# Remove deleted source/assets from the private build staging directory too.
+for source_dir in src fs fs_src; do
+  rsync -a --delete "$project_root/$source_dir/" "$build_root/$source_dir/"
+done
 # Staging may receive edits made while a previous build was still running:
 # rsync preserves their mtime, which can precede that build's objects. Rebuild
 # application objects and the panel while retaining the SDK cache.

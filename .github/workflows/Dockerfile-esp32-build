@@ -1,3 +1,0 @@
-FROM mgos/esp32-build:4.4.1-r7
-
-RUN chmod o+rx /opt/Espressif
