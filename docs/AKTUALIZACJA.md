@@ -1,6 +1,6 @@
 # Instalacja i aktualizacja Garage BLU
 
-Instrukcja dla **2.16.1_blu.63 (Plus 1) / 2.16.1_blu.59 (Gen3)**, stan: **2026-10-27**. Dostępne są osobne paczki
+Instrukcja dla **2.16.1_blu.64 (Plus 1) / 2.16.1_blu.59 (Gen3)**, stan: **2026-10-27**. Dostępne są osobne paczki
 dla **Shelly Plus 1 (Plus1)** i **Shelly 1 Gen3 (S1G3 / ESP32-C3)**.
 Wybierz dokładny model — paczki Plus1 i S1G3 nie są zamienne.
 
@@ -20,28 +20,28 @@ Wybierz dokładny model — paczki Plus1 i S1G3 nie są zamienne.
 pozostają na swoim fabrycznym firmware. Ich parowanie jest oddzielnym procesem.
 Publikacja nowej paczki na serwerze nie uruchamia aktualizacji urządzenia.
 
-W panelach blu56 i starszych aktualizacja może być oferowana jako `2.16.1-blu63` ze względu na zgodność starego parsera. Paczka Plus 1 i zainstalowany firmware mają właściwy numer **2.16.1_blu.63**. Gen3 nie otrzymuje tego wydania.
+W panelach blu56 i starszych aktualizacja może być oferowana jako `2.16.1-blu64` ze względu na zgodność starego parsera. Paczka Plus 1 i zainstalowany firmware mają właściwy numer **2.16.1_blu.64**. Gen3 nie otrzymuje tego wydania.
 
 ## Pobieranie
 
 - [Strona pobierania](https://hejsiri.pl/firmware/garage-blu/)
-- [ZIP 2.16.1_blu.63 — Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.63.zip)
-- [SHA-256 — Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.63.zip.sha256)
+- [ZIP 2.16.1_blu.64 — Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.64.zip)
+- [SHA-256 — Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.64.zip.sha256)
 - [ZIP 2.16.1_blu.59 — Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.59.zip)
 - [SHA-256 — Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.59.zip.sha256)
 
 | Parametr paczki | Shelly Plus 1 | Shelly 1 Gen3 |
 | --- | --- | --- |
 | Model / aplikacja | ShellyPlus1 / Plus1 | Shelly1Gen3 / S1G3 |
-| Wersja | 2.16.1_blu.63 | 2.16.1_blu.59 |
-| Build | 20261027-134308 | 20261027-103636 |
+| Wersja | 2.16.1_blu.64 | 2.16.1_blu.59 |
+| Build | 20261027-141321 | 20261027-103636 |
 | Rozmiar ZIP | 1 842 322 bajtów | 2 278 605 bajtów |
-| SHA-256 | `a23097518a23f0c37e7a8780f2d38de163a91a4c37bfa15bda95a67c24d435f8` | `d788ad730b04093a29f4adf7a7fa64b1106f854756925cbb845dd8f5bbf82ddf` |
+| SHA-256 | `519f3ae12b37c258b3a3338317387a5c0e194bd132f2b75e8b0d21dd816ea2d7` | `d788ad730b04093a29f4adf7a7fa64b1106f854756925cbb845dd8f5bbf82ddf` |
 
 Pobierz ZIP **bez rozpakowywania**. Na macOS sumę można sprawdzić poleceniem:
 
 ```sh
-shasum -a 256 shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.63.zip
+shasum -a 256 shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.64.zip
 shasum -a 256 shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.59.zip
 ```
 
@@ -69,7 +69,7 @@ Obraz Plus1 jest dla ESP32, a S1G3 dla ESP32-C3. Nie używaj ich zamiennie.
    **Shelly Plus 1:**
 
    ```text
-   http://ADRES_IP/rpc/Shelly.Update?url=https%3A%2F%2Fhejsiri.pl%2Ffirmware%2Fgarage-blu%2Fshelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.63.zip
+   http://ADRES_IP/rpc/Shelly.Update?url=https%3A%2F%2Fhejsiri.pl%2Ffirmware%2Fgarage-blu%2Fshelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.64.zip
    ```
 
    **Shelly 1 Gen3:**
@@ -92,7 +92,7 @@ konwersja na fizycznym Gen3 oraz przejście z fabrycznego 2.1.0 do blu42 nie zos
 1. Pobierz ZIP dla swojego modelu bez rozpakowywania.
 2. W Firmware → Update from file wskaż plik i kliknij Upload.
 3. Poczekaj na odpowiedź, zapis i restart. Panel może na ten czas utracić połączenie.
-4. Otwórz go ponownie i sprawdź, czy Version pokazuje 2.16.1_blu.63 na Plus 1 (Gen3: 2.16.1_blu.59).
+4. Otwórz go ponownie i sprawdź, czy Version pokazuje 2.16.1_blu.64 na Plus 1 (Gen3: 2.16.1_blu.59).
 
 Revert to Stock oznacza powrót do firmware fabrycznego; nie służy do aktualizacji Garage BLU.
 
