@@ -8,14 +8,11 @@ pełne zamknięcie i otwarcie. Sterownik komunikuje się z HomeKit przez Wi-Fi,
 a z urządzeniami BLU przez Bluetooth. Projekt bazuje na
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
 
-**Publiczne OTA: Shelly Plus 1 — 2.16.1_blu.61; Shelly 1 Gen3 — 2.16.1_blu.59 (2026-10-27).**
+**Publiczne OTA: Shelly Plus 1 — 2.16.1_blu.63; Shelly 1 Gen3 — 2.16.1_blu.59 (2026-10-27).**
 Dla każdego modelu jest osobny ZIP i suma SHA-256. Panel WWW obsługuje **polski i angielski**;
 przełącznik języka znajduje się w sekcji System. Dokumentacja użytkownika jest po polsku.
 
-**Przygotowywana aktualizacja:** lokalna wersja blu.62 poprawia usuwanie akcesoriów BLE.
-Na fizycznym Plus 1 potwierdzono usunięcie Shelly BLU Motion bez zawieszenia i restartu.
-Kolejna paczka obejmie też Xiaomi Motion Sensor 2S, dodatkowy format baterii MiBeacon,
-ikony Wi-Fi/BT na wizualizacji i poprawki wyglądu. Te zmiany nie są jeszcze opublikowane w OTA.
+**Najnowsza aktualizacja Plus 1:** poprawka usuwania czujników BLE, Xiaomi Motion Sensor 2S z Bindkey BLE, dodatkowy format baterii MiBeacon oraz ikony Wi-Fi i Bluetooth. Usunięcie BLU Motion sprawdzono na fizycznym Plus 1; nowe odczyty czujników wymagają jeszcze weryfikacji na sprzęcie.
 
 [Instalacja i aktualizacje](docs/AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](docs/KONFIGURACJA.md) ·
@@ -108,8 +105,8 @@ Instrukcje budowania, testów i struktura kodu są w [README-BLU.md](README-BLU.
 ## Pobieranie i aktualizacja
 
 - [Paczki i opis na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/)
-- [ZIP 2.16.1_blu.61 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.61.zip)
-- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.61.zip.sha256)
+- [ZIP 2.16.1_blu.63 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.63.zip)
+- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.63.zip.sha256)
 - [ZIP 2.16.1_blu.59 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.59.zip)
 - [SHA-256 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.59.zip.sha256)
 - [Instrukcja instalacji, aktualizacji i kontroli po restarcie](docs/AKTUALIZACJA.md)
