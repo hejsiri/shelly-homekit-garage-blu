@@ -57,32 +57,13 @@ napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 </tbody>
 </table>
 
-Nazwy obejmują nazwę handlową i model. Warianty HomeKit/Thread, Zigbee oraz nowsze modele o podobnej nazwie nie są automatycznie zgodne. Obsługa Xiaomi Motion Sensor 2S i dodatkowego formatu baterii jest przygotowana lokalnie do kolejnej aktualizacji. Status publikacji opisano na początku README.
+Urządzenia parujesz w panelu WWW Garage BLU. Szyfrowane czujniki Xiaomi i Qingping wymagają **Bindkey BLE** — 32-znakowego klucza sprawdzanego podczas parowania. Shelly BLU oraz Xiaomi Mi Temperature and Humidity Monitor (LYWSDCGQ/01ZM) nie wymagają ręcznego podawania klucza.
 
-Nazewnictwo producentów: [Shelly](https://kb.shelly.cloud/knowledge-base/buttons), [Xiaomi — Monitor 2](https://www.mi.com/ro/product/mi-temperature-and-humidity-monitor-2/specs/), [Xiaomi — Monitor](https://www.mi.com/mx/product/mi-temperature-and-humidity-monitor/specs/), [Xiaomi — Motion Sensor 2S](https://www.mi.com/global/product/xiaomi-motion-sensor-2s/specs/), [Qingping — Temp & RH Monitor](https://www.qingping.co/temp-rh-monitor/), [Qingping — deklaracja modelu CGG1](https://qingping.co/static/media/goose_m_eu_doc.pdf), [Shelly BLU H&T](https://shelly-api-docs.shelly.cloud/docs-ble/Devices/BLU/ht/).
+Ostatnie odczyty temperatury i wilgotności są zachowywane przez **godzinę**. Xiaomi Mi Temperature and Humidity Monitor 2 (LYWSD03MMC) obsługuje też eksperymentalny odczyt bezpośredni; w tym trybie poziom baterii jest szacowany z napięcia.
 
-LYWSD03MMC sam wybiera ścieżkę na podstawie rozpoznanego beacona. Dla szyfrowanych danych
-panel prosi o 32-znakowy **Bindkey BLE** i weryfikuje go przed zapisaniem przypisania.
-Odczyty temperatury i wilgotności są zachowywane przez **jedną godzinę**, z oddzielnym czasem
-ważności każdego pomiaru. Bateria z bezpośredniego GATT jest szacowana z napięcia (`~`).
-Wariant GATT pozostaje eksperymentalny. Klucza nie trzeba podawać dla pasywnego LYWSDCGQ/01ZM.
+Firmware Garage BLU instalujesz tylko na sterowniku — akcesoria zachowują swoje oprogramowanie. Wybierz paczkę dla **Shelly Plus 1** lub **Shelly 1 Gen3**. Paczki nie są zamienne i nie obsługują wersji Mini ani 1PM.
 
-BLU urządzenia zachowują fabryczny firmware Shelly. Paczkę Garage BLU instaluje się
-na sterowniku, a urządzenia BLU paruje w jego panelu WWW.
-**Paczki Plus1 i S1G3 nie są zamienne. Nie używaj ich na Mini, 1PM, Gen4 ani innych modelach.**
-Door/Window Outdoor ZB (SBDW-302C) i czujnik wycieku BLU pozostają w planach.
-H&T Gen3 z ekranem e-ink korzysta z Wi-Fi i nie jest obsługiwanym tu BLU H&T.
-
-## Shelly 1 Gen3
-
-Od **blu38** publikowana jest osobna paczka **S1G3 / ESP32-C3** dla Shelly 1 Gen3.
-Wydanie blu.59 zawiera funkcje Garage BLU, w tym krańcówki BLE, Motion, H&T,
-Button1, parowanie w panelu, wizualizację i HomeKit.
-
-[Poradnik Shelly 1 Gen3](docs/SHELLY_1_GEN3.md) zawiera linki do ZIP-u i SHA-256,
-instrukcję pierwszego uruchomienia oraz stan weryfikacji. Paczka nie jest dla Mini
-ani 1PM Gen3. Kompilacja i kontrola paczki przeszły; test fizycznego Gen3 pozostaje
-do wykonania.
+Instrukcja dla Gen3: [instalacja i konfiguracja Shelly 1 Gen3](docs/SHELLY_1_GEN3.md).
 
 ## Funkcje
 
