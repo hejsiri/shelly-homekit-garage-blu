@@ -39,7 +39,7 @@ napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 <tr><th colspan="2" align="left">Sterowniki</th></tr>
 <tr><td width="340"><strong>Shelly Plus 1</strong><br><code>SNSW-001X16EU</code></td><td><ul><li>Sterowanie przekaźnikiem bramy</li><li>Odbiór Bluetooth</li><li>Panel WWW i Apple HomeKit</li></ul></td></tr>
 <tr><td width="340"><strong>Shelly 1 Gen3</strong><br><code>S3SW-001X16EU</code></td><td><ul><li>Sterowanie przekaźnikiem bramy</li><li>Odbiór Bluetooth</li><li>Panel WWW i Apple HomeKit</li></ul></td></tr>
-<tr><th colspan="2" align="left">Czujniki otwarcia i zamknięcia — łącznie 2 miejsca</th></tr>
+<tr><th colspan="2" align="left">Czujniki otwarcia i zamknięcia</th></tr>
 <tr><td width="340"><strong>Shelly BLU Door Window</strong><br><code>SBDW-002C</code></td><td><ul><li>Stan otwarcia / zamknięcia</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><td width="340"><strong>Xiaomi Door &amp; Window Sensor 2</strong><br><code>MCCGQ02HL</code></td><td><ul><li>Stan otwarcia / zamknięcia</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><td width="340"><strong>Qingping Door &amp; Window Contact Sensor</strong><br><code>CGH1</code></td><td><ul><li>Stan otwarcia / zamknięcia</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
@@ -48,7 +48,7 @@ napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 <tr><td width="340"><strong>Qingping Motion &amp; Ambient Light Sensor</strong><br><code>CGPR1</code></td><td><ul><li>Wykrycie ruchu</li><li>Natężenie oświetlenia (lx)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><td width="340"><strong>Xiaomi Motion Sensor 2S</strong><br><code>XMPIR02SXS — Chiny</code></td><td><ul><li>Wykrycie ruchu</li><li>Natężenie oświetlenia (lx)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><td width="340"><strong>Xiaomi Motion Sensor 2S</strong><br><code>XMPIR02SGXS — globalny</code></td><td><ul><li>Wykrycie ruchu</li><li>Natężenie oświetlenia (lx)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
-<tr><th colspan="2" align="left">Temperatura i wilgotność — łącznie 2 miejsca: wewnątrz i na zewnątrz</th></tr>
+<tr><th colspan="2" align="left">Temperatura i wilgotność: wewnątrz i na zewnątrz</th></tr>
 <tr><td width="340"><strong>Shelly BLU H&amp;T</strong><br><code>SBHT-003C</code></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><td width="340"><strong>Xiaomi Mi Temperature and Humidity Monitor</strong><br><code>LYWSDCGQ/01ZM</code></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><td width="340"><strong>Xiaomi Mi Temperature and Humidity Monitor 2</strong><br><code>LYWSD03MMC</code></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%; z GATT szacowany z napięcia)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
