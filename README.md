@@ -34,25 +34,33 @@ napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 ## Wspierany sprzęt
 
 <table>
-<thead>
-<tr><th width="340">Urządzenie</th><th>Funkcja i status</th></tr>
-</thead>
+<thead><tr><th width="340">Akcesorium / sterownik i model</th><th>Funkcja i status</th></tr></thead>
 <tbody>
-<tr><td width="340"><strong>Shelly&nbsp;Plus&nbsp;1&nbsp;(Plus1)</strong></td><td>Paczka Plus1 dla ESP32. Sterowanie przekaźnikiem, WWW, BLE i HomeKit.</td></tr>
-<tr><td width="340"><strong>Shelly&nbsp;1&nbsp;Gen3&nbsp;(S1G3)</strong></td><td>Osobna paczka S1G3 dla ESP32-C3, te same funkcje Garage BLU. Test na fizycznym Gen3 pozostaje do wykonania.</td></tr>
-<tr><td width="340"><strong>Shelly&nbsp;BLU&nbsp;Door&nbsp;Window&nbsp;SBDW-002C<br>2 sztuki</strong></td><td>Role Closing sensor i Opening sensor. Szyfrowane odczyty dwóch fizycznych czujników potwierdzono we wcześniejszych próbach.</td></tr>
-<tr><td width="340"><strong>BLU&nbsp;Motion&nbsp;SBMO-003Z<br>1 sztuka</strong></td><td>Ruch w WWW i usługa Motion Sensor w HomeKit; odczyty obserwowano na sprzęcie. Od blu43 także Light sensor w HomeKit, z pomiarem oświetlenia w luksach z tego samego urządzenia.</td></tr>
-<tr><td width="340"><strong>BLU&nbsp;H&amp;T&nbsp;SBHT-003C<br>do 2 sztuk</strong></td><td>Role Indoor i Outdoor; temperatura i wilgotność w WWW i HomeKit. Obsługa zaimplementowana, testy fizycznych H&amp;T pozostają do wykonania.</td></tr>
-<tr><td width="340"><strong>Xiaomi&nbsp;Door&nbsp;&amp;&nbsp;Window&nbsp;Sensor&nbsp;2&nbsp;(MCCGQ02HL)</strong></td><td>Krańcówka otwarcia lub zamknięcia; szyfrowany MiBeacon, ręczny Bindkey BLE. Stan drzwi odczytywany na Plus 1. Dodatkowy format baterii czeka na kolejną aktualizację.</td></tr>
-<tr><td width="340"><strong>Xiaomi&nbsp;Motion&nbsp;Sensor&nbsp;2S</strong></td><td>Przygotowane do kolejnej aktualizacji: wariant chiński i globalny, Bindkey BLE, ruch, jasność i bateria. Testy parsera, AES-CCM i parowania przeszły; brak próby na fizycznym czujniku.</td></tr>
-<tr><td width="340"><strong>Qingping&nbsp;CGH1</strong></td><td>Krańcówka otwarcia lub zamknięcia; beacony natywne i MiBeacon, Bindkey BLE dla szyfrowanych danych.</td></tr>
-<tr><td width="340"><strong>Qingping&nbsp;CGPR1</strong></td><td>Ruch, jasność i bateria; beacony natywne lub szyfrowany MiBeacon z Bindkey BLE. Pakiet samej baterii lub jasności nie odświeża stanu ruchu.</td></tr>
-<tr><td width="340"><strong>Qingping&nbsp;CGG1</strong></td><td>Temperatura i wilgotność w roli Indoor lub Outdoor; warianty natywne i MiBeacon, z kluczem dla szyfrowanych danych.</td></tr>
-<tr><td width="340"><strong>Xiaomi&nbsp;LYWSD03MMC</strong></td><td>Jeden model na liście: szyfrowany MiBeacon z Bindkey BLE lub eksperymentalny bezpośredni odczyt GATT. Zgodność ścieżki GATT zależy od rewizji i firmware czujnika.</td></tr>
-<tr><td width="340"><strong>Xiaomi&nbsp;LYWSDCGQ/01ZM&nbsp;(MJ_HT_V1)</strong></td><td>Temperatura, wilgotność i bateria z fabrycznych beaconów BLE. Do wyboru zamiast BLU H&amp;T w roli Indoor lub Outdoor; łącznie dwa termometry. Bez PIN-u, chmury i zmiany firmware czujnika. Na Plus1/blu45 potwierdzono odczyty w panelu, w tym baterię 36 %.</td></tr>
-<tr><td width="340"><strong>BLU&nbsp;Button1<br>1 sztuka</strong></td><td>Pojedynczy nacisk steruje bramą; beacony określają obecność przycisku w zasięgu. Dwie usługi w akcesorium Shelly: obecność i przycisk programowalny. W blu42 na Plus 1 potwierdzono ich widoczność w Domu, odczyt obecności oraz dostępność trzech rodzajów naciśnięcia.</td></tr>
+<tr><th colspan="2" align="left">Sterowniki</th></tr>
+<tr><td width="340"><strong>Shelly Plus 1</strong><br><code>SNSW-001X16EU</code></td><td>Sterownik ESP32; przekaźnik bramy, odbiornik BLE, panel WWW i Apple HomeKit. Publiczne OTA: 2.16.1_blu.61.</td></tr>
+<tr><td width="340"><strong>Shelly 1 Gen3</strong><br><code>S3SW-001X16EU</code></td><td>Sterownik ESP32-C3; oddzielna paczka S1G3. Publiczne OTA: 2.16.1_blu.59. Test fizycznego Gen3 pozostaje do wykonania.</td></tr>
+<tr><th colspan="2" align="left">Czujniki otwarcia i zamknięcia — łącznie 2 miejsca</th></tr>
+<tr><td width="340"><strong>Shelly BLU Door Window</strong><br><code>SBDW-002C</code></td><td>Krańcówka otwarcia lub zamknięcia. Automatyczne parowanie i szyfrowane BTHome. Odczyty potwierdzone na Plus 1.</td></tr>
+<tr><td width="340"><strong>Xiaomi Door &amp; Window Sensor 2</strong><br><code>MCCGQ02HL</code></td><td>Krańcówka otwarcia lub zamknięcia. Szyfrowany MiBeacon, ręczny Bindkey BLE. Odczyt stanu potwierdzony na Plus 1. Dodatkowy format baterii czeka na aktualizację.</td></tr>
+<tr><td width="340"><strong>Qingping Door/Window Contact Sensor</strong><br><code>CGH1</code></td><td>Krańcówka otwarcia lub zamknięcia. Natywne beacony Qingping lub MiBeacon; Bindkey BLE dla danych szyfrowanych.</td></tr>
+<tr><th colspan="2" align="left">Czujniki ruchu i jasności — 1 miejsce</th></tr>
+<tr><td width="340"><strong>Shelly BLU Motion</strong><br><code>SBMO-003Z</code></td><td>Ruch i jasność w panelu oraz HomeKit. Automatyczne parowanie i szyfrowane BTHome. Odczyty obserwowane na Plus 1.</td></tr>
+<tr><td width="340"><strong>Qingping Motion &amp; Ambient Light Sensor</strong><br><code>CGPR1</code></td><td>Ruch, jasność i bateria. Natywne beacony Qingping lub szyfrowany MiBeacon z Bindkey BLE. Pakiet baterii lub jasności nie przedłuża ważności stanu ruchu.</td></tr>
+<tr><td width="340"><strong>Xiaomi Motion Sensor 2S</strong><br><code>XMPIR02SXS — Chiny</code></td><td>Przygotowane do kolejnej aktualizacji: MiBeacon 0x3531, Bindkey BLE, ruch, jasność i bateria. Publiczny zaszyfrowany beacon przeszedł testy; brak próby na fizycznym czujniku.</td></tr>
+<tr><td width="340"><strong>Xiaomi Motion Sensor 2S</strong><br><code>XMPIR02SGXS — globalny</code></td><td>Przygotowane do kolejnej aktualizacji: MiBeacon 0x4C60, ta sama pozycja modelu w panelu i automatyczne rozpoznawanie wariantu. Testy parsera przeszły; brak próby na fizycznym czujniku.</td></tr>
+<tr><th colspan="2" align="left">Temperatura i wilgotność — łącznie 2 miejsca: wewnątrz i na zewnątrz</th></tr>
+<tr><td width="340"><strong>Shelly BLU H&amp;T</strong><br><code>SBHT-003C</code></td><td>Temperatura, wilgotność i bateria. Automatyczne parowanie i szyfrowane BTHome. Test fizycznego H&amp;T pozostaje do wykonania.</td></tr>
+<tr><td width="340"><strong>Xiaomi Mi Temperature and Humidity Monitor</strong><br><code>LYWSDCGQ/01ZM</code></td><td>Pasywne, nieszyfrowane beacony MiBeacon (MJ_HT_V1). Temperatura, wilgotność i bateria; bez konta Xiaomi i klucza. Odczyty potwierdzone na Plus 1.</td></tr>
+<tr><td width="340"><strong>Xiaomi Mi Temperature and Humidity Monitor 2</strong><br><code>LYWSD03MMC</code></td><td>Jedna pozycja w panelu: szyfrowany MiBeacon z Bindkey BLE lub eksperymentalny bezpośredni GATT. Temperatura, wilgotność i bateria; GATT szacuje baterię z napięcia. Zgodność GATT zależy od rewizji i firmware.</td></tr>
+<tr><td width="340"><strong>Qingping Temp &amp; RH Monitor</strong><br><code>CGG1</code></td><td>Temperatura, wilgotność i bateria. Obsługiwane identyfikatory MiBeacon 0x0347 oraz 0x0B48 i natywne beacony Qingping. Dla szyfrowanych danych wymagany Bindkey BLE. Jedna pozycja modelu w panelu.</td></tr>
+<tr><th colspan="2" align="left">Przycisk i obecność auta — 1 miejsce</th></tr>
+<tr><td width="340"><strong>Shelly BLU Button1</strong><br><code>SBBT-002C</code></td><td>Pojedynczy nacisk: otwórz / zatrzymaj / zamknij. HomeKit: obecność w zasięgu BLE oraz przycisk programowalny z pojedynczym, podwójnym i długim naciśnięciem. Odczyty i usługi potwierdzone na Plus 1.</td></tr>
 </tbody>
 </table>
+
+Nazwy obejmują nazwę handlową i model. Warianty HomeKit/Thread, Zigbee oraz nowsze modele o podobnej nazwie nie są automatycznie zgodne. Tabela rozróżnia wydane funkcje i zmiany przygotowane lokalnie.
+
+Nazewnictwo producentów: [Shelly](https://kb.shelly.cloud/knowledge-base/buttons), [Xiaomi — Monitor 2](https://www.mi.com/ro/product/mi-temperature-and-humidity-monitor-2/specs/), [Xiaomi — Monitor](https://www.mi.com/mx/product/mi-temperature-and-humidity-monitor/specs/), [Xiaomi — Motion Sensor 2S](https://www.mi.com/global/product/xiaomi-motion-sensor-2s/specs/), [Qingping](https://qingping.cleargrass.com/).
 
 LYWSD03MMC sam wybiera ścieżkę na podstawie rozpoznanego beacona. Dla szyfrowanych danych
 panel prosi o 32-znakowy **Bindkey BLE** i weryfikuje go przed zapisaniem przypisania.
