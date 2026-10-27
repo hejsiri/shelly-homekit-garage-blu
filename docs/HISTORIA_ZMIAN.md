@@ -1,5 +1,12 @@
 # Historia zmian Garage BLU
 
+## 2.16.1_blu.65 (2026-10-27) — tylko Shelly Plus 1
+
+- Język wybiera się z menu „English / Polski” w sekcji System. Wybór jest zapamiętywany w przeglądarce i wspólny dla panelu oraz wizualizacji.
+
+- Xiaomi Door & Window Sensor 2 (MCCGQ02HL): ostatni odebrany poziom baterii jest zapisywany w pamięci trwałej z adresem MAC i datą odczytu. Każdy nowy pakiet baterii zastępuje wartość i odnawia ważność na 24 godziny. Po wygaśnięciu panel pokazuje brak odczytu.
+- Po restarcie ważność zapisu jest sprawdzana po synchronizacji czasu, z uwzględnieniem przerwy w zasilaniu. Pakiety bez baterii nie przedłużają tego terminu. Usunięcie parowania kasuje zapis baterii. Stan krańcówki nigdy nie jest przywracany z zapisu baterii.
+
 ## 2.16.1_blu.64 (2026-10-27) — tylko Shelly Plus 1
 
 - Listy typów urządzeń pokazują same nazwy marketingowe: usunięto modele w nawiasach oraz dopiski Bindkey BLE.
