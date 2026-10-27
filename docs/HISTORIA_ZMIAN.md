@@ -1,13 +1,125 @@
 # Historia zmian Garage BLU
 
-Bieżące opisy i instrukcje dotyczą **2.16.1-blu50** (stan: 2026-10-25).
+## 2.16.1_blu.63 (2026-10-27) — tylko Shelly Plus 1
+
+- Poprawiono zawieszenie podczas usuwania czujnika: puste MAC są sprawdzane przed parserem SDK. Usunięcie BLU Motion potwierdzono na fizycznym Plus 1 bez restartu; sprawdzono zachowanie po odświeżeniu. Poprawiono też obsługę spóźnionego odczytu termometru po usunięciu przypisania.
+- Dodano Xiaomi Motion Sensor 2S (wariant chiński i globalny): parowanie przez Bindkey BLE, ruch, jasność i bateria. Publiczna zaszyfrowana próbka przeszła weryfikację AES-CCM i testy ochrony przed powtórzeniem. Próba fizycznego czujnika pozostaje do wykonania.
+- Dodano format baterii MiBeacon `0x4803` dla MCCGQ02HL i CGPR1. Testy obejmują poprawne/błędne pakiety i zachowanie baterii po zmianie stanu. Nie przechwycono jeszcze pakietu baterii z czujników użytkownika.
+- Wizualizacja pokazuje siłę Wi-Fi (RSSI) i ikonę włączonego Bluetooth; wskaźniki reagują na utratę łączności.
+- Ujednolicono nazwy handlowe akcesoriów i oznaczenia modeli. Karta urządzenia podczas parowania ma białe tło.
+- Testy hosta, panelu i kompilacja Plus 1. Pełna próba całego wydania na fizycznej bramie pozostaje do wykonania. Gen3 pozostaje na 2.16.1_blu.59.
+
+## 2.16.1_blu.62 — lokalna próba
+
+- Testowa paczka poprawki usuwania BLU Motion. Niepublikowana w OTA; zmiany włączono do blu.63.
+
+## 2.16.1_blu.61 (2026-10-27) — usuwanie BLE poza główną pętlą, tylko Plus 1
+
+- Kasowanie powiązania transportowego Shelly BLU wykonuje osobne zadanie FreeRTOS. Obsługa RPC nie czeka synchronicznie na magazyn NimBLE/NVS.
+- Po 8 sekundach bez zakończenia panel otrzymuje błąd i zachowuje przypisanie aplikacji. Spóźniony wynik nie usuwa przypisania ani nie odpowiada drugi raz. Kolejna próba jest blokowana do wyjścia zadania.
+- Usunięcie klucza aplikacji, MAC, nazwy, odczytów i odświeżenie HomeKit następuje dopiero po sukcesie zadania. Zachowano pomijanie NimBLE dla Xiaomi/Qingping i ochronę współdzielonych powiązań.
+- Testy hosta obejmują kolejkę zadania, brak kasowania BLE na stosie RPC, timeout, spóźnione zakończenie, błędy oraz sześć ról. Kompilacja Plus 1; skuteczność na fizycznym Shelly wymaga potwierdzenia. Gen3 pozostaje na blu.59.
+
+## 2.16.1_blu.60 (2026-10-27) — tylko Shelly Plus 1
+
+- Przy usuwaniu Shelly BLU kasowanie powiązania transportowego ma limit liczby rekordów i kontrolę ich obecności. Błąd magazynu zatrzymuje operację zamiast pozwalać na nieograniczoną pętlę; pozostałe urządzenia zachowują swoje rekordy.
+- Zachowano czyszczenie danych prywatności BLE i dodano logi etapów usuwania oraz odświeżenia HomeKit, bez zapisywania kluczy.
+- Testy obejmują brak postępu mimo zgłaszanego sukcesu magazynu, rozdzielenie MAC/typu adresu, błędy odczytu/zapisu i wszystkie role. Skuteczność wobec fizycznego zawieszenia BLU Motion wymaga próby na Shelly.
+- Wydano wyłącznie paczkę Shelly Plus 1. Ostatnia paczka Gen3 pozostaje 2.16.1_blu.59.
+
+## 2.16.1_blu.59 (2026-10-27) — jeden model LYWSD03MMC
+
+- Połączono pozycje LYWSD03MMC w jeden model na liście termometrów. Szyfrowany MiBeacon wywołuje formularz Bindkey BLE; zachowano eksperymentalny odczyt GATT dla pozostałego wariantu.
+- Dotychczasowe przypisania GATT i Bindkey są pokazywane pod wspólną nazwą. Klucz nadal jest weryfikowany przed zapisaniem, a próba użycia szyfrowanego beacona bez klucza jest odrzucana.
+- Testy obu ścieżek parowania, rzeczywistego RPC Bind i formularza PL; próba na fizycznym czujniku pozostaje do wykonania.
+
+## 2.16.1_blu.58 (2026-10-27) — Qingping
+
+- Dodano CGG1 (temperatura/wilgotność), CGH1 (kontaktron) i CGPR1 (ruch i jasność). Obsługiwany jest natywny format Qingping oraz MiBeacon; zaszyfrowany wariant wymaga zweryfikowanego Bindkey BLE.
+- Panel pokazuje modele i miniaturki, wykrywa potrzebę podania klucza i zapamiętuje przypisanie. Temperatura/wilgotność zachowują godzinę ważności, a pakiety baterii i jasności nie odświeżają stanu krańcówki/ruchu.
+- Usuwanie tych modeli nie dotyka powiązań transportowych BLE. Nieszyfrowane pakiety są oznaczane jako nieszyfrowane.
+- Testy hosta i przeglądarki oraz kompilacje obu modeli; próby z fizycznymi czujnikami pozostają do wykonania. [Szczegóły](QINGPING.md).
+
+## 2.16.1_blu.57 (2026-10-27) — usuwanie Xiaomi
+
+- Usuwanie przypisań Xiaomi MiBeacon, Bindkey BLE i GATT pomija kasowanie powiązań transportowych NimBLE, których te ścieżki nie tworzą. Nadal kasuje przypisanie NVS, klucz, nazwę i odczyty oraz odświeża HomeKit.
+- Shelly BLU zachowuje czyszczenie rzeczywistych powiązań BLE. Test regresyjny sprawdza rozdzielenie tych ścieżek i zachowanie pozostałych urządzeń. Potwierdzenie na fizycznym Shelly pozostaje do wykonania.
+
+## 2.16.1-blu56 — Xiaomi Bindkey BLE
+
+Wydanie: 2026-10-26. Testy hosta i przeglądarki; sprawdzenie Bindkey na fizycznych czujnikach pozostaje do wykonania.
+
+- Dodano ręczne podawanie 32-znakowego Bindkey BLE dla MCCGQ02HL (krańcówki otwarcia/zamknięcia) i LYWSD03MMC (temperatura/wilgotność wewnątrz/na zewnątrz).
+- Klucz jest sprawdzany na świeżym beaconie AES-CCM z MIC przed zapisaniem. Pomyłka nie zmienia przypisania. Zapis w NVS obejmuje klucz i licznik chroniący przed ponownym użyciem pakietów, także po restarcie.
+- Pakiety baterii nie odświeżają stanu krańcówki. Dotychczasowe limity świeżości i blokady sterowania pozostają aktywne. Usunięcie urządzenia kasuje również Bindkey.
+- Klucz nie jest zwracany w statusie, zapisywany w przeglądarce ani wypisywany w logu wysyłanych poleceń panelu. Pole klucza jest czyszczone po wysłaniu i zamknięciu okna.
+- Nowy protokół nie przywraca automatycznie wycofanych wpisów blu46. Obsługa wymaga ręcznego dodania urządzenia.
+- Szczegóły i ograniczenia: [Bindkey BLE](BINDKEY_BLE.md).
+
+## 2.16.1-blu56 — rozpoznawanie urządzeń podczas parowania
+
+- Lista wykrytych urządzeń pokazuje lokalną miniaturkę, nazwę modelu, opis, MAC i RSSI zamiast wyboru po samym MAC. Rozpoznawanie korzysta z identyfikatorów modeli dostarczanych przez obecny skaner.
+- Katalog obejmuje Shelly BLU Button1, Door/Window, Motion i H&T oraz Xiaomi LYWSDCGQ/01ZM i LYWSD03MMC. Nie rozszerza obsługi protokołów ani modeli. Zdjęcia pokazują wygląd referencyjny; kolor obudowy nie jest wykrywany.
+- Nieznany identyfikator ma neutralny opis bez przypadkowego zdjęcia. Wybór spośród kilku zgodnych urządzeń zachowuje dokładny MAC, a aktualizacje RSSI nie przebudowują kart.
+- Zdjęcia producentów są dołączone do panelu jako małe WebP, bez odwołań sieciowych. Źródła: `BLU_DEVICE_PHOTOS.json`.
+
+## 2.16.1-blu56 — polskie parowanie
+
+- Uzupełniono polskie statusy ponownego łączenia, oczekiwania na to samo urządzenie, walidację PIN-u oraz błędy parowania i odczytu termometrów. Kody diagnostyczne pozostają dostępne.
+- Teksty okna parowania są tłumaczone od razu podczas zmiany etapu. Sprawdzono 23 etapy oraz przełączanie EN / PL w przeglądarce.
+
+## 2.16.1-blu56 — usuwanie akcesoriów BT
+
+- Sparowane akcesoria mają szary przycisk „Usuń” zamiast „Sparuj”.
+- Usunięcie kasuje klucz i licznik z NVS, powiązanie BLE, MAC, nazwę i ostatnie odczyty wybranego urządzenia. Przy usunięciu przycisku znika także nazwa auta.
+- Pozostałe akcesoria zachowują swoje dane. Powiązanie BLE wspólne dla innego przypisania pozostaje do usunięcia ostatniego przypisania.
+- Usunięcie czujnika krańcowego blokuje sterowanie BLU do ponownego sparowania. Opcjonalne akcesoria są usuwane również z usług HomeKit.
+
+
+Bieżące opisy i instrukcje dotyczą **2.16.1_blu.61 dla Plus 1 / 2.16.1_blu.59 dla Gen3** (stan: 2026-10-27).
 Zobacz [instalację i aktualizacje](AKTUALIZACJA.md), [konfigurację](KONFIGURACJA.md)
 i [rozwiązywanie problemów](ROZWIAZYWANIE_PROBLEMOW.md).
 
 Poniżej zachowano historyczne notatki z rozwoju. Polskie nazwy statusów i opisane
 w starszych wersjach obejścia błędów nie stanowią instrukcji dla bieżącego panelu.
-Od blu37 teksty systemowe panelu są po angielsku; własne nazwy akcesoriów mogą być
+Od blu37 bazowe teksty panelu są po angielsku, a od blu54 dostępny jest wybór EN / PL; własne nazwy akcesoriów mogą być
 w dowolnym języku. Od blu36 odczyty krańcówek nie są wyświetlane nad garażem.
+
+## 2.16.1-blu56 — ważność temperatury i wilgotności
+
+Ostatni pomiar temperatury i wilgotności wewnątrz / na zewnątrz jest ważny przez
+3600 sekund (1 godzinę), niezależnie od ustawienia Sensor timeout. Dotyczy Shelly
+BLU H&T oraz obu obsługiwanych protokołów Xiaomi. Każda wartość ma własny czas
+ostatniego pomiaru. Pakiety z samą baterią, nieudane odczyty i odświeżanie panelu
+nie przedłużają ważności pomiaru. Po godzinie bez nowego pomiaru dana wartość jest
+nieaktualna w panelu i HomeKit. Restart sterownika nadal wymaga nowego odczytu.
+Limity krańcówek, ruchu i obecności auta pozostają bez zmian.
+
+Testy: rzeczywiste funkcje C++ ważności odczytów, granica 3600 sekund, niezależność
+temperatury i wilgotności, pakiety baterii oraz niezmieniona blokada krańcówek.
+
+## blu55 — separatory akcesoriów BT i wybór języka w Systemie (2026-10-26)
+
+- Dodano pięć delikatnych separatorów pomiędzy sześcioma akcesoriami Bluetooth w ustawieniach Garage Door.
+- Przełącznik EN / PL przeniesiono na dół panelu System, do wiersza Language / Język. Wybór nadal jest zapamiętywany w przeglądarce i obejmuje wizualizację garażu.
+- Sprawdzono układ oraz działanie zmiany języka w lokalnym podglądzie. Weryfikacja na fizycznym sterowniku pozostaje do wykonania.
+
+## blu54 — wybór języka EN / PL (2026-10-26)
+
+- Dodano przełącznik EN / PL nad panelem. Domyślnym językiem pozostaje angielski; wybór jest zapamiętywany w przeglądarce dla danego adresu Shelly.
+- Tłumaczenie obejmuje ustawienia, statusy, instrukcje parowania, komunikaty aktualizacji, okna potwierdzeń, podpowiedzi i opisy dostępności oraz wizualizację garażu.
+- Zmiana języka działa bez przeładowania. Panel garażu otrzymuje tę samą wersję językową, również gdy zapis w localStorage jest niedostępny.
+- Własne nazwy urządzeń i auta, nazwy w HomeKit, adresy MAC, wartości pól i żądania RPC pozostają niezmienione. Nazwa „Open” lub „Ready” wpisana przez użytkownika nie jest tłumaczona.
+- Obie strony zawierają lokalnie dołączony słownik; nie korzystają z usług tłumaczeniowych ani zewnętrznych bibliotek. Dłuższe polskie etykiety zawijają się w formularzu.
+- Sprawdzono testy jednostkowe, przełączanie języka i odświeżanie w przeglądarce, formularz parowania, nazwy użytkownika i widok mobilny. Test na fizycznych sterownikach pozostaje do wykonania.
+
+## blu53 — wizualizacja odbioru Bluetooth (2026-10-26)
+
+- Badge akcesorium w ustawieniach Garage Door świeci na niebiesko przez 650 ms po zaobserwowaniu nowego zaakceptowanego odczytu (`packet_seq`).
+- Odświeżanie tego samego odczytu, pierwszy status po otwarciu panelu, nieaktualne dane i niesparowane urządzenia nie wywołują błysku.
+- Kolejny odebrany pakiet przedłuża błysk; po nim wraca kolor bieżącego stanu. Zmiana przypisanego urządzenia i restart licznika resetują wskaźnik.
+- Wskaźnik reaguje na otrzymanie statusu przez panel; nie jest pomiarem dokładnego czasu odbioru radiowego.
+- Testy logiki panelu wykonano lokalnie. Weryfikacja nowego efektu na fizycznych sterownikach pozostaje do wykonania.
 
 ## Wersja lokalna blu20 — BLU Button1 i zatrzymywanie
 
@@ -456,3 +568,19 @@ stare obrazy nie trafiały ponownie do firmware. Profile GPIO, schemat konfigura
 i układ partycji obu modeli zostały zachowane.
 
 To porządkowanie kodu na GitHubie, bez zastępowania opublikowanych paczek blu50.
+
+## blu51 — czytelny czas od ostatniego pomiaru
+
+Panel czujników BLU i Xiaomi pokazuje czas od ostatniej wiadomości jako
+`21:43 temu`, `01:21:43 temu` lub `2 dni 12:32:33 temu`.
+Dni są pomijane poniżej doby, a godziny przy wartości zero. Minuty i sekundy
+są zawsze widoczne; jeden dzień ma zapis `1 dzień`.
+
+Sprawdzono formatowanie, składnię JavaScript oraz regresję panelu. Wydanie nie
+zmienia protokołów czujników. Test na fizycznych urządzeniach pozostaje do wykonania.
+
+## blu52 — wyśrodkowane odczyty HT
+
+- Dane temperatury i wilgotności są wyśrodkowane w obszarze nieba nad garażem.
+- Wydanie zawiera czytelny czas od ostatniego pomiaru z blu51.
+- Paczki dla Shelly Plus 1 oraz Shelly 1 Gen3; weryfikacja sprzętowa pozostaje do wykonania.
