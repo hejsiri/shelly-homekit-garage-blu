@@ -60,7 +60,7 @@ napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 
 Nazwy obejmują nazwę handlową i model. Warianty HomeKit/Thread, Zigbee oraz nowsze modele o podobnej nazwie nie są automatycznie zgodne. Tabela rozróżnia wydane funkcje i zmiany przygotowane lokalnie.
 
-Nazewnictwo producentów: [Shelly](https://kb.shelly.cloud/knowledge-base/buttons), [Xiaomi — Monitor 2](https://www.mi.com/ro/product/mi-temperature-and-humidity-monitor-2/specs/), [Xiaomi — Monitor](https://www.mi.com/mx/product/mi-temperature-and-humidity-monitor/specs/), [Xiaomi — Motion Sensor 2S](https://www.mi.com/global/product/xiaomi-motion-sensor-2s/specs/), [Qingping](https://qingping.cleargrass.com/).
+Nazewnictwo producentów: [Shelly](https://kb.shelly.cloud/knowledge-base/buttons), [Xiaomi — Monitor 2](https://www.mi.com/ro/product/mi-temperature-and-humidity-monitor-2/specs/), [Xiaomi — Monitor](https://www.mi.com/mx/product/mi-temperature-and-humidity-monitor/specs/), [Xiaomi — Motion Sensor 2S](https://www.mi.com/global/product/xiaomi-motion-sensor-2s/specs/), [Qingping — Temp & RH Monitor](https://www.qingping.co/temp-rh-monitor/), [Qingping — deklaracja modelu CGG1](https://qingping.co/static/media/goose_m_eu_doc.pdf), [Shelly BLU H&T](https://shelly-api-docs.shelly.cloud/docs-ble/Devices/BLU/ht/).
 
 LYWSD03MMC sam wybiera ścieżkę na podstawie rozpoznanego beacona. Dla szyfrowanych danych
 panel prosi o 32-znakowy **Bindkey BLE** i weryfikuje go przed zapisaniem przypisania.
