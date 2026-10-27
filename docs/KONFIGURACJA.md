@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1-blu50 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-25**.
+Instrukcja dla **2.16.1_blu.61 / Shelly Plus 1 oraz 2.16.1_blu.59 / Shelly 1 Gen3**, stan: **2026-10-27**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -121,7 +121,7 @@ Każdy pomiar ma własny czas ważności; sam beacon baterii nie odświeża pomi
 ## Xiaomi LYWSD03MMC — próba bez klucza (blu49)
 
 1. Zostaw oryginalny firmware termometru. Przy **Indoor H&T** lub **Outdoor H&T**
-   wybierz **Xiaomi LYWSD03MMC (experimental)**, a następnie **Pair**.
+   wybierz **Xiaomi LYWSD03MMC**, a następnie **Pair**.
 2. Połóż włączony termometr blisko Shelly. Zamknij aplikacje, które utrzymują
    połączenie Bluetooth z tym termometrem. Nie trzeba naciskać przycisku, wpisywać
    PIN-u ani pobierać tokenów z Xiaomi Home.
@@ -155,7 +155,7 @@ To funkcja eksperymentalna. [Opublikowany przykład odczytu](https://github.com/
 dotyczy firmware **2.1.1_0159** i sprzętu **B1.5**. Użytkownik ma **B1.4 / 2.1.1_0159**:
 zgodność wymaga próby na tym egzemplarzu. Zaszyfrowane beacony tego modelu nie są
 dekodowane, a wcześniejsze przypisania z blu46 nie są automatycznie przywracane.
-**MCCGQ02HL oraz modele wymagające ręcznego klucza nadal nie są obsługiwane.**
+Dla MCCGQ02HL wybierz wariant **Bindkey BLE**. Od blu.59 LYWSD03MMC ma jedną pozycję na liście termometrów — szyfrowany beacon automatycznie wywołuje formularz 32-znakowego klucza Bindkey BLE, a pozostały wariant zachowuje eksperymentalny odczyt GATT. Szczegóły: [Bindkey BLE](BINDKEY_BLE.md). Odczyty temperatury i wilgotności są ważne przez godzinę.
 
 ## Własne nazwy
 
@@ -173,8 +173,7 @@ Zapis na Shelly przetrwa ponowne otwarcie strony. Zmiana nazwy nie wymaga parowa
 - Kafelek bramy używa pierwszego Name w sekcji Garage Door.
 
 Puste Name urządzenia BLU przywraca angielską nazwę domyślną. Limit wynosi 64 bajty
-UTF-8; polskie znaki mogą zajmować więcej niż jeden bajt. Teksty systemowe są po
-angielsku, lecz własne nazwy mogą być po polsku. Motion, H&T oraz oba akcesoria Button1
+UTF-8; polskie znaki mogą zajmować więcej niż jeden bajt. Teksty systemowe mają wersje EN / PL. Przełącznik w panelu System zapamiętuje wybór w przeglądarce. Własne nazwy nie są tłumaczone. Motion, H&T oraz oba akcesoria Button1
 przekazują nazwy także do HomeKit; aplikacja Dom może zachować nazwy nadane wcześniej ręcznie.
 
 ## Wizualizacja i statusy
@@ -252,3 +251,19 @@ nadane nazwy.
 
 Nie używaj HomeKit Reset do zwykłego odświeżenia statusu lub aktualizacji firmware;
 usuwa on parowania HomeKit i kod konfiguracji.
+
+## Język panelu EN / PL
+
+Na dole panelu **System** wybierz **EN** lub **PL**. Wybór jest zapamiętywany lokalnie
+w przeglądarce, osobno dla adresu danego urządzenia. Nie wymaga zapisu ustawień
+Shelly ani ponownego parowania. Język obejmuje również instrukcje parowania,
+komunikaty aktualizacji i statusy wizualizacji garażu. Nazwy własne i nazwy usług
+HomeKit pozostają bez zmian. W instrukcji zachowano angielskie nazwy pól.
+
+### Zapamiętywanie baterii MCCGQ02HL (Plus 1)
+
+Po odebraniu poziomu baterii Xiaomi Door & Window Sensor 2 sterownik zapisuje go na 24 godziny, również na czas restartu lub aktualizacji. Nowy odczyt nadpisuje zapis i odnawia ważność. Po 24 godzinach bez nowego pakietu baterii panel pokazuje „—”. Po restarcie zapis jest wyświetlany po synchronizacji czasu. Usunięcie parowania kasuje zapis. Ten mechanizm dotyczy tylko baterii — nie potwierdza stanu otwarcia ani zamknięcia.
+
+### Język panelu
+
+W sekcji **System** wybierz z menu **English** lub **Polski**. Wybór działa od razu dla ustawień, parowania i wizualizacji. Przeglądarka zapamiętuje go dla adresu sterownika i przywraca po ponownym otwarciu panelu.
