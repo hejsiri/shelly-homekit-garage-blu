@@ -33,21 +33,26 @@ napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 
 ## Wspierany sprzęt
 
-| Urządzenie | Funkcja i status |
-| --- | --- |
-| **Shelly Plus 1 (Plus1)** | Paczka Plus1 dla ESP32. Sterowanie przekaźnikiem, WWW, BLE i HomeKit. |
-| **Shelly 1 Gen3 (S1G3)** | Osobna paczka S1G3 dla ESP32-C3, te same funkcje Garage BLU. Test na fizycznym Gen3 pozostaje do wykonania. |
-| **Shelly BLU Door Window SBDW-002C — 2 sztuki** | Role Closing sensor i Opening sensor. Szyfrowane odczyty dwóch fizycznych czujników potwierdzono we wcześniejszych próbach. |
-| **BLU Motion SBMO-003Z — 1 sztuka** | Ruch w WWW i usługa Motion Sensor w HomeKit; odczyty obserwowano na sprzęcie. Od blu43 także Light sensor w HomeKit, z pomiarem oświetlenia w luksach z tego samego urządzenia. |
-| **BLU H&T SBHT-003C — do 2 sztuk** | Role Indoor i Outdoor; temperatura i wilgotność w WWW i HomeKit. Obsługa zaimplementowana, testy fizycznych H&T pozostają do wykonania. |
-| **Xiaomi Door & Window Sensor 2 (MCCGQ02HL)** | Krańcówka otwarcia lub zamknięcia; szyfrowany MiBeacon, ręczny Bindkey BLE. Stan drzwi odczytywany na Plus 1. Dodatkowy format baterii czeka na kolejną aktualizację. |
-| **Xiaomi Motion Sensor 2S** | Przygotowane do kolejnej aktualizacji: wariant chiński i globalny, Bindkey BLE, ruch, jasność i bateria. Testy parsera, AES-CCM i parowania przeszły; brak próby na fizycznym czujniku. |
-| **Qingping CGH1** | Krańcówka otwarcia lub zamknięcia; beacony natywne i MiBeacon, Bindkey BLE dla szyfrowanych danych. |
-| **Qingping CGPR1** | Ruch, jasność i bateria; beacony natywne lub szyfrowany MiBeacon z Bindkey BLE. Pakiet samej baterii lub jasności nie odświeża stanu ruchu. |
-| **Qingping CGG1** | Temperatura i wilgotność w roli Indoor lub Outdoor; warianty natywne i MiBeacon, z kluczem dla szyfrowanych danych. |
-| **Xiaomi LYWSD03MMC** | Jeden model na liście: szyfrowany MiBeacon z Bindkey BLE lub eksperymentalny bezpośredni odczyt GATT. Zgodność ścieżki GATT zależy od rewizji i firmware czujnika. |
-| **Xiaomi LYWSDCGQ/01ZM (MJ_HT_V1)** | Temperatura, wilgotność i bateria z fabrycznych beaconów BLE. Do wyboru zamiast BLU H&T w roli Indoor lub Outdoor; łącznie dwa termometry. Bez PIN-u, chmury i zmiany firmware czujnika. Na Plus1/blu45 potwierdzono odczyty w panelu, w tym baterię 36 %. |
-| **BLU Button1 — 1 sztuka** | Pojedynczy nacisk steruje bramą; beacony określają obecność przycisku w zasięgu. Dwie usługi w akcesorium Shelly: obecność i przycisk programowalny. W blu42 na Plus 1 potwierdzono ich widoczność w Domu, odczyt obecności oraz dostępność trzech rodzajów naciśnięcia. |
+<table>
+<thead>
+<tr><th width="340">Urządzenie</th><th>Funkcja i status</th></tr>
+</thead>
+<tbody>
+<tr><td width="340"><strong>Shelly&nbsp;Plus&nbsp;1&nbsp;(Plus1)</strong></td><td>Paczka Plus1 dla ESP32. Sterowanie przekaźnikiem, WWW, BLE i HomeKit.</td></tr>
+<tr><td width="340"><strong>Shelly&nbsp;1&nbsp;Gen3&nbsp;(S1G3)</strong></td><td>Osobna paczka S1G3 dla ESP32-C3, te same funkcje Garage BLU. Test na fizycznym Gen3 pozostaje do wykonania.</td></tr>
+<tr><td width="340"><strong>Shelly&nbsp;BLU&nbsp;Door&nbsp;Window&nbsp;SBDW-002C<br>2 sztuki</strong></td><td>Role Closing sensor i Opening sensor. Szyfrowane odczyty dwóch fizycznych czujników potwierdzono we wcześniejszych próbach.</td></tr>
+<tr><td width="340"><strong>BLU&nbsp;Motion&nbsp;SBMO-003Z<br>1 sztuka</strong></td><td>Ruch w WWW i usługa Motion Sensor w HomeKit; odczyty obserwowano na sprzęcie. Od blu43 także Light sensor w HomeKit, z pomiarem oświetlenia w luksach z tego samego urządzenia.</td></tr>
+<tr><td width="340"><strong>BLU&nbsp;H&amp;T&nbsp;SBHT-003C<br>do 2 sztuk</strong></td><td>Role Indoor i Outdoor; temperatura i wilgotność w WWW i HomeKit. Obsługa zaimplementowana, testy fizycznych H&amp;T pozostają do wykonania.</td></tr>
+<tr><td width="340"><strong>Xiaomi&nbsp;Door&nbsp;&amp;&nbsp;Window&nbsp;Sensor&nbsp;2&nbsp;(MCCGQ02HL)</strong></td><td>Krańcówka otwarcia lub zamknięcia; szyfrowany MiBeacon, ręczny Bindkey BLE. Stan drzwi odczytywany na Plus 1. Dodatkowy format baterii czeka na kolejną aktualizację.</td></tr>
+<tr><td width="340"><strong>Xiaomi&nbsp;Motion&nbsp;Sensor&nbsp;2S</strong></td><td>Przygotowane do kolejnej aktualizacji: wariant chiński i globalny, Bindkey BLE, ruch, jasność i bateria. Testy parsera, AES-CCM i parowania przeszły; brak próby na fizycznym czujniku.</td></tr>
+<tr><td width="340"><strong>Qingping&nbsp;CGH1</strong></td><td>Krańcówka otwarcia lub zamknięcia; beacony natywne i MiBeacon, Bindkey BLE dla szyfrowanych danych.</td></tr>
+<tr><td width="340"><strong>Qingping&nbsp;CGPR1</strong></td><td>Ruch, jasność i bateria; beacony natywne lub szyfrowany MiBeacon z Bindkey BLE. Pakiet samej baterii lub jasności nie odświeża stanu ruchu.</td></tr>
+<tr><td width="340"><strong>Qingping&nbsp;CGG1</strong></td><td>Temperatura i wilgotność w roli Indoor lub Outdoor; warianty natywne i MiBeacon, z kluczem dla szyfrowanych danych.</td></tr>
+<tr><td width="340"><strong>Xiaomi&nbsp;LYWSD03MMC</strong></td><td>Jeden model na liście: szyfrowany MiBeacon z Bindkey BLE lub eksperymentalny bezpośredni odczyt GATT. Zgodność ścieżki GATT zależy od rewizji i firmware czujnika.</td></tr>
+<tr><td width="340"><strong>Xiaomi&nbsp;LYWSDCGQ/01ZM&nbsp;(MJ_HT_V1)</strong></td><td>Temperatura, wilgotność i bateria z fabrycznych beaconów BLE. Do wyboru zamiast BLU H&amp;T w roli Indoor lub Outdoor; łącznie dwa termometry. Bez PIN-u, chmury i zmiany firmware czujnika. Na Plus1/blu45 potwierdzono odczyty w panelu, w tym baterię 36 %.</td></tr>
+<tr><td width="340"><strong>BLU&nbsp;Button1<br>1 sztuka</strong></td><td>Pojedynczy nacisk steruje bramą; beacony określają obecność przycisku w zasięgu. Dwie usługi w akcesorium Shelly: obecność i przycisk programowalny. W blu42 na Plus 1 potwierdzono ich widoczność w Domu, odczyt obecności oraz dostępność trzech rodzajów naciśnięcia.</td></tr>
+</tbody>
+</table>
 
 LYWSD03MMC sam wybiera ścieżkę na podstawie rozpoznanego beacona. Dla szyfrowanych danych
 panel prosi o 32-znakowy **Bindkey BLE** i weryfikuje go przed zapisaniem przypisania.
