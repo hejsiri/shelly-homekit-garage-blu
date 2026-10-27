@@ -1,5 +1,11 @@
 # Historia zmian Garage BLU
 
+## 2.16.1_blu.64 (2026-10-27) — tylko Shelly Plus 1
+
+- Listy typów urządzeń pokazują same nazwy marketingowe: usunięto modele w nawiasach oraz dopiski Bindkey BLE.
+- Usunięto „Mi” z nazw termometrów Xiaomi w panelu. Nazwy w oknie wykrywania termometrów pozostawiają model do identyfikacji urządzenia.
+- Sposób parowania i obsługa Bindkey BLE pozostają bez zmian. Gen3 pozostaje na 2.16.1_blu.59.
+
 ## 2.16.1_blu.63 (2026-10-27) — tylko Shelly Plus 1
 
 - Poprawiono zawieszenie podczas usuwania czujnika: puste MAC są sprawdzane przed parserem SDK. Usunięcie BLU Motion potwierdzono na fizycznym Plus 1 bez restartu; sprawdzono zachowanie po odświeżeniu. Poprawiono też obsługę spóźnionego odczytu termometru po usunięciu przypisania.
