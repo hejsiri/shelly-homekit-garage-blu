@@ -8,11 +8,11 @@ pełne zamknięcie i otwarcie. Sterownik komunikuje się z HomeKit przez Wi-Fi,
 a z urządzeniami BLU przez Bluetooth. Projekt bazuje na
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
 
-**Publiczne OTA: Shelly Plus 1 — 2.16.1_blu.64; Shelly 1 Gen3 — 2.16.1_blu.59 (2026-10-27).**
+**Publiczne OTA: Shelly Plus 1 — 2.16.1_blu.65; Shelly 1 Gen3 — 2.16.1_blu.59 (2026-10-27).**
 Dla każdego modelu jest osobny ZIP i suma SHA-256. Panel WWW obsługuje **polski i angielski**;
-przełącznik języka znajduje się w sekcji System. Dokumentacja użytkownika jest po polsku.
+wybór języka znajduje się w sekcji System. Dokumentacja użytkownika jest po polsku.
 
-**Najnowsza aktualizacja Plus 1:** uproszczone nazwy na listach urządzeń — bez modeli w nawiasach, dopisków Bindkey BLE i „Mi” w nazwach termometrów Xiaomi. Sposób parowania pozostaje bez zmian.
+**Najnowsza aktualizacja Plus 1:** zapisywanie baterii Xiaomi Door & Window Sensor 2 na 24 godziny, także po restarcie, oraz rozwijane menu języka „English / Polski” z zapamiętywaniem wyboru.
 
 [Instalacja i aktualizacje](docs/AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](docs/KONFIGURACJA.md) ·
@@ -105,8 +105,8 @@ Instrukcje budowania, testów i struktura kodu są w [README-BLU.md](README-BLU.
 ## Pobieranie i aktualizacja
 
 - [Paczki i opis na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/)
-- [ZIP 2.16.1_blu.64 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.64.zip)
-- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.64.zip.sha256)
+- [ZIP 2.16.1_blu.65 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.65.zip)
+- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.65.zip.sha256)
 - [ZIP 2.16.1_blu.59 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.59.zip)
 - [SHA-256 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.59.zip.sha256)
 - [Instrukcja instalacji, aktualizacji i kontroli po restarcie](docs/AKTUALIZACJA.md)
