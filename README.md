@@ -42,7 +42,7 @@ napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 <tr><th colspan="2" align="left">Czujniki otwarcia i zamknięcia — łącznie 2 miejsca</th></tr>
 <tr><td width="340"><strong>Shelly BLU Door Window</strong><br><code>SBDW-002C</code></td><td>Krańcówka otwarcia lub zamknięcia. Automatyczne parowanie i szyfrowane BTHome. Odczyty potwierdzone na Plus 1.</td></tr>
 <tr><td width="340"><strong>Xiaomi Door &amp; Window Sensor 2</strong><br><code>MCCGQ02HL</code></td><td>Krańcówka otwarcia lub zamknięcia. Szyfrowany MiBeacon, ręczny Bindkey BLE. Odczyt stanu potwierdzony na Plus 1. Dodatkowy format baterii czeka na aktualizację.</td></tr>
-<tr><td width="340"><strong>Qingping Door/Window Contact Sensor</strong><br><code>CGH1</code></td><td>Krańcówka otwarcia lub zamknięcia. Natywne beacony Qingping lub MiBeacon; Bindkey BLE dla danych szyfrowanych.</td></tr>
+<tr><td width="340"><strong>Qingping Door &amp; Window Contact Sensor</strong><br><code>CGH1</code></td><td>Krańcówka otwarcia lub zamknięcia. Natywne beacony Qingping lub MiBeacon; Bindkey BLE dla danych szyfrowanych.</td></tr>
 <tr><th colspan="2" align="left">Czujniki ruchu i jasności — 1 miejsce</th></tr>
 <tr><td width="340"><strong>Shelly BLU Motion</strong><br><code>SBMO-003Z</code></td><td>Ruch i jasność w panelu oraz HomeKit. Automatyczne parowanie i szyfrowane BTHome. Odczyty obserwowane na Plus 1.</td></tr>
 <tr><td width="340"><strong>Qingping Motion &amp; Ambient Light Sensor</strong><br><code>CGPR1</code></td><td>Ruch, jasność i bateria. Natywne beacony Qingping lub szyfrowany MiBeacon z Bindkey BLE. Pakiet baterii lub jasności nie przedłuża ważności stanu ruchu.</td></tr>
