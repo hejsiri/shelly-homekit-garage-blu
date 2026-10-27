@@ -34,31 +34,31 @@ napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 ## Wspierany sprzęt
 
 <table>
-<thead><tr><th width="340">Akcesorium / sterownik i model</th><th>Funkcja i status</th></tr></thead>
+<thead><tr><th width="340">Akcesorium / sterownik i model</th><th>Dane i funkcje</th></tr></thead>
 <tbody>
 <tr><th colspan="2" align="left">Sterowniki</th></tr>
-<tr><td width="340"><strong>Shelly Plus 1</strong><br><code>SNSW-001X16EU</code></td><td>Sterownik ESP32; przekaźnik bramy, odbiornik BLE, panel WWW i Apple HomeKit. Publiczne OTA: 2.16.1_blu.61.</td></tr>
-<tr><td width="340"><strong>Shelly 1 Gen3</strong><br><code>S3SW-001X16EU</code></td><td>Sterownik ESP32-C3; oddzielna paczka S1G3. Publiczne OTA: 2.16.1_blu.59. Test fizycznego Gen3 pozostaje do wykonania.</td></tr>
+<tr><td width="340"><strong>Shelly Plus 1</strong><br><code>SNSW-001X16EU</code></td><td><ul><li>Sterowanie przekaźnikiem bramy</li><li>Odbiór Bluetooth</li><li>Panel WWW i Apple HomeKit</li></ul></td></tr>
+<tr><td width="340"><strong>Shelly 1 Gen3</strong><br><code>S3SW-001X16EU</code></td><td><ul><li>Sterowanie przekaźnikiem bramy</li><li>Odbiór Bluetooth</li><li>Panel WWW i Apple HomeKit</li></ul></td></tr>
 <tr><th colspan="2" align="left">Czujniki otwarcia i zamknięcia — łącznie 2 miejsca</th></tr>
-<tr><td width="340"><strong>Shelly BLU Door Window</strong><br><code>SBDW-002C</code></td><td>Krańcówka otwarcia lub zamknięcia. Automatyczne parowanie i szyfrowane BTHome. Odczyty potwierdzone na Plus 1.</td></tr>
-<tr><td width="340"><strong>Xiaomi Door &amp; Window Sensor 2</strong><br><code>MCCGQ02HL</code></td><td>Krańcówka otwarcia lub zamknięcia. Szyfrowany MiBeacon, ręczny Bindkey BLE. Odczyt stanu potwierdzony na Plus 1. Dodatkowy format baterii czeka na aktualizację.</td></tr>
-<tr><td width="340"><strong>Qingping Door &amp; Window Contact Sensor</strong><br><code>CGH1</code></td><td>Krańcówka otwarcia lub zamknięcia. Natywne beacony Qingping lub MiBeacon; Bindkey BLE dla danych szyfrowanych.</td></tr>
+<tr><td width="340"><strong>Shelly BLU Door Window</strong><br><code>SBDW-002C</code></td><td><ul><li>Stan otwarcia / zamknięcia</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
+<tr><td width="340"><strong>Xiaomi Door &amp; Window Sensor 2</strong><br><code>MCCGQ02HL</code></td><td><ul><li>Stan otwarcia / zamknięcia</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
+<tr><td width="340"><strong>Qingping Door &amp; Window Contact Sensor</strong><br><code>CGH1</code></td><td><ul><li>Stan otwarcia / zamknięcia</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><th colspan="2" align="left">Czujniki ruchu i jasności — 1 miejsce</th></tr>
-<tr><td width="340"><strong>Shelly BLU Motion</strong><br><code>SBMO-003Z</code></td><td>Ruch i jasność w panelu oraz HomeKit. Automatyczne parowanie i szyfrowane BTHome. Odczyty obserwowane na Plus 1.</td></tr>
-<tr><td width="340"><strong>Qingping Motion &amp; Ambient Light Sensor</strong><br><code>CGPR1</code></td><td>Ruch, jasność i bateria. Natywne beacony Qingping lub szyfrowany MiBeacon z Bindkey BLE. Pakiet baterii lub jasności nie przedłuża ważności stanu ruchu.</td></tr>
-<tr><td width="340"><strong>Xiaomi Motion Sensor 2S</strong><br><code>XMPIR02SXS — Chiny</code></td><td>Przygotowane do kolejnej aktualizacji: MiBeacon 0x3531, Bindkey BLE, ruch, jasność i bateria. Publiczny zaszyfrowany beacon przeszedł testy; brak próby na fizycznym czujniku.</td></tr>
-<tr><td width="340"><strong>Xiaomi Motion Sensor 2S</strong><br><code>XMPIR02SGXS — globalny</code></td><td>Przygotowane do kolejnej aktualizacji: MiBeacon 0x4C60, ta sama pozycja modelu w panelu i automatyczne rozpoznawanie wariantu. Testy parsera przeszły; brak próby na fizycznym czujniku.</td></tr>
+<tr><td width="340"><strong>Shelly BLU Motion</strong><br><code>SBMO-003Z</code></td><td><ul><li>Wykrycie ruchu</li><li>Natężenie oświetlenia (lx)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
+<tr><td width="340"><strong>Qingping Motion &amp; Ambient Light Sensor</strong><br><code>CGPR1</code></td><td><ul><li>Wykrycie ruchu</li><li>Natężenie oświetlenia (lx)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
+<tr><td width="340"><strong>Xiaomi Motion Sensor 2S</strong><br><code>XMPIR02SXS — Chiny</code></td><td><ul><li>Wykrycie ruchu</li><li>Natężenie oświetlenia (lx)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
+<tr><td width="340"><strong>Xiaomi Motion Sensor 2S</strong><br><code>XMPIR02SGXS — globalny</code></td><td><ul><li>Wykrycie ruchu</li><li>Natężenie oświetlenia (lx)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><th colspan="2" align="left">Temperatura i wilgotność — łącznie 2 miejsca: wewnątrz i na zewnątrz</th></tr>
-<tr><td width="340"><strong>Shelly BLU H&amp;T</strong><br><code>SBHT-003C</code></td><td>Temperatura, wilgotność i bateria. Automatyczne parowanie i szyfrowane BTHome. Test fizycznego H&amp;T pozostaje do wykonania.</td></tr>
-<tr><td width="340"><strong>Xiaomi Mi Temperature and Humidity Monitor</strong><br><code>LYWSDCGQ/01ZM</code></td><td>Pasywne, nieszyfrowane beacony MiBeacon (MJ_HT_V1). Temperatura, wilgotność i bateria; bez konta Xiaomi i klucza. Odczyty potwierdzone na Plus 1.</td></tr>
-<tr><td width="340"><strong>Xiaomi Mi Temperature and Humidity Monitor 2</strong><br><code>LYWSD03MMC</code></td><td>Jedna pozycja w panelu: szyfrowany MiBeacon z Bindkey BLE lub eksperymentalny bezpośredni GATT. Temperatura, wilgotność i bateria; GATT szacuje baterię z napięcia. Zgodność GATT zależy od rewizji i firmware.</td></tr>
-<tr><td width="340"><strong>Qingping Temp &amp; RH Monitor</strong><br><code>CGG1</code></td><td>Temperatura, wilgotność i bateria. Obsługiwane identyfikatory MiBeacon 0x0347 oraz 0x0B48 i natywne beacony Qingping. Dla szyfrowanych danych wymagany Bindkey BLE. Jedna pozycja modelu w panelu.</td></tr>
+<tr><td width="340"><strong>Shelly BLU H&amp;T</strong><br><code>SBHT-003C</code></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
+<tr><td width="340"><strong>Xiaomi Mi Temperature and Humidity Monitor</strong><br><code>LYWSDCGQ/01ZM</code></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
+<tr><td width="340"><strong>Xiaomi Mi Temperature and Humidity Monitor 2</strong><br><code>LYWSD03MMC</code></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%; z GATT szacowany z napięcia)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
+<tr><td width="340"><strong>Qingping Temp &amp; RH Monitor</strong><br><code>CGG1</code></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><th colspan="2" align="left">Przycisk i obecność auta — 1 miejsce</th></tr>
-<tr><td width="340"><strong>Shelly BLU Button1</strong><br><code>SBBT-002C</code></td><td>Pojedynczy nacisk: otwórz / zatrzymaj / zamknij. HomeKit: obecność w zasięgu BLE oraz przycisk programowalny z pojedynczym, podwójnym i długim naciśnięciem. Odczyty i usługi potwierdzone na Plus 1.</td></tr>
+<tr><td width="340"><strong>Shelly BLU Button1</strong><br><code>SBBT-002C</code></td><td><ul><li>Pojedyncze, podwójne i długie naciśnięcie</li><li>Obecność przycisku w zasięgu BLE</li><li>Sterowanie bramą pojedynczym naciśnięciem</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 </tbody>
 </table>
 
-Nazwy obejmują nazwę handlową i model. Warianty HomeKit/Thread, Zigbee oraz nowsze modele o podobnej nazwie nie są automatycznie zgodne. Tabela rozróżnia wydane funkcje i zmiany przygotowane lokalnie.
+Nazwy obejmują nazwę handlową i model. Warianty HomeKit/Thread, Zigbee oraz nowsze modele o podobnej nazwie nie są automatycznie zgodne. Obsługa Xiaomi Motion Sensor 2S i dodatkowego formatu baterii jest przygotowana lokalnie do kolejnej aktualizacji. Status publikacji opisano na początku README.
 
 Nazewnictwo producentów: [Shelly](https://kb.shelly.cloud/knowledge-base/buttons), [Xiaomi — Monitor 2](https://www.mi.com/ro/product/mi-temperature-and-humidity-monitor-2/specs/), [Xiaomi — Monitor](https://www.mi.com/mx/product/mi-temperature-and-humidity-monitor/specs/), [Xiaomi — Motion Sensor 2S](https://www.mi.com/global/product/xiaomi-motion-sensor-2s/specs/), [Qingping — Temp & RH Monitor](https://www.qingping.co/temp-rh-monitor/), [Qingping — deklaracja modelu CGG1](https://qingping.co/static/media/goose_m_eu_doc.pdf), [Shelly BLU H&T](https://shelly-api-docs.shelly.cloud/docs-ble/Devices/BLU/ht/).
 
