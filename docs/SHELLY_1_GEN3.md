@@ -28,7 +28,7 @@ rozpoznawana jako **Shelly1Gen3**.
 | Platforma | ESP32-C3 |
 | Wersja | 2.16.1_blu.85 |
 | Build | 20261120-184914 |
-| ZIP | 2 359 375 bajtów |
+| ZIP | 2 361 423 bajtów |
 | SHA-256 | `6e4febd20dfd96c4ce21e1a3f5a328e1b8767af9a111d1c045377141f98c3f53` |
 
 ZIP jest dla **Shelly 1 Gen3**, nie dla **Shelly 1 Mini Gen3**, **1PM Gen3**, innych
