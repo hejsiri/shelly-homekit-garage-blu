@@ -73,20 +73,21 @@ extern "C" void HAPAccessoryServerRaiseEvent(HAPAccessoryServerRef*,const HAPCha
  notifications.push_back(static_cast<const HAPBaseCharacteristic*>(ch)->iid);
 }
 namespace shelly { namespace blu {
-Sensor sensor;
+Sensor sensor, smoke_sensor;
+bool smoke_paired=false,smoke_ready=false;
 bool ht=false;
-bool SensorPaired(int role){return role==2||role==5||(ht&&role==3);}
+bool SensorPaired(int role){return role==2||role==5||(ht&&role==3)||(role==6&&smoke_paired);}
 const char *SensorName(int role){return role==2?"Motion sensor":role==3?"Indoor":"Button";}
 const char *CarName(){return "Car presence";}
 bool ready=true;
 bool CarPresenceReady(){return ready;}
 bool CarPresent(){return true;}
-bool SensorReady(int){return true;}
+bool SensorReady(int role){return role==6?smoke_ready:true;}
 bool HTReady(int,bool temperature){return ready&&sensor.HTFresh(temperature,100,180);}
 bool MotionReady(){return ready;}
 bool MotionLightReady(){return ready&&sensor.IlluminanceFresh(100,180);}
 const Sensor &MotionReading(){return sensor;}
-const Sensor &ReadingFor(int){return sensor;}
+const Sensor &ReadingFor(int role){return role==6?smoke_sensor:sensor;}
 void SetButtonEventHandler(std::function<void(uint8_t)>){ }
 }}
 #include "select-services.hpp"
@@ -109,6 +110,12 @@ extern "C" bool TestFindCharacteristic(HAPAccessoryServerRef*,uint64_t,uint64_t,
 int main(int argc,char **argv){
  const std::string mode=argc==1?"ready":argv[1];
  shelly::blu::ht=mode.rfind("ht",0)==0;
+ shelly::blu::smoke_paired=mode.rfind("smoke",0)==0;
+ shelly::blu::smoke_sensor.seen=mode!="smoke-missing";
+ shelly::blu::smoke_sensor.smoke_seen=mode!="smoke-missing";
+ shelly::blu::smoke_sensor.active=mode=="smoke-alarm"||mode=="smoke-stale-alarm";
+ shelly::blu::smoke_ready=mode!="smoke-missing"&&mode!="smoke-stale"&&mode!="smoke-stale-alarm";
+
  shelly::blu::ready=mode!="not-ready";
  auto &sensor=shelly::blu::sensor;sensor.seen=true;sensor.illuminance_last_seen=100;
  sensor.illuminance100=mode=="missing"?-1:mode=="dark"?0:mode=="bright"?16777215:12345;
@@ -176,14 +183,14 @@ for f in [sdk/'HomeKitADK/HAP/HAPCharacteristicTypes.c',sdk/'HomeKitADK/HAP/HAPS
  *[sdk/'HomeKitADK/PAL'/('HAPBase+'+name+'.c') for name in ['RawBuffer','String','Int','Float','Double','UTF8']],p/'db.c']:
  out=p/(f.stem+'.o');subprocess.run(['clang',*flags,'-c',str(f),'-o',str(out)],check=True);objs.append(str(out))
 subprocess.run(['clang++','-std=c++14',*flags,str(p/'test.cpp'),str(p/'motion.cpp'),str(sdk/'src/mgos_hap_chars.cpp'),str(sdk/'src/mgos_hap_service.cpp'),str(sdk/'src/mgos_hap_accessory.cpp'),*objs,('-Wl,-dead_strip' if sys.platform=='darwin' else '-Wl,--gc-sections'),'-o',str(p/'test')],check=True)
-for mode in ['ready','not-ready','missing','dark','bright','stale','lost','ht','ht-stale']:
+for mode in ['ready','not-ready','missing','dark','bright','stale','lost','ht','ht-stale','smoke-alarm','smoke-clear','smoke-missing','smoke-stale','smoke-stale-alarm']:
  ready=mode not in ['not-ready','lost']
  args=[str(p/'test')]+([] if mode=='ready' else [mode])
  db=json.loads(subprocess.check_output(args))
  assert len(db['accessories'])==1
  accessory=db['accessories'][0];assert accessory['aid']==1
  services={v['type']:v for v in accessory['services']}
- assert set(services)==({'3E','41','85','86','89','84','8A','82'} if mode.startswith('ht') else {'3E','41','85','86','89','84'})
+ assert set(services)==({'3E','41','85','86','89','84','8A','82'} if mode.startswith('ht') else {'3E','41','85','86','89','84'} | ({'87'} if mode.startswith('smoke') else set()))
  assert [v['type'] for v in services.values() if v['primary']]==['41']
  assert services['85']['iid']==0x1800 and services['86']['iid']==0x1900 and services['89']['iid']==0x1a00
  ids=[]
@@ -210,7 +217,7 @@ for mode in ['ready','not-ready','missing','dark','bright','stale','lost','ht','
  assert next(c['value'] for c in services['86']['characteristics'] if c['type']=='23')=='Car presence'
  assert services['84']['iid']==0x1b00
  light={c['type']:c for c in services['84']['characteristics']}
- expected=100000 if mode=='bright' else 123.45 if mode in ['ready','lost','ht','ht-stale'] else 0.0001
+ expected=100000 if mode=='bright' else 123.45 if mode in ['ready','lost','ht','ht-stale'] or mode.startswith('smoke') else 0.0001
  assert abs(light['6B']['value']-expected)<0.00001,(mode,light)
  assert light['6B']['format']=='float' and light['6B']['unit']=='lux'
  assert light['6B']['minValue']==0.0001 and light['6B']['maxValue']==100000
@@ -218,6 +225,14 @@ for mode in ['ready','not-ready','missing','dark','bright','stale','lost','ht','
  light_ready=ready and mode not in ['missing','stale']
  assert light['77']['value']==(0 if light_ready else 1)
  assert light['75']['value']==(1 if light_ready else 0)
+ if mode.startswith('smoke'):
+  smoke={c['type']:c for c in services['87']['characteristics']}
+  assert services['87']['iid']==0x1c00
+  assert set(smoke)=={'23','76','77'}
+  assert smoke['77']['value']==(1 if mode in ['smoke-missing','smoke-stale','smoke-stale-alarm'] else 0)
+  if mode in ['smoke-alarm','smoke-stale-alarm']:assert smoke['76']['value']==1
+  elif mode=='smoke-clear':assert smoke['76']['value']==0
+  else:assert smoke['76']['value']==0 and smoke['77']['value']==1
  if mode.startswith('ht'):
   temp={c['type']:c for c in services['8A']['characteristics']}
   hum={c['type']:c for c in services['82']['characteristics']}

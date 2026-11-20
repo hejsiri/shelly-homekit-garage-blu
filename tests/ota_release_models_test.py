@@ -6,6 +6,7 @@ a temporary project; no hosting or live device is contacted.
 """
 import io
 import json
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -18,7 +19,9 @@ models = {'ShellyPlus1': ('Plus1', 'esp32'), 'Shelly1Gen3': ('S1G3', 'esp32c3')}
 
 
 def project(path):
-    for name in ['tools/ota/prepare.py', 'tools/ota/landing.html']:
+    for name in ['tools/ota/prepare.py', 'tools/ota/landing.html',
+                 'tools/ota/check_stock_layout.py', 'tools/ota/update/index.php',
+                 'tools/ota/update/installer.js', 'tools/ota/update/compatibility.json']:
         dest = path / name
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(root / name, dest)
@@ -57,8 +60,24 @@ with tempfile.TemporaryDirectory(prefix='garage-ota-models-') as temp:
     assert run.returncode == 0, run.stderr
     out = valid / 'releases/hosting/garage-blu'
     release = json.loads((out / 'release.json').read_text())
-    channel = json.loads((out / 'update.json').read_text())[0][1]
+    entries = json.loads((out / 'update.json').read_text())
+    channel = entries[0][1]
+    version = next(iter(release.values()))['version']
+    if '_blu.' in version:
+        legacy = next(cfg for pattern,cfg in entries if re.search(pattern,'2.16.1-blu56'))
+        canonical = next(cfg for pattern,cfg in entries if re.search(pattern,version))
+        assert legacy['version'] == version.replace('_blu.','-blu')
+        assert canonical['version'] == version
+        assert legacy['urls'] == {'ShellyPlus1': canonical['urls']['ShellyPlus1']}
+        assert 'Shelly1Gen3' in legacy['incompatible_models']
+        old_gen3 = next(cfg for pattern,cfg in entries if re.search(pattern,'2.16.1_blu.78'))
+        assert 'Shelly1Gen3' not in old_gen3['urls']
+        assert 'Shelly1Gen3' in old_gen3['incompatible_models']
+        assert re.fullmatch(r'\d+\.\d+\.\d+-?[a-z]*\d*',legacy['version'])
+
     assert set(release) == set(models) == set(channel['urls'])
+    assert json.loads((out / 'install.json').read_text()) == release
+    assert (out / 'update/index.php').is_file()
     assert len({r['version'] for r in release.values()}) == 1
     for model, (app, platform) in models.items():
         name = release[model]['url'].rsplit('/', 1)[1]

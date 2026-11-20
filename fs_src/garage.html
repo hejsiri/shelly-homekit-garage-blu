@@ -4,74 +4,151 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Garage — Tesla Model S 2023</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f4f5f7;color:#202329;font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1200px;margin:28px auto;padding:28px;background:white;border-radius:26px}header{display:flex;justify-content:space-between;align-items:center;padding:0 8px}h1{margin:0;font-size:23px;font-weight:600}header span{font-size:13px;color:#85858b}.layout{display:grid;grid-template-columns:minmax(0,1fr) 244px;gap:40px;align-items:center}.scene{position:relative;aspect-ratio:1254/1100;overflow:hidden;background:white;min-width:0}.base{position:absolute;width:100%;height:auto;display:block;mask-image:linear-gradient(to bottom,#000 80%,transparent 87.5%);-webkit-mask-image:linear-gradient(to bottom,#000 80%,transparent 87.5%)}.scene:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to right,white,transparent 4.2%,transparent 95.8%,white);z-index:2}.aperture{position:absolute;left:15.4705%;top:32%;width:68.5805%;height:51.9091%;overflow:hidden}.leaf{position:absolute;inset:0;background:#403f3e;will-change:transform}.leaf img{position:absolute;max-width:none;width:100%;height:100%;left:0;top:0;pointer-events:none}aside{display:flex;flex-direction:column;gap:12px;padding:24px 8px 24px 0;min-width:0}.home-tile{appearance:none;border:0;width:100%;aspect-ratio:1.214;display:flex;flex-direction:column;align-items:flex-start;padding:6.2%;border-radius:30px;background:#e6e6eb;color:#85858b;text-align:left;font:inherit;cursor:pointer;transition:background .18s,transform .12s}.home-tile:active{transform:scale(.97)}.home-tile:focus-visible{outline:3px solid #00bfb2;outline-offset:4px}.home-tile.active{background:white;color:#090909;box-shadow:0 2px 18px #00000014}.icon-disc{width:26.5%;aspect-ratio:1;border-radius:50%;background:#cfcfd4;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#61d8d3}.home-tile.active .icon-disc{background:#00bfb2;color:white}.garage-symbol{position:relative;width:61%;height:54%;border:2px solid currentColor;border-radius:1px;overflow:hidden}.garage-symbol span{position:absolute;left:2px;right:2px;top:2px;bottom:-1px;background:currentColor;transform:translateY(calc(var(--door-open,0) * -86%));opacity:.92}.garage-symbol span:before{content:"";position:absolute;top:2px;left:3px;right:3px;height:5px;background:repeating-linear-gradient(to right,#00bfb2 0 5px,currentColor 5px 7px)}.garage-symbol span:after{content:"";position:absolute;bottom:3px;width:7px;height:1.5px;left:calc(50% - 3.5px);background:#00a69e}.home-tile .tile-name{margin-top:auto;padding-top:20px;font-size:19px;font-weight:600;line-height:1.14;letter-spacing:-.5px;white-space:nowrap}.home-tile strong{font-size:18px;font-weight:400;color:#929296;line-height:1.2;margin-top:3px}.home-tile.moving strong:after{content:"";display:inline-block;width:10px;height:10px;margin-left:8px;border:2px dotted #c6c6c9;border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.sensor-list{display:grid;gap:10px}.sensor-tile{display:flex;align-items:center;gap:13px;min-height:70px;border-radius:25px;padding:13px 16px;background:#f0f0f3}.sensor-tile svg{width:26px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:#85858b;flex-shrink:0}.sensor-tile strong{font-size:14px;font-weight:600;display:block}.sensor-tile span{display:block;font-size:17px;color:#85858b;line-height:1.2;margin-top:2px}.position{font-size:12px;color:#8b8b91}.time{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:#85858b}.time input{width:56px;padding:6px;border:1px solid #d9dde2;border-radius:8px;font:inherit;color:#202329;background:white}footer{font-size:12px;color:#929298;padding:12px 8px 0}.demo-label{font-size:11px;color:#a0a0a6;margin-bottom:-5px}@media(max-width:700px){main{margin:12px;padding:20px 16px;border-radius:22px}header{padding:0 4px}.layout{display:flex;flex-direction:column;gap:0}.scene{width:100%;max-width:600px;margin:auto}aside{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;padding:0 4px 12px}.home-tile{grid-column:1;grid-row:1 / 3;border-radius:26px;padding:7%;align-self:start}.sensor-list{grid-column:2;grid-row:1 / 4;gap:9px}.sensor-tile{min-height:63px;padding:10px 12px;border-radius:22px;gap:8px}.sensor-tile svg{width:23px;height:27px}.sensor-tile strong{font-size:12px}.sensor-tile span{font-size:15px}.home-tile .tile-name{font-size:clamp(12px,3.7vw,20px);padding-top:14px;letter-spacing:-.45px}.home-tile strong{font-size:clamp(13px,3.7vw,18px)}.position{grid-column:1;grid-row:3}.time{grid-column:1 / -1}.demo-label{display:none}header span{font-size:11px}footer{padding:4px}}@media(prefers-reduced-motion:reduce){.home-tile.moving strong:after{animation:none}}
-
-.layout{grid-template-columns:minmax(0,1fr) 300px;gap:34px}.home-tile{aspect-ratio:348.37/131.73;min-height:0;flex-direction:row;align-items:center;padding:7.1%;gap:7%;border-radius:36px;background:#ccc;color:white;border:1.3px solid transparent;box-shadow:none}.home-tile.active{background:white;color:#010101;border-color:#010101;box-shadow:none}.homekit-icon{width:28.9%;aspect-ratio:1;flex-shrink:0;display:block}.homekit-icon img{display:block;width:100%;height:100%}.icon-closed{display:none!important}.home-tile.closed .icon-open{display:none}.home-tile.closed .icon-closed{display:block!important}.tile-copy{display:flex;flex-direction:column;min-width:0;gap:4px}.home-tile .tile-name{margin:0;padding:0;font-size:24px;line-height:1.08;font-weight:700;letter-spacing:0;white-space:nowrap}.home-tile strong{margin:0;font-size:24px;line-height:1.1;font-weight:400;color:inherit;white-space:nowrap}.home-tile.moving strong:after{display:none}@media(max-width:700px){aside{display:flex;flex-direction:column;gap:12px}.home-tile{width:100%;border-radius:40px;padding:6.5% 7%;gap:7%}.home-tile .tile-name,.home-tile strong{font-size:clamp(18px,6.4vw,32px)}.sensor-list{width:100%;grid-template-columns:1fr 1fr}.sensor-tile:first-child{grid-column:1 / -1}.time{width:100%}.position{align-self:flex-start}}
-
-/* Four equal compact tiles below the garage. */
-.layout{display:flex;flex-direction:column;gap:0;align-items:center}.scene{width:min(100%,780px);margin:auto}aside{width:100%;max-width:780px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:0 4px 18px;align-items:stretch}.sensor-list{display:contents}.sensor-tile,.sensor-tile:first-child{grid-column:auto;min-width:0;min-height:74px;border-radius:23px;padding:12px;gap:9px}.home-tile{width:100%;aspect-ratio:auto;min-height:74px;padding:12px;gap:9px;border-radius:23px;align-self:stretch;grid-column:auto;grid-row:auto}.homekit-icon{width:36px;height:36px;aspect-ratio:1}.tile-copy{gap:3px}.home-tile .tile-name{font-size:14px;line-height:1.15;white-space:normal}.home-tile strong{font-size:16px;line-height:1.2;white-space:nowrap}.sensor-tile strong{font-size:14px;line-height:1.15}.sensor-tile span{font-size:16px;line-height:1.2}.sensor-tile svg{width:24px;height:28px}.position{grid-column:1 / 3;grid-row:auto;align-self:center}.time{grid-column:3 / 5;grid-row:auto;margin:0}.home-tile.active{border-color:#010101}@media(max-width:700px){main{padding:20px 14px}aside{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.scene{width:100%;max-width:600px}.home-tile,.sensor-tile{min-height:72px;border-radius:23px;padding:11px;gap:8px}.home-tile .tile-name,.sensor-tile strong{font-size:13px}.home-tile strong,.sensor-tile span{font-size:15px}.homekit-icon{width:34px;height:34px}.position{grid-column:1}.time{grid-column:2;width:auto;flex-wrap:wrap;justify-content:flex-end;gap:4px}.sensor-tile:first-child{grid-column:auto}}
-
-.home-tile{background:#f0f0f3;color:#202329;border:1px solid #e9e9ed;box-shadow:none}.home-tile strong{color:#85858b}.home-tile.active{background:#fdfdfd;color:#202329;border-color:#e5e5ea;box-shadow:none}.home-tile:active{background:#fff;border-color:#dedee5}.home-tile:hover{border-color:#dedee5}
-
-.home-tile,.sensor-tile{padding:12px 14px;gap:12px;border:1px solid transparent;min-height:76px}.home-tile{background:#f0f0f3;box-shadow:none}.home-tile:hover{border-color:transparent}.home-tile.active,.home-tile.active:hover,.home-tile.active:active{background:#fdfdfd;border-color:#e5e5ea}.home-tile:not(.active):active{border-color:transparent}.homekit-icon{width:40px;height:40px;flex:0 0 40px}.sensor-tile svg{width:40px;height:32px;flex:0 0 40px;padding:0 7px}.tile-copy{gap:3px}.home-tile .tile-name,.sensor-tile strong{font-size:14px;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.home-tile strong,.sensor-tile span{font-size:16px;line-height:1.2;margin-top:2px}.sensor-tile>div{min-width:0}.tile-copy{min-width:0}@media(max-width:700px){.home-tile,.sensor-tile{padding:11px 12px;gap:10px;min-height:74px}.homekit-icon{width:36px;height:36px;flex-basis:36px}.sensor-tile svg{width:36px;flex-basis:36px;padding:0 6px}.home-tile .tile-name,.sensor-tile strong{font-size:13px}.home-tile strong,.sensor-tile span{font-size:15px}}
-
-.home-tile,.sensor-tile{padding:8px 10px;gap:8px;min-height:66px}@media(max-width:700px){.home-tile,.sensor-tile{padding:7px 9px;gap:7px;min-height:64px}}
-
-.door-state{display:flex;align-items:baseline;gap:4px;min-width:0}.door-state #status{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.door-state .position{font:inherit;color:inherit;flex-shrink:0;grid-column:auto;align-self:auto}.time{grid-column:1 / -1;justify-content:flex-end}.home-tile strong.door-state{font-size:15px}@media(max-width:700px){.home-tile strong.door-state{font-size:13px;gap:3px}.time{grid-column:1 / -1}}
-
-/* Compact proportions matching the supplied Home tile reference. */
-aside .home-tile,aside .sensor-tile,aside .sensor-tile:first-child{height:62px;min-height:62px;padding:7px 10px;gap:9px;border-radius:22px}.homekit-icon{width:44px;height:44px;flex:0 0 44px}aside .sensor-tile svg{width:44px;height:34px;flex:0 0 44px;padding:0 9px}.tile-copy{gap:1px}aside .home-tile .tile-name,aside .sensor-tile strong{font-size:13px;line-height:1.15}aside .home-tile strong.door-state,aside .sensor-tile span{font-size:14px;line-height:1.2;margin-top:2px}aside .home-tile strong.door-state{gap:3px}@media(max-width:700px){aside .home-tile,aside .sensor-tile,aside .sensor-tile:first-child{height:60px;min-height:60px;padding:6px 9px;gap:7px}.homekit-icon{width:42px;height:42px;flex-basis:42px}aside .sensor-tile svg{width:42px;flex-basis:42px;padding:0 9px}}
-
-html{min-height:100%}main{height:calc(100svh - 24px);min-height:360px;margin:12px auto;padding:16px 20px}.layout{height:100%;justify-content:center;gap:4px}.scene{flex:0 0 auto;width:min(100%,780px,calc((100svh - 182px) * 1.14));margin:0 auto}aside{flex:0 0 auto;padding:0 4px;row-gap:10px}.time{min-height:30px}@media(max-width:700px){main{height:calc(100svh - 24px);margin:12px;padding:12px 14px;min-height:360px}.scene{width:min(100%,600px,calc((100svh - 226px) * 1.14));margin:0 auto}.layout{gap:4px}aside{padding:0 4px;gap:10px}.time{min-height:30px}}@media(max-height:390px){main{height:auto;min-height:calc(100svh - 24px)}.scene{width:min(45%,360px)}.layout{gap:8px}}
-
-main{background:transparent;border-radius:0;box-shadow:none}
-
-body{background:#fff}
-
-:root{--page:#fff;--ink:#202329;--tile:#f0f0f3;--active:#fdfdfd;--line:#e5e5ea;--muted:#85858b;--switch:#efeff2;--selected:#fff}html[data-theme="night"]{color-scheme:dark;--page:#191a1d;--ink:#f2f2f4;--tile:#2b2c31;--active:#36383e;--line:#494b53;--muted:#b3b4bd;--switch:#2b2c31;--selected:#484a52}body{background:var(--page);color:var(--ink);transition:background .2s}.scene{background:transparent}.scene:after{display:none}.base{mask-image:none;-webkit-mask-image:none;clip-path:polygon(4.2% 16.4%,95.9% 16.4%,95.9% 19.5%,95.2% 19.5%,95.2% 71.5%,100% 74.5%,100% 78.5%,0% 78.5%,0% 74.5%,4.7% 71.5%,4.7% 19.5%,4.2% 19.5%)}.home-tile,.sensor-tile{background:var(--tile);color:var(--ink)}.home-tile.active,.home-tile.active:hover,.home-tile.active:active{background:var(--active);color:var(--ink);border-color:var(--line)}.home-tile strong,.sensor-tile span,.sensor-tile svg{color:var(--muted)}html[data-theme="night"] .leaf{filter:brightness(.72)}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;max-width:780px;width:100%;margin:0 auto 8px;min-height:32px}.mode-group{display:flex;background:var(--switch);padding:3px;border-radius:11px;gap:2px}.mode-group button{appearance:none;border:0;background:transparent;color:var(--muted);font:500 12px -apple-system,BlinkMacSystemFont,sans-serif;line-height:1.2;padding:7px 10px;border-radius:8px;cursor:pointer;min-height:28px}.mode-group button[aria-pressed="true"]{background:var(--selected);color:var(--ink);box-shadow:0 1px 3px #00000014}.mode-group button:focus-visible{outline:2px solid #51b89b;outline-offset:2px}.layout{height:calc(100% - 44px)}.scene{width:min(100%,780px,calc((100svh - 226px) * 1.14))}@media(max-width:700px){.scene{width:min(100%,600px,calc((100svh - 270px) * 1.14))}.mode-group button{padding:7px 8px}}@media(max-height:390px){.scene{width:min(45%,360px)}}
-
-.home-tile.active,.home-tile.active:hover,.home-tile.active:active{background:#fff;color:#202329;border-color:#e5e5ea}.home-tile.active strong,.home-tile.active .position{color:#85858b}html[data-theme="night"] .base{mask-image:linear-gradient(to bottom,#000 73.6%,transparent 74.8%);-webkit-mask-image:linear-gradient(to bottom,#000 73.6%,transparent 74.8%)}html[data-theme="night"] .scene:after{display:block;inset:auto;left:15.4705%;top:83.8%;width:68.5805%;height:3%;background:linear-gradient(to bottom,var(--page) 0%,var(--page) 65%,transparent);opacity:calc(1 - var(--openness,0));pointer-events:none;z-index:2}
-
-/* One canonical exterior/shadow, with only the interior switched. */
-.base:not(.exterior){clip-path:inset(28.07% 15.95% 26.4% 15.47%)}
-
+*{box-sizing:border-box}
+body{font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.scene{aspect-ratio:1254/1100;overflow:hidden;min-width:0}
+.scene:after{content:"";position:absolute}
+.aperture{position:absolute}
+.leaf{position:absolute;background:#403f3e;will-change:transform}
+.leaf img{position:absolute;max-width:none;pointer-events:none}
+aside{flex-direction:column;min-width:0}
+.home-tile{appearance:none;text-align:left;font:inherit;cursor:pointer;transition:background .18s,transform .12s}
+.home-tile:active{transform:scale(.97)}
+.home-tile:focus-visible{outline:3px solid #00bfb2;outline-offset:4px}
+.home-tile .tile-name{margin-top:auto;padding-top:20px}
+.home-tile.moving strong:after{content:"";width:10px;height:10px;margin-left:8px;border:2px dotted #c6c6c9;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.position{font-size:12px;color:#8b8b91}
+@media(max-width:700px){.home-tile .tile-name{padding-top:14px}}
+@media(prefers-reduced-motion:reduce){.home-tile.moving strong:after{animation:none}}
+.layout{grid-template-columns:minmax(0,1fr) 300px}
+.home-tile{flex-direction:row}
+.homekit-icon{display:block}
+.homekit-icon img{display:block;width:100%;height:100%}
+.icon-closed{display:none!important}
+.home-tile.closed .icon-open{display:none}
+.home-tile.closed .icon-closed{display:block!important}
+.tile-copy{display:flex;flex-direction:column}
+.home-tile .tile-name{letter-spacing:0}
+.home-tile strong{margin:0;font-weight:400}
+.home-tile.moving strong:after{display:none}
+@media(max-width:700px){aside{flex-direction:column}}
+.layout{display:flex;flex-direction:column;align-items:center}
+.home-tile{width:100%;aspect-ratio:auto;align-self:stretch;grid-column:auto;grid-row:auto}
+.homekit-icon{aspect-ratio:1}
+.home-tile strong{white-space:nowrap}
+.position{grid-column:1 / 3;grid-row:auto;align-self:center}
+@media(max-width:700px){.position{grid-column:1}}
+.home-tile.active{box-shadow:none}
+.home-tile:active{background:#fff;border-color:#dedee5}
+.home-tile:hover,.home-tile:not(.active):active{border-color:transparent}
+.home-tile .tile-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.home-tile strong{font-size:16px;line-height:1.2;margin-top:2px}
+.tile-copy{min-width:0}
+@media(max-width:700px){.home-tile strong{font-size:15px}}
+.door-state{display:flex;align-items:baseline;gap:4px;min-width:0}
+.door-state #status{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.door-state .position{font:inherit;color:inherit;flex-shrink:0;grid-column:auto;align-self:auto}
+.home-tile strong.door-state{font-size:15px}
+@media(max-width:700px){.home-tile strong.door-state{font-size:13px;gap:3px}}
+aside .home-tile{height:62px;min-height:62px;border-radius:22px}
+.homekit-icon{flex:0 0 44px}
+.tile-copy{gap:1px}
+aside .home-tile .tile-name{font-size:13px;line-height:1.15}
+aside .home-tile strong.door-state{font-size:14px;line-height:1.2;margin-top:2px}
+aside .home-tile strong.door-state{gap:3px}
+@media(max-width:700px){aside .home-tile{height:60px;min-height:60px}}
+@media(max-width:700px){.homekit-icon{flex-basis:42px}}
+html{min-height:100%}
+.layout{justify-content:center;gap:4px}
+.scene{flex:0 0 auto}
+aside{flex:0 0 auto;row-gap:10px}
+@media(max-width:700px){.layout{gap:4px}}
+@media(max-height:390px){.layout{gap:8px}}
+main{border-radius:0;box-shadow:none}
+:root{--ink:#202329;--tile:#f0f0f3;--active:#fdfdfd;--line:#e5e5ea;--muted:#85858b;--switch:#efeff2;--selected:#fff}
+html[data-theme="night"]{color-scheme:dark;--ink:#f2f2f4;--tile:#2b2c31;--active:#36383e;--line:#494b53;--muted:#b3b4bd;--switch:#2b2c31;--selected:#484a52}
+body{background:var(--page);color:var(--ink);transition:background .2s}
+.home-tile{color:var(--ink)}
+.home-tile strong{color:var(--muted)}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:32px}
+.mode-group{display:flex;padding:3px;border-radius:11px;gap:2px}
+.mode-group button{appearance:none;border:0;background:transparent;color:var(--muted);font:500 12px -apple-system,BlinkMacSystemFont,sans-serif;line-height:1.2;padding:7px 10px;border-radius:8px;cursor:pointer}
+.mode-group button:focus-visible{outline:2px solid #51b89b;outline-offset:2px}
+@media(max-width:700px){.mode-group button{padding:7px 8px}}
+.home-tile.active,.home-tile.active:hover,.home-tile.active:active{color:#202329}
+.home-tile.active strong,.home-tile.active .position{color:#85858b}
 html[data-theme="night"] .home-tile.closed .icon-closed{filter:brightness(.702)}
-
-/* End the render at the physical floor/wall edges: no exterior shadow. */
-.base.exterior{clip-path:polygon(4.2% 16.4%,95.9% 16.4%,95.9% 19.5%,95.2% 19.5%,95.2% 74.48%,84.05% 74.48%,84.05% 73.6%,15.47% 73.6%,15.47% 74.48%,4.7% 74.48%,4.7% 19.5%,4.2% 19.5%)}html[data-theme="night"] .base{mask-image:none;-webkit-mask-image:none}.scene:after,html[data-theme="night"] .scene:after{display:block;inset:auto;left:15.4705%;top:83.8%;width:68.5805%;height:2%;background:var(--page);opacity:calc(1 - var(--openness,0));pointer-events:none;z-index:2}
-
-.sensor-tile[hidden]{display:none}.home-tile:disabled{cursor:default;opacity:1}.home-tile:disabled .homekit-icon{opacity:.65}.home-tile:disabled:active{transform:none}
-
-/* Match the surrounding firmware settings cards exactly. */
-:root{--page:#fff}html[data-theme="night"]{--page:#222}main{margin:0!important;padding:14px!important;height:100svh!important;min-height:360px}.layout{height:calc(100% - 44px)}
-
-.mode-group button{display:flex;align-items:center;justify-content:center;min-width:36px;min-height:32px}.mode-group button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.mode-group button[aria-pressed="true"]{background:#51b89b;color:#fff;box-shadow:none}.mode-group button:hover{background:#51b89b22}.mode-group button[aria-pressed="true"]:hover{background:#43a98d}
-
-/* Full-bleed house scene. All animation layers share one scaled source canvas. */
-body{margin:0!important}main{position:relative;overflow:hidden;padding:0!important;margin:0!important;height:100svh!important;min-height:360px;background:var(--page)}.layout{position:static;height:100%}.scene{position:absolute;inset:0;width:100%!important;height:100%;max-width:none;margin:0;background:transparent}.scene:after,html[data-theme="night"] .scene:after{display:none}.house-canvas{position:absolute}.house-background{position:absolute;inset:0;width:100%;height:100%;display:block}.aperture{left:12.8342%;top:48.2168%;width:45.9893%;height:19.2582%;overflow:hidden}.interior{position:absolute;inset:0;width:100%;height:100%;display:block}.leaf{inset:0}.leaf img{width:100%;height:100%;left:0;top:0}.toolbar{position:absolute;left:14px;right:14px;top:14px;width:auto;max-width:none;z-index:3;margin:0}aside{position:absolute;left:14px;right:14px;bottom:16px;width:auto;max-width:none;z-index:3;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:stretch}.home-tile,.sensor-tile{background:rgba(255,255,255,.64);backdrop-filter:blur(6px) saturate(115%);-webkit-backdrop-filter:blur(6px) saturate(115%);border:1px solid rgba(255,255,255,.2);box-shadow:0 2px 12px #00000008}.home-tile.active,.home-tile.active:hover,.home-tile.active:active{background:rgba(255,255,255,.94);border-color:rgba(255,255,255,.7)}.mode-group{background:rgba(255,255,255,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}html[data-theme="night"] .home-tile:not(.active),html[data-theme="night"] .sensor-tile{background:rgba(30,31,35,.64);border-color:rgba(255,255,255,.06)}html[data-theme="night"] .mode-group{background:rgba(30,31,35,.6)}html[data-theme="night"] .interior{filter:none}html[data-theme="night"] .leaf{filter:brightness(.7)}@media(max-height:390px){main{height:100svh!important;min-height:300px}aside{grid-template-columns:repeat(4,minmax(0,1fr));bottom:10px}.scene{width:100%!important}}
-.car-layer{position:absolute;left:17.44%;top:39.26%;width:50.39%;height:56.67%;pointer-events:none}html[data-theme="night"] .car-layer{filter:none}html[data-theme="night"] .leaf{filter:none}.aperture{height:19.4%}html[data-theme="night"] .aperture:after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:#39362f;pointer-events:none}
-.aperture{left:24.4207%;top:41.0842%;width:51.1586%;height:18.6163%}html[data-theme="night"] .aperture:after{display:none}.car-layer{left:25%;top:33%;width:45%;height:63%}
-.car-layer{left:23%;top:16.86%;width:54%;height:81.61%}
-.car-layer{left:42.16%;top:35.25%;width:36.59%;height:57.47%}.car-ground{position:absolute;left:39%;top:83%;width:43%;height:11%;background:radial-gradient(ellipse,rgba(0,0,0,.52),rgba(0,0,0,.24) 40%,transparent 73%);filter:blur(2px);pointer-events:none}.car-ground[hidden]{display:none}
-
-.garage-details{position:absolute;z-index:3;top:54px;left:12px;right:12px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#30383d;font-size:10px;line-height:1.3;pointer-events:none;text-shadow:0 1px 5px #ffffff70}html[data-theme="night"] .garage-details{color:#f2f2f2;text-shadow:0 1px 4px #0009}.weather-row,.detail-row{display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}.weather-row{font-size:11px}.weather-row svg{width:12px;height:13px;fill:none;stroke:currentColor;stroke-width:1.7}.mini-badge{display:inline-block;border-radius:4px;padding:1px 4px;background:#ffffff70;color:#30383d}.mini-badge.contact{background:#39433e;color:white}.mini-power{display:inline-flex;align-items:center;gap:2px}.mini-battery{width:11px;height:6px;border:1px solid currentColor;border-radius:1px;display:inline-block;padding:1px;position:relative}.mini-battery:after{content:"";position:absolute;right:-3px;top:1px;width:1px;height:2px;background:currentColor}.mini-battery i{display:block;background:currentColor;height:100%}.mini-signal{display:inline-flex;align-items:flex-end;gap:1px;height:8px;margin-left:3px}.mini-signal i{width:2px;background:currentColor;opacity:.25}.mini-signal i.on{opacity:1}.mini-age{opacity:.75}.presence-tile{grid-column:1/-1;grid-row:3;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.64);backdrop-filter:blur(6px);border-radius:18px;padding:7px 10px;color:#30383d;font-size:11px}.presence-tile svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6}.presence-tile strong{font-weight:600;margin-right:5px}.presence-tile[hidden]{display:none}html[data-theme="night"] .presence-tile{background:#1e1f23a3;color:#eee}aside{gap:8px;bottom:12px}.home-tile,.sensor-tile{min-height:52px}.sensor-list{display:contents}@media(max-width:350px){.garage-details{font-size:9px}.weather-row{font-size:10px}}
-.garage-details [hidden]{display:none}.garage-details .weather-row{font-weight:500}.sensor-tile{min-height:50px}.presence-tile{min-height:32px}
-
-aside{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.presence-tile{grid-column:auto;grid-row:auto}.home-tile,.sensor-tile,.presence-tile{height:60px;min-height:60px;padding:7px 10px;gap:9px;justify-content:flex-start;border-radius:22px;display:flex;align-items:center}.presence-tile[hidden],.sensor-tile[hidden]{display:none}.homekit-icon,.sensor-tile>svg,.presence-tile>svg{width:36px;height:36px;flex-shrink:0}.presence-tile strong,.sensor-tile strong,.home-tile .tile-name{display:block;font-size:12px;font-weight:600;line-height:1.2;margin:0;padding:0}.presence-tile span,.sensor-tile span,.home-tile .door-state{display:block;font-size:12px;line-height:1.3;margin-top:3px;font-weight:400}.presence-tile svg{color:var(--muted)}@media(min-width:650px){aside{grid-template-columns:repeat(3,minmax(0,1fr))}}
-
-aside{grid-template-columns:repeat(2,minmax(0,1fr))}.button-tile{display:flex;align-items:center;justify-content:flex-start;height:60px;min-height:60px;padding:7px 10px;gap:9px;border:1px solid transparent;border-radius:22px;background:rgba(255,255,255,.64);backdrop-filter:blur(6px);color:#30383d;transition:background .15s}.button-tile[hidden]{display:none}.button-tile svg{width:36px;height:36px;flex-shrink:0;fill:none;stroke:var(--muted);stroke-width:1.6}.button-tile strong{display:block;font-size:12px;font-weight:600;line-height:1.2}.button-tile span{display:block;font-size:12px;line-height:1.3;margin-top:3px;color:var(--muted)}html[data-theme="night"] .button-tile{background:#1e1f23a3;color:#eee}.button-tile.pulse,html[data-theme="night"] .button-tile.pulse{background:#fff;color:#202329;border-color:#d9e5de}.button-tile.pulse svg{stroke:#51b89b}.button-tile.pulse span{color:#467b66}
-
-.presence-tile>svg,.button-tile>svg{width:36px;height:32px;flex:0 0 36px;padding:0 6px;stroke:var(--muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;fill:none}.presence-tile strong,.button-tile strong{color:inherit}.presence-tile span{color:var(--muted)}.presence-tile.active,html[data-theme="night"] .presence-tile.active{background:#fff;color:#202329;border:1px solid #e5e5ea}.presence-tile.active span{color:#85858b}.presence-tile.active>svg{stroke:#51b89b}
-
-.tile-icon{display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 36px;border-radius:50%;background:transparent;color:var(--muted)}.sensor-tile .tile-icon>svg,.presence-tile .tile-icon>svg,.button-tile .tile-icon>svg{width:24px;height:26px;flex:none;padding:0;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}.presence-tile.active .tile-icon,.sensor-tile.active .tile-icon{background:#4cadd8;color:white}.button-tile.pulse .tile-icon{background:#e86363;color:white}.button-tile.pulse .tile-icon>svg{stroke:white}.sensor-tile.active,html[data-theme="night"] .sensor-tile.active{background:#fff;color:#202329;border:1px solid #e5e5ea}.sensor-tile.active span:not(.tile-icon){color:#85858b}
-.presence-tile.active .tile-icon>svg,.sensor-tile.active .tile-icon>svg,.button-tile.pulse .tile-icon>svg{color:#fff;stroke:#fff}
-/* Shared icon slot keeps all four tiles aligned, including inactive states. */
-aside .home-tile,aside .sensor-tile,aside .presence-tile,aside .button-tile{padding:7px 10px;gap:9px;border-width:1px;border-style:solid}
-aside .presence-tile:not(.active){border-color:transparent}
-aside .sensor-tile .tile-icon,aside .presence-tile .tile-icon,aside .button-tile .tile-icon,aside .homekit-icon{display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 36px;margin:0;padding:0;line-height:1}
+.scene:after,html[data-theme="night"] .scene:after{inset:auto;left:15.4705%;top:83.8%;width:68.5805%;height:2%;background:var(--page);opacity:calc(1 - var(--openness,0));pointer-events:none;z-index:2}
+.home-tile:disabled{cursor:default;opacity:1}
+.home-tile:disabled .homekit-icon{opacity:.65}
+.home-tile:disabled:active{transform:none}
+:root{--page:#fff}
+html[data-theme="night"]{--page:#222}
+.mode-group button{display:flex;align-items:center;justify-content:center;min-width:36px;min-height:32px}
+.mode-group button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.mode-group button[aria-pressed="true"]{background:#51b89b;color:#fff;box-shadow:none}
+.mode-group button:hover{background:#51b89b22}
+.mode-group button[aria-pressed="true"]:hover{background:#43a98d}
+body{margin:0!important}
+main{position:relative;overflow:hidden;padding:0!important;margin:0!important;height:100svh!important;min-height:360px;background:var(--page)}
+.layout{position:static;height:100%}
+.scene{position:absolute;inset:0;width:100%!important;height:100%;max-width:none;margin:0;background:transparent}
+.scene:after,html[data-theme="night"] .scene:after{display:none}
+.house-canvas{position:absolute}
+.house-background{position:absolute;inset:0;width:100%;height:100%;display:block}
+.aperture{overflow:hidden}
+.interior{position:absolute;inset:0;width:100%;height:100%;display:block}
+.leaf{inset:0}
+.leaf img{width:100%;height:100%;left:0;top:0}
+.toolbar{position:absolute;left:14px;right:14px;top:14px;width:auto;max-width:none;z-index:3;margin:0}
+aside{position:absolute;left:14px;right:14px;width:auto;max-width:none;z-index:3;padding:0;display:grid;align-items:stretch}
+.home-tile{background:rgba(255,255,255,.64);backdrop-filter:blur(6px) saturate(115%);-webkit-backdrop-filter:blur(6px) saturate(115%);border:1px solid rgba(255,255,255,.2);box-shadow:0 2px 12px #00000008}
+.home-tile.active,.home-tile.active:hover,.home-tile.active:active{background:rgba(255,255,255,.94);border-color:rgba(255,255,255,.7)}
+.mode-group{background:rgba(255,255,255,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+html[data-theme="night"] .home-tile:not(.active){background:rgba(30,31,35,.64);border-color:rgba(255,255,255,.06)}
+html[data-theme="night"] .mode-group{background:rgba(30,31,35,.6)}
+html[data-theme="night"] .interior{filter:none}
+@media(max-height:390px){main{height:100svh!important;min-height:300px}}
+@media(max-height:390px){.scene{width:100%!important}}
+.car-layer{position:absolute;pointer-events:none}
+html[data-theme="night"] .car-layer,html[data-theme="night"] .leaf{filter:none}
+html[data-theme="night"] .aperture:after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:#39362f;pointer-events:none}
+.aperture{left:24.4207%;top:41.0842%;width:51.1586%;height:18.6163%}
+html[data-theme="night"] .aperture:after{display:none}
+.car-layer{left:42.16%;top:35.25%;width:36.59%;height:57.47%}
+.car-ground{position:absolute;left:39%;top:83%;width:43%;height:11%;background:radial-gradient(ellipse,rgba(0,0,0,.52),rgba(0,0,0,.24) 40%,transparent 73%);filter:blur(2px);pointer-events:none}
+.car-ground[hidden]{display:none}
+.garage-details{position:absolute;z-index:3;flex-direction:column;font-size:10px;line-height:1.3}
+@media(max-width:350px){.garage-details{font-size:9px}}
+.garage-details [hidden]{display:none}
+aside{gap:8px}
+.home-tile{height:60px;min-height:60px;padding:7px 10px;gap:9px;justify-content:flex-start;border-radius:22px;display:flex;align-items:center}
+.homekit-icon{width:36px;height:36px;flex-shrink:0}
+.home-tile .tile-name{display:block;font-size:12px;font-weight:600;line-height:1.2;margin:0;padding:0}
+.home-tile .door-state{display:block;font-size:12px;line-height:1.3;margin-top:3px;font-weight:400}
+aside{grid-template-columns:repeat(2,minmax(0,1fr))}
+.button-tile{display:flex;align-items:center;justify-content:flex-start;height:60px;min-height:60px;padding:7px 10px;gap:9px;border:1px solid transparent;border-radius:22px;background:rgba(255,255,255,.64);backdrop-filter:blur(6px);color:#30383d;transition:background .15s}
+.button-tile[hidden]{display:none}
+.button-tile svg{width:36px;height:36px;flex-shrink:0;fill:none;stroke:var(--muted);stroke-width:1.6}
+.button-tile strong{display:block;font-size:12px;font-weight:600;line-height:1.2}
+.button-tile span{display:block;font-size:12px;line-height:1.3;margin-top:3px;color:var(--muted)}
+html[data-theme="night"] .button-tile{background:#1e1f23a3;color:#eee}
+.button-tile.pulse,html[data-theme="night"] .button-tile.pulse{background:#fff;color:#202329;border-color:#d9e5de}
+.button-tile.pulse svg{stroke:#51b89b}
+.button-tile.pulse span{color:#467b66}
+.button-tile>svg{width:36px;height:32px;flex:0 0 36px;padding:0 6px;stroke:var(--muted);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.button-tile strong{color:inherit}
+.tile-icon{display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 36px;border-radius:50%;background:transparent;color:var(--muted)}
+.button-tile .tile-icon>svg{width:24px;height:26px;flex:none;padding:0;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.button-tile.pulse .tile-icon{background:#e86363;color:white}
+.button-tile.pulse .tile-icon>svg{color:#fff;stroke:#fff}
+aside .home-tile,aside .button-tile{padding:7px 10px;gap:9px;border-width:1px;border-style:solid}
+aside .button-tile .tile-icon,aside .homekit-icon{display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 36px;margin:0;padding:0;line-height:1}
 aside .tile-icon>svg{display:block;margin:0}
-.garage-details .weather-row{min-height:20px;line-height:20px;padding:1px 0;overflow:visible}.garage-details .weather-row svg{display:block;width:13px;height:17px;flex:0 0 13px;overflow:visible}
-/* Use the motion tile typography for every dashboard tile and state. */
+aside .button-tile .tile-icon{background:rgba(0,0,0,.15)}
+aside .button-tile:not(.pulse) .tile-icon>svg{color:#fff;stroke:#fff}
+aside .button-tile.pulse .tile-icon{background:#e86363}
 aside .dashboard-tile{font-family:inherit;font-style:normal;--tile-title-color:var(--ink);--tile-status-color:var(--muted)}
 aside .dashboard-tile:is(.active,.pulse){--tile-title-color:#202329;--tile-status-color:#85858b}
 aside .dashboard-tile .tile-copy{display:flex;flex-direction:column;min-width:0;gap:0}
@@ -80,16 +157,61 @@ aside .dashboard-tile .tile-copy .tile-status{display:block;margin:2px 0 0;paddi
 aside .dashboard-tile .tile-copy .door-state{display:flex;align-items:baseline;gap:3px}
 .door-state .obstruction-icon{display:none;width:16px;height:16px;flex:0 0 16px;align-self:center;fill:currentColor}
 .home-tile.obstructed .obstruction-icon{display:block}
-.garage-details .weather-row,.garage-details .detail-row{max-width:100%;min-width:0}
-.garage-details .sensor-label{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.garage-details .mini-badge,.garage-details svg{flex-shrink:0}
-/* Reveal only the complete selected scene, never legacy/default image layers. */
+aside{bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+main{max-width:none}
+.garage-details{--reading-icon-size:22px;top:64px;bottom:66%;left:50%;right:auto;width:calc(100% - 28px);max-width:600px;margin:0;transform:translateX(-50%);display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:center;align-content:center;justify-content:center;gap:12px 7px;height:auto;padding:8px 0;overflow:visible;color:rgba(38,48,58,.85);background:transparent;text-shadow:none;pointer-events:none}
+html[data-theme="night"] .garage-details{color:rgba(255,255,255,.78);text-shadow:none}
+.garage-details-lower{top:60%;bottom:calc(92px + env(safe-area-inset-bottom,0px));padding:0}
+.garage-details::-webkit-scrollbar{display:none}
+.home-summary{display:grid;grid-column:span 2;grid-template-columns:var(--reading-icon-size) minmax(0,1fr);align-items:center;justify-self:center;width:max-content;max-width:100%;column-gap:6px;min-width:0;white-space:normal;pointer-events:auto}
+#car-presence{appearance:none;border:0;border-radius:6px;background:transparent;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+#car-presence:focus-visible{outline:2px solid currentColor;outline-offset:5px}
+.home-summary-icon{display:block;width:var(--reading-icon-size);height:var(--reading-icon-size);margin:0;padding:0;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.home-summary-copy{display:flex;flex-direction:column;gap:2px;min-width:0}
+.home-summary-label,.home-summary-value{display:block;margin:0;padding:0;color:inherit;font-size:11px;line-height:1.2;letter-spacing:0;overflow-wrap:anywhere}
+.home-summary-label{font-weight:600}
+.home-summary-value{font-weight:400;font-variant-numeric:tabular-nums}
+.home-summary-value.is-detected{position:relative;overflow:visible}
+.reading-detected-badge{position:absolute;left:0;top:0;display:block;overflow:visible;pointer-events:none}
+.reading-accessible-text{color:transparent}
+.garage-details[hidden],.garage-details .home-summary[hidden]{display:none}
+@media(max-width:700px){.garage-details{--reading-icon-size:20px;gap:12px 5px}}
+@media(max-width:700px){.home-summary-label,.home-summary-value{font-size:10px}}
+@media(max-width:380px){.garage-details{--reading-icon-size:18px;width:calc(100% - 20px);column-gap:3.5px}}
+@media(max-width:380px){.home-summary{column-gap:6px}}
+@media(max-width:380px){.home-summary-label,.home-summary-value{font-size:10px}}
+.garage-details svg{flex-shrink:0}
 .scene{visibility:hidden}html[data-scene-ready="true"] .scene{visibility:visible}
+.toolbar-right{display:flex;align-items:center;gap:12px}
+.connection-icons{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.connection-icons[hidden],.connection-icon[hidden]{display:none}
+.connection-icon{display:inline-flex;align-items:center;justify-content:center;width:24px;height:28px;opacity:.82}
+.connection-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.wifi-arc{opacity:.2}
+.wifi-arc.active{opacity:1}
+.wifi-off{display:none}
+.connection-icon.offline{color:var(--muted)}
+.connection-icon.offline .wifi-off{display:block}
+.connection-icon.offline .wifi-arc{opacity:.15}
+.connection-icon.starting{opacity:.4}
+@media(max-width:400px){.toolbar-right{gap:8px}}
+@media(max-width:400px){.connection-icons{gap:5px}}
 </style>
 <main>
-<div class="toolbar"><div class="mode-group" aria-label="Appearance"><button type="button" data-theme-mode="day" aria-label="Day" title="Day"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><button type="button" data-theme-mode="night" aria-label="Night" title="Night"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z"/></svg></button><button type="button" data-theme-mode="auto">Auto</button></div><div class="mode-group" aria-label="Car"><button type="button" id="car-toggle" aria-label="Show car" title="Car in the garage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 10 2-6h12l2 6M3 10h18v8H3zM5 18v3m14-3v3M6 14h2m8 0h2"/></svg></button></div></div>
+<div class="toolbar"><div class="mode-group" aria-label="Appearance"><button type="button" data-theme-mode="day" aria-label="Day" title="Day"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><button type="button" data-theme-mode="night" aria-label="Night" title="Night"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z"/></svg></button><button type="button" data-theme-mode="auto">Auto</button></div><div class="toolbar-right"><div class="connection-icons" id="connection-icons" hidden><span class="connection-icon" id="wifi-indicator" role="img" aria-label="Wi-Fi"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="wifi-arc" d="M2 8a16 16 0 0 1 20 0"/><path class="wifi-arc" d="M5 11a11 11 0 0 1 14 0"/><path class="wifi-arc" d="M8 14a6 6 0 0 1 8 0"/><circle class="wifi-arc" cx="12" cy="18" r="1" fill="currentColor" stroke="none"/><path class="wifi-off" d="m4 4 16 16"/></svg></span><span class="connection-icon" id="bt-indicator" role="img" aria-label="Bluetooth" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 6 10 12-5 4V2l5 4L7 18"/></svg></span></div></div></div>
 
-<div class="garage-details" aria-label="Sensor readings"><div id="weather-outdoor" class="weather-row"></div><div id="weather-indoor" class="weather-row"></div></div>
+<div class="garage-details" aria-label="Sensor readings" tabindex="0">
+  <div class="home-summary" id="summary-temperature"><svg class="home-summary-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M11 18.2V6a4 4 0 0 1 8 0v12.2a7 7 0 1 1-8 0Z" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15 9v15" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="15" cy="24" r="3.1" fill="currentColor" stroke="none"/><path d="M21.5 7H25m-3.5 5H24m-2.5 5H25" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><div class="home-summary-copy"><strong class="home-summary-label">Temperature</strong><span class="home-summary-value" data-reading="temperature" data-i18n-ignore>—</span></div></div>
+  <div class="home-summary" id="summary-humidity"><svg class="home-summary-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3C13 7.5 6 14.7 6 20a10 10 0 0 0 20 0C26 14.7 19 7.5 16 3Z" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="m12 23 8-8" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="16" r="1.7" fill="currentColor" stroke="none"/><circle cx="20" cy="23" r="1.7" fill="currentColor" stroke="none"/></svg><div class="home-summary-copy"><strong class="home-summary-label">Humidity</strong><span class="home-summary-value" data-reading="humidity" data-i18n-ignore>—</span></div></div>
+  <div class="home-summary"><svg class="home-summary-icon" viewBox="2 8 40 40" aria-hidden="true"><circle cx="22" cy="28" r="8" fill="currentColor" stroke="none"/><path d="M22 11v4m0 26v4M5 28h4m26 0h4M10 16l3 3m18 18 3 3M10 40l3-3m18-18 3-3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg><div class="home-summary-copy"><strong class="home-summary-label">Light</strong><span class="home-summary-value" data-reading="light">No data</span></div></div>
+</div>
+<div class="garage-details garage-details-lower" aria-label="Sensors" tabindex="0">
+  <div class="home-summary" id="summary-open"><svg class="home-summary-icon" viewBox="-3 6 48 48" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" stroke="none" d="M19.5 8.43L19.43 8.5L19.03 9.5L19.02 14.5L18.99 15.5L19.5 15.77L21.5 15.84L21.69 16.5L21.69 43.5L22.5 44.43L29.5 44.43L30.5 44.37L31.5 44.22L32.5 43.94L33.24 43.5L33.5 43.28L34.11 42.5L34.64 41.5L34.93 40.5L34.98 39.5L34.98 20.5L34.91 19.5L34.61 18.5L34.05 17.5L33.5 16.85L32.5 16.16L31.5 15.9L29.5 15.76L22.5 15.76L21.76 15.5L21.72 14.5L21.71 9.5L21.23 8.5L20.5 8.03L19.5 8.43ZM8.5 16.07L7.5 16.69L6.75 17.5L6.16 18.5L5.93 19.5L5.92 40.5L6.14 41.5L6.66 42.5L8.5 44.02L9.5 44.28L10.5 44.39L11.5 44.43L18.5 44.45L18.66 44.5L19.03 45.5L19.02 50.5L19.38 51.5L19.5 51.62L20.5 51.97L21.25 51.5L21.71 50.5L21.72 45.5L22.06 44.5L21.5 44.21L20.5 44.21L19.5 44.27L19.02 43.5L19.03 16.5L18.5 15.74L11.5 15.76L9.5 15.88L8.5 16.07Z"/></svg><div class="home-summary-copy"><strong class="home-summary-label">Opening sensor</strong><span class="home-summary-value" data-reading="open">No data</span></div></div>
+  <div class="home-summary" id="summary-closed"><svg class="home-summary-icon" viewBox="-3 6 48 48" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" stroke="none" d="M19.5 8.43L19.43 8.5L19.03 9.5L19.02 14.5L18.99 15.5L19.5 15.77L21.5 15.84L21.69 16.5L21.69 43.5L22.5 44.43L29.5 44.43L30.5 44.37L31.5 44.22L32.5 43.94L33.24 43.5L33.5 43.28L34.11 42.5L34.64 41.5L34.93 40.5L34.98 39.5L34.98 20.5L34.91 19.5L34.61 18.5L34.05 17.5L33.5 16.85L32.5 16.16L31.5 15.9L29.5 15.76L22.5 15.76L21.76 15.5L21.72 14.5L21.71 9.5L21.23 8.5L20.5 8.03L19.5 8.43ZM8.5 16.07L7.5 16.69L6.75 17.5L6.16 18.5L5.93 19.5L5.92 40.5L6.14 41.5L6.66 42.5L8.5 44.02L9.5 44.28L10.5 44.39L11.5 44.43L18.5 44.45L18.66 44.5L19.03 45.5L19.02 50.5L19.38 51.5L19.5 51.62L20.5 51.97L21.25 51.5L21.71 50.5L21.72 45.5L22.06 44.5L21.5 44.21L20.5 44.21L19.5 44.27L19.02 43.5L19.03 16.5L18.5 15.74L11.5 15.76L9.5 15.88L8.5 16.07Z"/></svg><div class="home-summary-copy"><strong class="home-summary-label">Closing sensor</strong><span class="home-summary-value" data-reading="closed">No data</span></div></div>
+  <div class="home-summary"><svg class="home-summary-icon" viewBox="-2 5 44 44" aria-hidden="true"><g fill="currentColor" stroke="none"><circle cx="29" cy="11" r="3.5"/><path d="m25.6 18-7.4 5.1-2 9.6a1.6 1.6 0 0 0 3.1.7l1.8-8.2 3.1-2-1.3 10.1-6.6 9.1a1.8 1.8 0 0 0 2.9 2.1l7.1-9.7 3.2 3.1 3.4 8a1.8 1.8 0 0 0 3.3-1.4l-3.7-8.7-4.4-4.4 1.1-8.4 2.4 3 6.4.8a1.6 1.6 0 1 0 .4-3.2l-5.1-.7-3.3-4.2a3.2 3.2 0 0 0-4.4-1.6Z"/></g><path d="M6 13h9M1 22h10M5 31h7M2 40h7" fill="none" stroke="currentColor" stroke-width="2.2" opacity=".65"/></svg><div class="home-summary-copy"><strong class="home-summary-label">Motion</strong><span class="home-summary-value" data-reading="motion">No data</span></div></div>
+  <div class="home-summary"><svg class="home-summary-icon" viewBox="2 7 42 42" aria-hidden="true"><defs><mask id="smoke-cloud-separation" x="0" y="0" width="44" height="56" maskUnits="userSpaceOnUse"><rect width="44" height="56" fill="white" stroke="none"/><path d="M14 42h21a7 7 0 0 0 1.3-13.9A9.5 9.5 0 0 0 18.4 25a7 7 0 0 0-7.2 7A5.2 5.2 0 0 0 14 42Z" fill="black" stroke="black" stroke-width="3.5"/></mask></defs><path d="M8.5 32H25a6.5 6.5 0 0 0 .4-13A8.4 8.4 0 0 0 10 17.8a6.7 6.7 0 0 0-5.7 6.6A4.2 4.2 0 0 0 8.5 32Z" fill="currentColor" stroke="none" mask="url(#smoke-cloud-separation)"/><path d="M14 42h21a7 7 0 0 0 1.3-13.9A9.5 9.5 0 0 0 18.4 25a7 7 0 0 0-7.2 7A5.2 5.2 0 0 0 14 42Z" fill="currentColor" stroke="none"/></svg><div class="home-summary-copy"><strong class="home-summary-label">Smoke sensor</strong><span class="home-summary-value" data-reading="smoke">No data</span></div></div>
+  <button type="button" class="home-summary" id="car-presence" aria-label="Show car" aria-pressed="false" hidden><svg class="home-summary-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="m7 14 2.2-6.3A2.5 2.5 0 0 1 11.6 6h8.8a2.5 2.5 0 0 1 2.4 1.7L25 14M8 14h16a2 2 0 0 1 2 2v8H6v-8a2 2 0 0 1 2-2ZM8 24v3m16-3v3M10 18h2m8 0h2M13 22h6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="home-summary-copy"><strong class="home-summary-label" data-i18n-ignore>Car presence</strong><span class="home-summary-value" data-reading="car" data-i18n-ignore>—</span></div></button>
+</div>
 <div class="layout">
 <div class="scene" role="img" aria-label="Garage with an animated door">
 <div class="house-canvas"><img class="house-background" alt="">
@@ -98,37 +220,94 @@ aside .dashboard-tile .tile-copy .door-state{display:flex;align-items:baseline;g
 <aside aria-label="Garage door controls">
 <button id="garage-control" class="home-tile dashboard-tile" type="button" aria-label="Open garage door">
 <span class="homekit-icon" aria-hidden="true"><img class="icon-open" src="garage-icon-open.svg" alt=""><img class="icon-closed" src="garage-icon-closed.svg" alt=""></span>
-<span class="tile-copy"><span class="tile-name">Garage door</span>
+<span class="tile-copy">
+<span class="tile-name" data-i18n-ignore>Brama garażowa</span>
 <strong class="door-state tile-status"><svg class="obstruction-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M10.27 3.5a2 2 0 0 1 3.46 0l8.66 15A2 2 0 0 1 20.66 21H3.34a2 2 0 0 1-1.73-3l8.66-15ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Zm0 8a1.25 1.25 0 1 0 0 2.5A1.25 1.25 0 0 0 12 16Z"/></svg><span id="status" aria-live="polite">Closed</span><span id="position" class="position"></span></strong></span>
 </button>
-<div class="sensor-list" aria-label="Sensors"><div class="sensor-tile dashboard-tile" id="motion-tile" hidden><span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 28 32" aria-hidden="true"><circle cx="16" cy="5" r="2.5"/><path d="m13 11 4-2 3 5 4 1M16 11l-4 8 5 3 2 7M12 19l-4 9M12 12l-3 4M2 8h5M1 14h4M2 21h4"/></svg></span><div class="tile-copy"><strong class="tile-name">Motion sensor</strong><span class="tile-status">—</span></div></div><div class="presence-tile dashboard-tile" id="car-presence" hidden><span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 28 32" aria-hidden="true"><path d="m6 14 2-6a2 2 0 0 1 2-1h8a2 2 0 0 1 2 1l2 6M7 14h14a2 2 0 0 1 2 2v7H5v-7a2 2 0 0 1 2-2Zm0 9v3m14-3v3M8 18h3m6 0h3M11 22h6"/></svg></span><div class="tile-copy"><strong class="tile-name">Car presence</strong><span class="tile-status">—</span></div></div>
-
-
-</div>
 
 <div class="button-tile dashboard-tile" id="button-indicator" role="status" aria-label="BLU Button1" hidden><span class="tile-icon" aria-hidden="true"><svg viewBox="0 0 28 32" aria-hidden="true"><rect x="6" y="4" width="16" height="24" rx="5"/><circle cx="14" cy="14" r="4.5"/><path d="M12 24h4"/></svg></span><div class="tile-copy"><strong class="tile-name">Button</strong><span class="tile-status">Ready</span></div></div>
 </aside>
 </div>
 
 </main>
+<script src="i18n.js">
+</script>
 <script>
+const garageReadingBadgeCache=new WeakMap();
+function layoutGarageReadings(){
+ document.querySelectorAll('.garage-details').forEach(group=>{
+   const visible=Array.from(group.children).filter(node=>node.classList.contains('home-summary')&&!node.hidden);
+   group.hidden=visible.length===0;
+   visible.forEach(node=>{node.style.gridColumn='span 2';});
+   if(visible.length%3===1)visible[visible.length-1].style.gridColumn='3 / span 2';
+   else if(visible.length%3===2){visible[visible.length-2].style.gridColumn='2 / span 2';visible[visible.length-1].style.gridColumn='4 / span 2';}
+ });
+}
+function setGarageDashboardVisibility(blu){
+ const show=role=>!blu[role]||blu[role].dashboard!==false;
+ const visibility={temperature:show('indoor')||show('outdoor'),humidity:show('indoor')||show('outdoor'),light:show('motion'),motion:show('motion'),open:show('open'),closed:show('closed'),smoke:show('smoke')};
+ for(const [kind,visible] of Object.entries(visibility))document.querySelector('[data-reading="'+kind+'"]').closest('.home-summary').hidden=!visible;
+}
+const garageReadingUpdates=new WeakMap();
+let garageReadingBadgeSequence=0,garageReadingBadgeCanvas=null;
+function setGarageReadingValue(node,text,detected=false,refreshKey=null){
+ const key=refreshKey===null?null:JSON.stringify(refreshKey);
+ let update=garageReadingUpdates.get(node);
+ if(!update){update={key,until:0,timer:0};garageReadingUpdates.set(node,update);}
+ else if(key!==null&&key!==update.key&&!detected){
+   update.until=performance.now()+1000;
+   if(update.timer)clearTimeout(update.timer);
+   update.timer=setTimeout(()=>{update.timer=0;update.until=0;setGarageReadingValue(node,update.text,update.detected,update.refreshKey);},1000);
+ }
+ update.key=key;update.text=text;update.detected=detected;update.refreshKey=refreshKey;
+ if(key===null||detected){if(update.timer)clearTimeout(update.timer);update.timer=0;update.until=0;}
+ const badge=detected||update.until>performance.now();
+ node.setAttribute('data-i18n-ignore','');
+ const style=badge?getComputedStyle(node):null;
+ const fontSize=style?parseFloat(style.fontSize):0;
+ const fontFamily=style?style.fontFamily:'';
+ const lineHeight=style?(parseFloat(style.lineHeight)||fontSize*1.2):0;
+ const signature=JSON.stringify([text,badge,fontSize,fontFamily,lineHeight]);
+ if(garageReadingBadgeCache.get(node)===signature)return;
+ garageReadingBadgeCache.set(node,signature);
+ node.classList.toggle('is-detected',badge);
+ node.textContent=text;
+ if(!badge)return;
+ if(!garageReadingBadgeCanvas)garageReadingBadgeCanvas=document.createElement('canvas');
+ const context=garageReadingBadgeCanvas.getContext('2d');
+ context.font='600 '+fontSize+'px '+fontFamily;
+ const width=Math.ceil(context.measureText(text).width)+8,height=lineHeight;
+ const svgNS='http://www.w3.org/2000/svg';
+ const create=(tag,attributes)=>{const element=document.createElementNS(svgNS,tag);for(const [key,value] of Object.entries(attributes))element.setAttribute(key,String(value));return element;};
+ const id='garage-detected-'+(++garageReadingBadgeSequence);
+ const svg=create('svg',{class:'reading-detected-badge',width,height,viewBox:'0 0 '+width+' '+height,'aria-hidden':'true',focusable:'false'});
+ const defs=create('defs',{}),mask=create('mask',{id,x:0,y:0,width,height,maskUnits:'userSpaceOnUse',maskContentUnits:'userSpaceOnUse',style:'mask-type:luminance'});
+ mask.append(create('rect',{width,height,rx:4,fill:'white'}));
+ const cutout=create('text',{x:width/2,y:height/2+fontSize*.32,'text-anchor':'middle','font-family':fontFamily,'font-size':fontSize,'font-weight':600,fill:'black'});
+ cutout.textContent=text;mask.append(cutout);defs.append(mask);svg.append(defs,create('rect',{width,height,rx:4,fill:'currentColor',mask:'url(#'+id+')'}));
+ const caption=document.createElement('span');caption.className='reading-accessible-text';caption.textContent=text;
+ node.replaceChildren(caption,svg);
+}
 (()=>{
 const system=matchMedia('(prefers-color-scheme: dark)'),base=document.querySelector('.interior'),exterior=document.querySelector('.house-background');let mode='auto',car='car';try{mode=localStorage.getItem('garage-theme')||'auto';car=localStorage.getItem('garage-car')||'car';}catch(_){}if(!['day','night','auto'].includes(mode))mode='auto';if(!['car','empty'].includes(car))car='car';
 let themeRequest=0;
 let lastPresenceMAC=null,lastPresencePacket=null,lastPresence=null;
-let presenceData=null;
+let presenceData=null,presenceUpdateAt=0;
 function renderCarPresence(){
  if(!presenceData)return;
  const presence=document.getElementById('car-presence'),button=presenceData.button;
- presence.hidden=!(button&&button.secure);
- const ready=presenceData.car_presence_ready!==false,present=car==='car';
- presence.querySelector(':scope > div > span').textContent=!ready?'No data':present?'Detected':'Not detected';
+ const tr=text=>typeof GarageI18n==='undefined'?text:GarageI18n.t(text);
+ presence.hidden=!(button&&button.secure)||button.dashboard===false;
+ const ready=presenceData.car_presence_ready!==false&&performance.now()-presenceUpdateAt<=15000,present=car==='car';
+ setGarageReadingValue(presence.querySelector('[data-reading="car"]'),tr(!ready?'No data':present?'Detected':'Not detected'),ready&&present,ready&&button&&button.secure?[button.packet_seq??null,present]:null);
  presence.classList.toggle('active',ready&&present);
- presence.querySelector('.tile-name').textContent=presenceData.car_name||'Car presence';
- presence.title='BLU button detected within range — this does not confirm the parking location';
+ presence.querySelector('.home-summary-label').textContent=presenceData.car_name||tr('Car presence');
+ presence.title=tr('BLU button detected within range — this does not confirm the parking location');
+ layoutGarageReadings();
 }
+document.addEventListener('garage-language-change',renderCarPresence);
 // A user override lasts until a new authenticated packet or a presence transition.
-// Polling the same packet must not immediately undo the toolbar button.
+// Polling the same packet must not immediately undo the presence control.
 function syncCarPresence(blu){
  const button=blu.button;
  if(!button||!button.secure){lastPresenceMAC=lastPresencePacket=lastPresence=null;return;}
@@ -142,6 +321,7 @@ function syncCarPresence(blu){
 window.addEventListener('message',e=>{
  if(e.source===parent&&e.origin===location.origin&&e.data&&e.data.garageTelemetry){
    presenceData=e.data.garageTelemetry.status.blu||{};
+   presenceUpdateAt=performance.now();
    syncCarPresence(presenceData);renderCarPresence();
  }
 });
@@ -160,8 +340,8 @@ try{await Promise.all(paths.map(readyAsset));}catch(e){console.warn('Cannot load
 exterior.src=paths[0];base.src=paths[1];document.querySelector('.leaf img').src=paths[2];document.querySelector('.car-layer').src=paths[3];document.documentElement.dataset.car=car;document.querySelector('.car-layer').hidden=car!=='car';document.querySelector('.car-ground').hidden=car!=='car';document.documentElement.dataset.theme=theme;parent.postMessage({garageAction:'theme',theme},location.origin);
 document.documentElement.dataset.sceneReady='true';
 base.closest('.scene').setAttribute('aria-label',car==='car'?'Garage with a Tesla Model S':'Empty garage');
-document.querySelectorAll('[data-theme-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeMode===mode)));document.getElementById('car-toggle').setAttribute('aria-pressed',String(car==='car'));document.getElementById('car-toggle').setAttribute('aria-label',car==='car'?'Hide car':'Show car');}
-document.querySelectorAll('[data-theme-mode]').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.themeMode;try{localStorage.setItem('garage-theme',mode);}catch(_){}apply();}));document.getElementById('car-toggle').addEventListener('click',()=>{car=car==='car'?'empty':'car';try{localStorage.setItem('garage-car',car);}catch(_){}apply();});system.addEventListener('change',()=>{if(mode==='auto')apply();});
+document.querySelectorAll('[data-theme-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeMode===mode)));document.getElementById('car-presence').setAttribute('aria-pressed',String(car==='car'));document.getElementById('car-presence').setAttribute('aria-label',car==='car'?'Hide car':'Show car');}
+document.querySelectorAll('[data-theme-mode]').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.themeMode;try{localStorage.setItem('garage-theme',mode);}catch(_){}apply();}));document.getElementById('car-presence').addEventListener('click',()=>{car=car==='car'?'empty':'car';try{localStorage.setItem('garage-car',car);}catch(_){}apply();renderCarPresence();});system.addEventListener('change',()=>{if(mode==='auto')apply();});
 const scene=document.querySelector('.scene'),canvas=document.querySelector('.house-canvas');
 function fitScene(){const box=scene.getBoundingClientRect(),scale=Math.max(box.width/1122,box.height/1402);canvas.style.width=(1122*scale)+'px';canvas.style.height=(1402*scale)+'px';canvas.style.left=((box.width-1122*scale)/2)+'px';canvas.style.top=((box.height-1402*scale)/2)+'px';}
 new ResizeObserver(fitScene).observe(scene);fitScene();apply();
@@ -169,17 +349,81 @@ new ResizeObserver(fitScene).observe(scene);fitScene();apply();
 
 (()=>{
 const leaf=document.getElementById('leaf'),status=document.getElementById('status'),position=document.getElementById('position'),control=document.getElementById('garage-control');
-const sensors=document.querySelectorAll('.sensor-tile');let frame=0,received=false,lastUpdate=0,lastButtonSequence=null,buttonPulseTimer=0;
+let frame=0,received=false,lastUpdate=0,lastButtonSequence=null,buttonPulseTimer=0;
 control.disabled=true;status.textContent='Loading…';
 control.addEventListener('click',()=>{if(!control.disabled)parent.postMessage({garageAction:'toggle'},location.origin);});
-function sensorValue(node,value){node.querySelector(':scope > div > span').textContent=value;}
+let summaryData=null;
+function renderGarageName(cd){
+ const name=cd.name||'Garage door';
+ control.querySelector('.tile-name').textContent=['Garage door','Garage Door'].includes(name)&&typeof GarageI18n!=='undefined'?GarageI18n.t('Garage door'):name;
+}
+function renderSensorNames(blu){
+ const tr=text=>typeof GarageI18n==='undefined'?text:GarageI18n.t(text);
+ for(const [id,role,fallback] of [['button-indicator','button','Button']]){
+   const name=blu[role]&&blu[role].name;
+   document.getElementById(id).querySelector('.tile-name').textContent=name&&name!==fallback?name:tr(fallback);
+ }
+}
+function renderSummary(data){
+ const cd=data.status,blu=cd.blu||{},tr=text=>typeof GarageI18n==='undefined'?text:GarageI18n.t(text);
+ setGarageDashboardVisibility(blu);
+ const language=typeof GarageI18n==='undefined'?'en':GarageI18n.getLanguage();
+ const number=(value,digits=0)=>value.toFixed(digits).replace('.',language==='pl'?',':'.');
+ const paired=s=>!!(s&&(s.paired??s.secure));
+ const fresh=s=>paired(s)&&s.ready!==false&&s.seen&&Number.isFinite(s.age_s)&&s.age_s>=0&&s.age_s<=(s.timeout_s||blu.stale_after_s||180);
+ const set=(kind,text,detected=false,refreshKey=null)=>setGarageReadingValue(document.querySelector('[data-reading="'+kind+'"]'),text,detected,refreshKey);
+ for(const [kind,label] of [['temperature','Temperature'],['humidity','Humidity'],['open','Opening sensor'],['closed','Closing sensor'],['motion','Motion'],['light','Light'],['smoke','Smoke sensor']]){
+   const node=document.querySelector('[data-reading="'+kind+'"]').previousElementSibling;
+   node.setAttribute('data-i18n-ignore','');node.textContent=tr(label);
+ }
+ for(const [kind,unit,digits] of [['temperature','°',1],['humidity','%',0]]){
+   const sources=['indoor','outdoor'].map(role=>blu[role]).filter(s=>paired(s)&&s.dashboard!==false&&Number.isFinite(s[kind])&&(kind!=='humidity'||s[kind]>=0&&s[kind]<=100)&&(s[kind+'_ready']===true||s[kind+'_ready']!==false&&fresh(s)));
+   const values=sources.map(s=>s[kind]);
+   const low=Math.min(...values),high=Math.max(...values);
+   set(kind,values.length?(number(low,digits)+(low!==high?'–'+number(high,digits):'')+unit):tr('No data'));
+   document.getElementById('summary-'+kind).title=sources.map(s=>(s.name||tr('Temperature and humidity'))+': '+number(s[kind],digits)+unit).join(' · ');
+ }
+ for(const [role,label] of [['open','Opening sensor'],['closed','Closing sensor']]){
+   const contact=blu[role];
+   set(role,tr(fresh(contact)?contact.active?'Contacts closed':'Contacts open':'No data'),!!(fresh(contact)&&contact.active),fresh(contact)?[contact.packet_seq??null,contact.active]:null);
+   document.getElementById('summary-'+role).title=contact&&contact.name&&contact.name!==label?contact.name:tr(label);
+ }
+ set('motion',tr(fresh(blu.motion)?blu.motion.active?'Detected':'Not detected':'No data'),!!(fresh(blu.motion)&&blu.motion.active),fresh(blu.motion)?[blu.motion.packet_seq??null,blu.motion.active]:null);
+ const light=blu.motion;
+ const lightFresh=paired(light)&&Number.isFinite(light.illuminance)&&light.illuminance>=0&&(light.illuminance_ready===true||light.illuminance_ready!==false&&fresh(light)&&Number.isFinite(light.illuminance_age_s)&&light.illuminance_age_s>=0&&light.illuminance_age_s<=(light.timeout_s||blu.stale_after_s||180));
+ set('light',lightFresh?number(light.illuminance)+' '+(language==='pl'?'luksów':'lux'):tr('No data'),false,lightFresh?[light.packet_seq??null,light.illuminance]:null);
+ const smoke=blu.smoke,smokeState=paired(smoke)&&smoke.smoke_seen;
+ const smokeFresh=smokeState&&fresh(smoke)&&Number.isFinite(smoke.smoke_age_s)&&smoke.smoke_age_s>=0&&smoke.smoke_age_s<=(smoke.timeout_s||blu.stale_after_s||180);
+ set('smoke',tr(smokeState&&smoke.active?'Smoke detected':smokeFresh||fresh(smoke)?'Ready':'No data'),!!(smokeState&&smoke.active),smokeFresh?[smoke.packet_seq??null,smoke.active]:null);
+ layoutGarageReadings();
+}
+document.addEventListener('garage-language-change',()=>{if(summaryData){renderSummary(summaryData);renderGarageName(summaryData.status);renderSensorNames(summaryData.status.blu||{});}});
+function renderConnections(network){
+ const group=document.getElementById('connection-icons'),wifi=document.getElementById('wifi-indicator'),bt=document.getElementById('bt-indicator');
+ const tr=text=>typeof GarageI18n==='undefined'?text:GarageI18n.t(text);
+ group.hidden=false;
+ const connected=!!(network&&network.wifi_connected),rssi=network&&network.wifi_rssi;
+ const valid=Number.isFinite(rssi)&&rssi<0;
+ const strength=connected?(valid?(rssi>=-55?4:rssi>=-67?3:rssi>=-75?2:1):0):0;
+ const arcs=wifi.querySelectorAll('.wifi-arc');
+ arcs.forEach((arc,index)=>arc.classList.toggle('active',index>=4-strength));
+ wifi.classList.toggle('offline',!connected);
+ const label='Wi-Fi: '+tr(connected?'Connected':'Disconnected')+(connected&&valid?' · '+rssi+' dBm':'');
+ wifi.title=label;wifi.setAttribute('aria-label',label);
+ bt.hidden=!(network&&network.bt_enabled);
+ bt.classList.toggle('starting',!network||!network.bt_running);
+ const btLabel=tr(network&&network.bt_running?'Bluetooth enabled':'Bluetooth starting');
+ bt.title=btLabel;bt.setAttribute('aria-label',btLabel);
+}
 function update(data){
+ summaryData=data;renderSummary(data);
+ renderConnections(data.network);
  received=true;lastUpdate=performance.now();if(frame)cancelAnimationFrame(frame);
  const cd=data.status,blu=cd.blu||{},blocked=blu.enable&&!blu.ready,state=blocked?'unavailable':cd.cur_state_str;
+ renderGarageName(cd);
  control.disabled=blocked||!['open','closed','opening','closing','stopped'].includes(state);
  const moving=state==='opening'||state==='closing';
  const captions={closed:'Closed',open:'Open',opening:'Opening…',closing:'Closing…',stopped:'Stopped',unavailable:'No data'};
- control.querySelector('.tile-name').textContent=cd.name||'Garage door';
  const obstructed=!!(cd.obstruction_detected??cd.movement_timed_out)&&!blocked;
  status.textContent=obstructed?'Obstruction':captions[state]||'Unknown state';control.classList.toggle('obstructed',obstructed);control.classList.toggle('active',state!=='closed'&&state!=='unavailable');control.classList.toggle('closed',state==='closed');control.setAttribute('aria-label',moving?'Stop garage door':state==='closed'?'Open garage door':'Close garage door');
  const motion=data.motion||{from:.5,to:.5,duration:0,elapsed:0},start=performance.now();
@@ -194,32 +438,21 @@ function update(data){
   if(!obstructed&&moving&&f<1)frame=requestAnimationFrame(paint);
  }
  paint(start);
- const fresh=s=>s&&s.secure&&s.seen&&s.age_s>=0&&s.age_s<=blu.stale_after_s;
- sensors[0].querySelector('.tile-name').textContent=blu.motion&&blu.motion.name||'Motion sensor';
- sensors[0].hidden=!(blu.motion&&blu.motion.secure);sensors[0].classList.toggle('active',!!(fresh(blu.motion)&&blu.motion.active));sensorValue(sensors[0],fresh(blu.motion)?(blu.motion.active?'Motion detected':'No motion'):'No data');
+ renderSensorNames(blu);
 
 
- const tempIcon='<svg viewBox="-1 -1 18 24" aria-hidden="true"><path d="M5 12V4a3 3 0 0 1 6 0v8a5 5 0 1 1-6 0Z"/><path d="M8 6v10"/></svg>';
- const waterIcon='<svg viewBox="-1 -1 18 23" aria-hidden="true"><path d="M8 1S1 10 1 13a7 7 0 0 0 14 0C15 10 8 1 8 1Z"/></svg>';
- for(const [role,label] of [['outdoor','Outdoor'],['indoor','Indoor']]){
-   const v=blu[role],node=document.getElementById('weather-'+role);node.hidden=!(v&&(v.paired??v.secure));
-   const ready=v&&(v.paired??v.secure)&&v.seen&&v.age_s>=0&&v.age_s<=(v.timeout_s||blu.stale_after_s);
-   node.innerHTML='<span class="sensor-label"></span> '+tempIcon+(ready&&v.temperature_ready!==false?Number(v.temperature).toFixed(1)+' °C':'—')+' '+waterIcon+(ready&&v.humidity_ready!==false?Number(v.humidity)+'%':'—');
-   node.querySelector('.sensor-label').textContent=(v&&v.name||label)+':';
- }
- const indicator=document.getElementById('button-indicator');indicator.hidden=!(blu.button&&blu.button.secure);
+ const indicator=document.getElementById('button-indicator');indicator.hidden=!(blu.button&&blu.button.secure)||blu.button.dashboard===false;
  const seq=Number(blu.button_press_seq)||0,pressAge=Number(blu.button_press_age_ms);
  if(lastButtonSequence!==null&&seq!==lastButtonSequence&&seq>0&&pressAge>=0&&pressAge<=2500&&!indicator.hidden){
    indicator.classList.add('pulse');indicator.querySelector(':scope > div > span').textContent='Pressed';
    clearTimeout(buttonPulseTimer);buttonPulseTimer=setTimeout(()=>{indicator.classList.remove('pulse');indicator.querySelector(':scope > div > span').textContent='Ready';},1000);
  }
  lastButtonSequence=seq;
- indicator.querySelector('.tile-name').textContent=blu.button&&blu.button.name||'Button';
 
 }
 window.addEventListener('message',e=>{if(e.source===parent&&e.origin===location.origin&&e.data&&e.data.garageTelemetry)update(e.data.garageTelemetry);});
 // A disconnected panel must not continue presenting old readings as live.
-setInterval(()=>{if(received&&performance.now()-lastUpdate>15000){control.disabled=true;status.textContent='Disconnected';control.classList.remove('obstructed');if(frame)cancelAnimationFrame(frame);sensors.forEach(s=>sensorValue(s,'No data'));}},3000);
+setInterval(()=>{if(received&&performance.now()-lastUpdate>15000){control.disabled=true;status.textContent='Disconnected';renderConnections(null);control.classList.remove('obstructed');if(frame)cancelAnimationFrame(frame);summaryData=null;document.querySelectorAll('[data-reading]').forEach(node=>{setGarageReadingValue(node,typeof GarageI18n==='undefined'?'Disconnected':GarageI18n.t('Disconnected'));});}},3000);
 parent.postMessage({garageAction:'ready'},location.origin);
 })();
 </script>

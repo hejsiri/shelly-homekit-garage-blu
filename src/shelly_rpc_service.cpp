@@ -165,7 +165,7 @@ static void AppendWifiInfoExt(std::string *res) {
       "wifi_ap_en: %B, wifi_ap_ssid: %Q, wifi_ap_pass: %Q, "
       "wifi_connecting: %B, wifi_connected: %B, wifi_conn_ssid: %Q, "
       "wifi_conn_rssi: %d, wifi_conn_ip: %Q, "
-      "wifi_status: %Q, wifi_sta_ps_mode: %d, mac_address: %Q, ",
+      "wifi_status: %Q, wifi_sta_ps_mode: %d, wifi_min_ps_mode: %d, mac_address: %Q, ",
       wc.sta.enable, wc.sta.ssid.c_str(), wifi_pass.c_str(),
       (unsigned int) digest[0], (unsigned int) digest[2],
       (unsigned int) digest[4], (unsigned int) digest[6], wc.sta.ip.c_str(),
@@ -175,7 +175,8 @@ static void AppendWifiInfoExt(std::string *res) {
       wc.sta1.nameserver.c_str(), wc.ap.enable, wc.ap.ssid.c_str(),
       wifi_ap_pass.c_str(), wi.sta_connecting, wi.sta_connected,
       wi.sta_ssid.c_str(), wi.sta_rssi, wi.sta_ip.c_str(), wi.status.c_str(),
-      wc.sta_ps_mode, GetMACAddr(true /* sta */, true /* delims */).c_str());
+      wc.sta_ps_mode, kWifiMinPowerSaveMode,
+      GetMACAddr(true /* sta */, true /* delims */).c_str());
 }
 
 static void AppendOTAInfoExt(std::string *res) {
@@ -461,6 +462,40 @@ static Status SetAuthFileName(const std::string &passwd_fname,
   return Status::OK();
 }
 
+static Status WriteAuthFile(const char *realm, const char *ha1) {
+  const std::string temporary = std::string(AUTH_FILE_NAME) + ".tmp";
+  const std::string contents =
+      std::string(AUTH_USER) + ":" + realm + ":" + ha1 + "\n";
+  FILE *fp = fopen(temporary.c_str(), "w");
+  if (fp == nullptr) {
+    return mgos::Errorf(STATUS_UNAVAILABLE,
+                        "Failed to open authentication file for writing");
+  }
+  bool complete = fwrite(contents.data(), 1, contents.size(), fp) == contents.size();
+  if (ferror(fp)) complete = false;
+  if (fflush(fp) != 0) complete = false;
+  if (fclose(fp) != 0) complete = false;
+  if (!complete) {
+    if (remove(temporary.c_str()) != 0) {
+      LOG(LL_ERROR, ("Failed to remove incomplete authentication file"));
+    }
+    return mgos::Errorf(
+        STATUS_UNAVAILABLE,
+        "Failed to save authentication file; previous credentials retained");
+  }
+  // Both controller profiles use LittleFS, which supports replacing a file
+  // by rename. Never truncate or unlink the current credential file first.
+  if (rename(temporary.c_str(), AUTH_FILE_NAME) != 0) {
+    if (remove(temporary.c_str()) != 0) {
+      LOG(LL_ERROR, ("Failed to remove pending authentication file"));
+    }
+    return mgos::Errorf(
+        STATUS_UNAVAILABLE,
+        "Failed to replace authentication file; previous credentials retained");
+  }
+  return Status::OK();
+}
+
 static void SetAuthHandler(struct mg_rpc_request_info *ri, void *cb_arg,
                            struct mg_rpc_frame_info *fi, struct mg_str args) {
   char *user = nullptr, *realm = nullptr, *ha1 = nullptr;
@@ -496,13 +531,11 @@ static void SetAuthHandler(struct mg_rpc_request_info *ri, void *cb_arg,
     return;
   }
 
-  FILE *fp = fopen(AUTH_FILE_NAME, "w");
-  if (fp == nullptr) {
-    mg_rpc_send_errorf(ri, 500, "failed to %s", "save file");
+  auto saved = WriteAuthFile(realm, ha1);
+  if (!saved.ok()) {
+    SendStatusResp(ri, saved);
     return;
   }
-  fprintf(fp, "%s:%s:%s\n", AUTH_USER, realm, ha1);
-  fclose(fp);
 
   auto st = SetAuthFileName(AUTH_FILE_NAME, realm, true);
   SendStatusResp(ri, st);

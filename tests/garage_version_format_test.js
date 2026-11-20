@@ -1,0 +1,12 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const s=fs.readFileSync('fs_src/script.js','utf8'),ctx={};vm.createContext(ctx);
+vm.runInContext(s.slice(s.indexOf('function parseVersion('),s.indexOf('function checkUpdateIfNeeded(')),ctx);
+assert(ctx.isNewer('2.16.1_blu.63','2.16.1_blu.62'));
+assert(ctx.isNewer('2.16.1_blu.63','2.16.1_blu.61'));
+assert(ctx.isNewer('2.16.1_blu.57','2.16.1-blu56'));
+assert(ctx.isNewer('2.16.1_blu.58','2.16.1_blu.57'));
+assert(!ctx.isNewer('2.16.1-blu56','2.16.1_blu.57'));
+assert(!ctx.isNewer('2.16.1-blu57','2.16.1_blu.57'));
+assert(!ctx.isNewer('bad','2.16.1_blu.57'));
+assert(ctx.isNewer('2.17.0','2.16.1_blu.57'));
+console.log('PASS: old/new version comparison, canonical equality and invalid-version handling');

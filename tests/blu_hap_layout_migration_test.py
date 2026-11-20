@@ -17,13 +17,13 @@ void mgos_sys_config_set_blu_hap_layout_version(int v){revision=v;}
 int HAPAccessoryServerIncrementCN(int*){increments++;return result;}
 '''+function+r'''
 int main(){
- assert(MigrateBLUHAPLayout()&&revision==3&&increments==1);
- assert(!MigrateBLUHAPLayout()&&revision==3&&increments==1);
- revision=1;assert(MigrateBLUHAPLayout()&&revision==3&&increments==2);
- revision=2;assert(MigrateBLUHAPLayout()&&revision==3&&increments==3);
- revision=0;result=1;assert(!MigrateBLUHAPLayout()&&revision==0&&increments==4);
- result=0;assert(MigrateBLUHAPLayout()&&revision==3&&increments==5);
- revision=4;assert(!MigrateBLUHAPLayout()&&revision==4&&increments==5);
+ for(int previous=0;previous<5;previous++){
+  revision=previous;assert(MigrateBLUHAPLayout()&&revision==5&&increments==previous+1);
+  assert(!MigrateBLUHAPLayout()&&revision==5&&increments==previous+1);
+ }
+ revision=0;result=1;assert(!MigrateBLUHAPLayout()&&revision==0&&increments==6);
+ result=0;assert(MigrateBLUHAPLayout()&&revision==5&&increments==7);
+ revision=6;assert(!MigrateBLUHAPLayout()&&revision==6&&increments==7);
 }
 '''
 with tempfile.TemporaryDirectory(prefix='shelly-hap-migration-') as temp:

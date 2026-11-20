@@ -55,6 +55,7 @@
 #include "shelly_input.hpp"
 #include "shelly_ota.hpp"
 #include "shelly_output.hpp"
+#include "shelly_obsolete_garage_assets.hpp"
 #include "shelly_rpc_service.hpp"
 #include "shelly_switch.hpp"
 #include "shelly_sys_led_btn.hpp"
@@ -532,12 +533,12 @@ bool mgos_sys_config_get_wifi_sta_enable(void) {
 
 #ifdef SHELLY_GARAGE_BLE
 static bool MigrateBLUHAPLayout() {
-  if (mgos_sys_config_get_blu_hap_layout_version() >= 3) return false;
+  if (mgos_sys_config_get_blu_hap_layout_version() >= 5) return false;
   if (HAPAccessoryServerIncrementCN(&s_kvs) != kHAPError_None) {
     LOG(LL_ERROR, ("Failed to update BLU HomeKit layout configuration number"));
     return false;
   }
-  mgos_sys_config_set_blu_hap_layout_version(3);
+  mgos_sys_config_set_blu_hap_layout_version(5);
   return true;
 }
 #endif
@@ -662,6 +663,7 @@ void RestartService() {
 extern "C" bool mgos_ota_merge_fs_should_copy_file(const char *old_fs_path,
                                                    const char *new_fs_path,
                                                    const char *file_name) {
+  if (IsObsoleteGarageAsset(file_name)) return false;
   static const char *s_skip_files[] = {
       // Some files from stock that we don't need.
       "cert.pem",
@@ -771,6 +773,13 @@ void InitApp() {
       mgos_gpio_setup_output(LED_GPIO, LED_ON);
     }
     return;
+  }
+
+  // Reclaim only retired firmware assets, before any configuration/HomeKit
+  // writes. Never remove user configuration, logs, keys or current UI assets.
+  const size_t removed_assets = RemoveObsoleteGarageAssets(::remove);
+  if (removed_assets != 0) {
+    LOG(LL_INFO, ("Removed %u obsolete garage assets", (unsigned) removed_assets));
   }
 
   InitWifiConfigManager();

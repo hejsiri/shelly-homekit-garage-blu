@@ -21,10 +21,22 @@
 <body>
 <main>
 <h1>Shelly HomeKit Garage BLU</h1>
-<p><strong>$version · $published_models</strong><br>Dokumentacja aktualna na 2026-10-25. Panel urządzenia jest po angielsku; poniższe instrukcje zachowują nazwy jego pól.</p>
+<p><strong>$version · $published_models</strong><br>Dokumentacja aktualna na 2026-11-20. Panel ma przełącznik EN / PL; poniższe instrukcje zachowują angielskie nazwy pól.</p>
+<p><strong>Pierwsza instalacja:</strong> zaktualizuj fabryczny firmware do najnowszego stabilnego, a potem użyj <a href="update/">jednego adresu instalacji Garage BLU</a>. Obsługiwane układy: Plus 1 — stock 1.7.6; Shelly 1 Gen3 — stock 2.2.0. Dobór paczki odbywa się po modelu.</p>
+<p><strong>Nowość w blu.82</strong> — zegar Xiaomi BHR5435GL (LYWSD02MMC) może udostępniać temperaturę i wilgotność w HomeKit bez wpisywania klucza BLE. W panelu wybierz zegar z opcją „bez klucza” i naciśnij „Sparuj”. Tryb sprawdzono w symulatorze.</p>
+<p><strong>Gen3 blu.78 i starsze:</strong> mają inny układ partycji. Bezpośrednia aktualizacja do $version jest zablokowana. <a href="INSTALACJA_JEDEN_ADRES.md">Zgodność i ograniczenia aktualizacji</a>.</p>
 <p>Garage BLU łączy bramę garażową z Apple HomeKit przez Wi-Fi. Dwa bezprzewodowe
 Shelly BLU Door/Window potwierdzają pełne zamknięcie i otwarcie, a opcjonalne
 Motion, H&amp;T i Button1 dodają odczyty ruchu, temperatury, wilgotności i obecności.</p>
+<p><strong>2.16.1_blu.73 — Shelly Plus 1:</strong> Sparowane krańcówki Opening sensor i Closing sensor są dostępne w HomeKit jako osobne Contact Sensor.</p>
+<p><strong>2.16.1_blu.78 — Plus 1 i Gen3:</strong> Automatyczne usunięcie 11 wycofanych grafik garażu, ochrona zapisu kluczy HomeKit i danych logowania przed błędami systemu plików oraz odchudzone style dashboardu. Kontrola budowania wymaga co najmniej 64 KiB wolnego miejsca w świeżym obrazie plików. Zwolnienie miejsca nie przywraca już utraconego parowania.</p>
+<p><strong>2.16.1_blu.77 — Plus 1 i Gen3:</strong> Temperatura i wilgotność odświeżają się bez migającego badge.</p>
+<p><strong>2.16.1_blu.76 — Plus 1 i Gen3:</strong> Biała ikona przycisku w stanie nieaktywnym i krótszy status czujnika dymu na dashboardzie: Ready / Gotowy.</p>
+<p><strong>2.16.1_blu.75 — Plus 1 i Gen3:</strong> Wyśrodkowane odczyty nad i pod garażem. Przełączanie widoczności samochodu kliknięciem odczytu obecności auta. Okrągłe tło ikony przycisku oraz krótsze etykiety Model i MAC w ustawieniach.</p>
+<p><strong>2.16.1_blu.74 — Plus 1 i Gen3:</strong> Nowy dashboard z polskimi odczytami, ikonami dopasowanymi do trybu dziennego i nocnego oraz badge przy detekcji i nowych pomiarach. Checkbox „Pokazuj w dashboard” przy każdym czujniku zapisuje widoczność i automatycznie porządkuje odczyty.</p>
+<p><strong>W blu54:</strong> przełącznik EN / PL dla ustawień, parowania, komunikatów aktualizacji i wizualizacji garażu. Wybór jest zapamiętywany w przeglądarce. Własne nazwy urządzeń oraz HomeKit pozostają bez zmian. Tłumaczenie jest lokalne i działa bez zewnętrznych usług.</p>
+<p><strong>W blu53:</strong> badge akcesorium Bluetooth błyska na niebiesko przez 650 ms po otrzymaniu nowego odczytu. Zwykłe odświeżanie statusu nie powoduje migania. Efekt jest sprawdzony testami panelu; weryfikacja na urządzeniach pozostaje do wykonania.</p>
+<p><strong>W blu52:</strong> wyśrodkowane odczyty HT nad garażem oraz czytelny czas od ostatniej wiadomości czujnika, np. <code>21:43 temu</code> lub <code>2 dni 12:32:33 temu</code>. Dni i godziny o wartości zero są pomijane.</p>
 <nav aria-label="Na tej stronie">
   <a href="#pobieranie">Pobieranie</a><a href="#sprzet">Sprzęt</a><a href="#gen3">Shelly 1 Gen3</a>
   <a href="#konfiguracja">Pierwsze uruchomienie</a><a href="#aktualizacja">Aktualizacja</a>
@@ -62,7 +74,7 @@ pozostaje do wykonania; metadane mają <code>hardware_tested: false</code>.</p>
 <tr><th scope="row">Xiaomi LYWSDCGQ/01ZM</th><td>Fabryczne beacony Bluetooth: temperatura, wilgotność i bateria. Wybierz typ Xiaomi przy Indoor H&amp;T lub Outdoor H&amp;T, następnie Pair. Bez PIN-u i zmiany firmware czujnika; łącznie dwa termometry. Na Plus1/blu45 potwierdzono odczyty w panelu, w tym baterię 36 %.</td></tr>
 <tr><th scope="row">BLU Button1</th><td>Pojedynczy nacisk steruje bramą; beacony wskazują obecność przycisku w zasięgu BLE.</td></tr>
 </tbody></table></div>
-<p>Blu49 dodaje eksperymentalny odczyt Xiaomi LYWSD03MMC przez krótkie połączenie BLE: bez PIN-u, tokenu i zmiany firmware. Wybierz typ przy Indoor/Outdoor H&amp;T i naciśnij Pair. Pomiary co 5 minut, bateria szacowana z napięcia. B1.4 / 2.1.1_0159 wymaga próby fizycznej. LYWSDCGQ/01ZM nadal działa z beaconów. Blu50 poprawia nazwy modelu zakończone NUL i używa zwykłych odczytów ATT z uchwytów wykrytych po UUID. Błędy zawierają odpowiedź urządzenia. Obsługa ręcznych kluczy i MCCGQ02HL pozostaje wycofana.</p>
+<p>Blu49 dodaje eksperymentalny odczyt Xiaomi LYWSD03MMC przez krótkie połączenie BLE: bez PIN-u, tokenu i zmiany firmware. Wybierz typ przy Indoor/Outdoor H&amp;T i naciśnij Pair. Pomiary co 5 minut, bateria szacowana z napięcia. B1.4 / 2.1.1_0159 wymaga próby fizycznej. LYWSDCGQ/01ZM nadal działa z beaconów. Blu50 poprawia nazwy modelu zakończone NUL i używa zwykłych odczytów ATT z uchwytów wykrytych po UUID. Błędy zawierają odpowiedź urządzenia. Od blu56 dostępny jest dodatkowo wariant Bindkey BLE dla MCCGQ02HL i LYWSD03MMC; stare wpisy z blu46/47 nie są przywracane automatycznie.</p>
 <p>Urządzenia BLU zachowują oryginalny firmware Shelly. Door/Window Outdoor ZB
 (SBDW-302C) i czujnik wycieku pozostają w planach. H&amp;T Gen3 z ekranem e-ink jest
 urządzeniem Wi-Fi, a nie obsługiwanym tu BLU H&amp;T.</p>
@@ -113,6 +125,7 @@ wskaż plik i kliknij <strong>Upload</strong>. Poczekaj na zapis i restart.
 Revert to Stock jest powrotem do firmware fabrycznego, a nie aktualizacją Garage BLU.</p>
 <details>
 <summary>Pierwsza konwersja z fabrycznego firmware</summary>
+<p>Zalecana ścieżka: najnowszy stabilny stock, następnie <a href="update/">instalator sprawdzający model sprzętu i wersję firmware</a>. Link pojawia się dopiero po zgodnej weryfikacji. Nowszy stock także wymaga potwierdzenia zgodności. Poniżej alternatywa z bezpośrednim ZIP-em.</p>
 <p>Otwórz fabryczny panel i użyj instalacji własnego ZIP-u lub URL, jeśli jest dostępna.
 Alternatywą jest fabryczne RPC Shelly.Update z parametrem url. Wybierz przykład dla
 dokładnego modelu. Po podstawieniu ADRES_IP i otwarciu adresu rozpoczyna aktualizację:</p>
@@ -126,9 +139,9 @@ zapisu. Zwykła aktualizacja nie wymaga resetu sterownika, HomeKit ani urządze�
 </section>
 
 <section id="funkcje">
-<h2>Obsługa w blu50</h2>
-<p>Ikona auta zmienia teraz równocześnie grafikę i kafelek <strong>Car presence</strong>.
-Ukrycie wygasza kafelek i pokazuje Not detected do kolejnego beacona Button1.
+<h2>Funkcje Garage BLU</h2>
+<p>Kliknięcie odczytu <strong>Car presence</strong> pod garażem zmienia grafikę auta i status obecności.
+Ukrycie pokazuje Not detected do kolejnego beacona Button1.
 Ręczny wybór dotyczy panelu WWW; obecność w HomeKit nadal jest odczytywana z BLE.</p>
 <p>Nowość: sparowany BLU Motion udostępnia w HomeKit dodatkowy <strong>Light sensor</strong>
 z pomiarem w luksach. Dane pochodzą z czujnika ruchu. Nowa usługa zachowuje
@@ -155,8 +168,9 @@ migracji cztery pozycje w Domu, gotowy ruch, wykrytą obecność i przycisk z tr
 rodzajami naciśnięcia do konfiguracji.</li>
 <li><strong>Continue previous direction after stop:</strong> wyłączone — zmiana kierunku po
 zatrzymaniu; włączone — kontynuacja poprzedniego. Dopasuj tę opcję do działania napędu.</li>
-<li><strong>Wizualizacja:</strong> Day / Night / Auto, ruch, Button1 i H&amp;T. Krańcówki są
-w ustawieniach, nie nad garażem. Scena czeka na komplet aktualnych grafik.
+<li><strong>Wizualizacja:</strong> Day / Night / Auto. Temperatura, wilgotność i światło
+są nad garażem; krańcówki, ruch, czujnik dymu i obecność auta pod garażem.
+Każde urządzenie ma checkbox „Pokazuj w dashboard”. Scena czeka na komplet aktualnych grafik.
 Przy ustawionym haśle jest dostępna po zalogowaniu; podczas OTA pozostaje ukryta.</li>
 </ul>
 <p>Procent ruchu jest estymacją czasu, a zasięg przycisku nie potwierdza miejsca
@@ -184,7 +198,7 @@ napędu już będącego w ruchu ani nie zastępuje jego zabezpieczeń.</p>
 <li><a href="$repo/blob/master/docs/AKTUALIZACJA.md">Instalacja i aktualizacje</a> · <a href="AKTUALIZACJA.md">plik Markdown</a></li>
 <li><a href="$repo/blob/master/docs/KONFIGURACJA.md">Konfiguracja i obsługa</a> · <a href="KONFIGURACJA.md">plik Markdown</a></li>
 <li><a href="$repo/blob/master/docs/ROZWIAZYWANIE_PROBLEMOW.md">Rozwiązywanie problemów</a> · <a href="ROZWIAZYWANIE_PROBLEMOW.md">plik Markdown</a></li>
-<li><a href="$repo/blob/master/docs/HISTORIA_ZMIAN.md">Historia zmian blu20–blu50</a> · <a href="HISTORIA_ZMIAN.md">plik Markdown</a></li>
+<li><a href="$repo/blob/master/docs/HISTORIA_ZMIAN.md">Historia zmian do 2.16.1_blu.78</a> · <a href="HISTORIA_ZMIAN.md">plik Markdown</a></li>
 <li><a href="$repo/blob/master/README-BLU.md">Dokumentacja techniczna i budowanie (EN)</a></li>
 <li><a href="$repo">Repozytorium Garage BLU</a> · <a href="$repo/issues">Zgłoszenia błędów i propozycje</a></li>
 </ul>

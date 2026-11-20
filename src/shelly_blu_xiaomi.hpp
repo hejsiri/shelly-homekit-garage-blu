@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -7,34 +8,11 @@
 
 namespace shelly {
 namespace blu {
-// Stock LYWSDCGQ/01ZM (MJ_HT_V1), MiBeacon product 0x01aa, service 0xfe95.
-// This is a passive, unencrypted thermometer, never a garage control input.
-// Wire format reference: Bluetooth-Devices/xiaomi-ble, test_Xiaomi_LYWSDCGQ.
-inline bool DecodeXiaomi(const uint8_t *data, size_t size,
-                         const uint8_t mac[6], Reading *out) {
-  if (size < 5) return false;
-  const uint16_t flags = data[0] | (uint16_t(data[1]) << 8);
-  const unsigned version = flags >> 12;
-  if (version < 2 || version > 5 || !(flags & 0x40) ||
-      (flags & (0x08 | 0x80)) || data[2] != 0xaa || data[3] != 0x01)
-    return false;
-  size_t offset = 5;
-  if (flags & 0x10) {
-    if (size - offset < 6) return false;
-    for (size_t i = 0; i < 6; i++)
-      if (data[offset + i] != mac[5 - i]) return false;
-    offset += 6;
-  }
-  if (flags & 0x20) {
-    if (offset == size) return false;
-    const uint8_t capability = data[offset++];
-    if (capability & 0x20) {
-      if (offset == size) return false;
-      offset++;  // Optional I/O capability.
-    }
-  }
+inline bool DecodeThermometerObjects(const uint8_t *data, size_t size, int packet,
+                                     bool clock, Reading *out) {
   Reading reading;
-  reading.packet_id = data[4];
+  reading.packet_id = packet;
+  size_t offset = 0;
   bool any = false;
   unsigned fields = 0;
   while (offset < size) {
@@ -62,7 +40,26 @@ inline bool DecodeXiaomi(const uint8_t *data, size_t size,
         reading.humidity = (humidity10 + 5) / 10;
         mask |= 2;
       }
-    } else if (type == 0x100a) {
+    } else if (clock && (type == 0x4801 || type == 0x4c01 || type == 0x4808 || type == 0x4c08)) {
+      if (length != 4) return false;
+      float measurement;
+      memcpy(&measurement, value, sizeof(measurement));  // IEEE 754 little-endian on ESP32.
+      if (!std::isfinite(measurement)) return false;
+      if ((type & 0xff) == 1) {
+        if (measurement < -100 || measurement > 100) return false;
+        reading.temperature10 = std::lround(measurement * 10);
+        reading.temperature_present = true;
+        mask = 1;
+      } else {
+        if (measurement < 0 || measurement > 100) return false;
+        reading.humidity = std::lround(measurement);
+        mask = 2;
+      }
+    } else if (clock && (type == 0x4802 || type == 0x4c02)) {
+      if (length != 1 || value[0] > 100) return false;
+      reading.humidity = value[0];
+      mask = 2;
+    } else if (type == 0x100a || (clock && (type == 0x4803 || type == 0x4c03))) {
       if (length != 1 || value[0] > 100) return false;
       reading.battery = value[0];
       mask = 4;
@@ -76,6 +73,35 @@ inline bool DecodeXiaomi(const uint8_t *data, size_t size,
   if (!any) return false;
   *out = reading;
   return true;
+}
+
+// Stock LYWSDCGQ/01ZM (MJ_HT_V1), MiBeacon product 0x01aa, service 0xfe95.
+// This is a passive, unencrypted thermometer, never a garage control input.
+// Wire format reference: Bluetooth-Devices/xiaomi-ble, test_Xiaomi_LYWSDCGQ.
+inline bool DecodeXiaomi(const uint8_t *data, size_t size,
+                         const uint8_t mac[6], Reading *out) {
+  if (size < 5) return false;
+  const uint16_t flags = data[0] | (uint16_t(data[1]) << 8);
+  const unsigned version = flags >> 12;
+  if (version < 2 || version > 5 || !(flags & 0x40) ||
+      (flags & (0x08 | 0x80)) || data[2] != 0xaa || data[3] != 0x01)
+    return false;
+  size_t offset = 5;
+  if (flags & 0x10) {
+    if (size - offset < 6) return false;
+    for (size_t i = 0; i < 6; i++)
+      if (data[offset + i] != mac[5 - i]) return false;
+    offset += 6;
+  }
+  if (flags & 0x20) {
+    if (offset == size) return false;
+    const uint8_t capability = data[offset++];
+    if (capability & 0x20) {
+      if (offset == size) return false;
+      offset++;  // Optional I/O capability.
+    }
+  }
+  return DecodeThermometerObjects(data + offset, size - offset, data[4], false, out);
 }
 
 inline bool DecodeXiaomiAdvertisement(const uint8_t *data, size_t size,

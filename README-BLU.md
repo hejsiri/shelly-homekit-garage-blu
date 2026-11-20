@@ -2,18 +2,22 @@
 
 Garage BLU adds encrypted Shelly BLU devices, Xiaomi thermometers and a garage dashboard to
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
-The current OTA release is **2.16.1-blu50 for Shelly Plus 1 and Shelly 1 Gen3**,
+The current OTA release is **2.16.1_blu.79 for Shelly Plus 1 and Shelly 1 Gen3**,
 with separate model-specific ZIPs and checksums. The Gen3 image targets ESP32-C3;
 its physical-device validation remains pending.
 HomeKit uses Wi-Fi. BLU devices keep their original Shelly firmware.
+An authenticated detector heartbeat confirms HomeKit reachability without
+overwriting the smoke alarm state; only an explicit smoke-state field changes it.
 
-User documentation (Polish, with the English UI labels):
+User documentation (Polish, retaining English field names for reference):
 [Shelly 1 Gen3 guide](docs/SHELLY_1_GEN3.md),
 [install/update](docs/AKTUALIZACJA.md), [configuration](docs/KONFIGURACJA.md),
 [troubleshooting](docs/ROZWIAZYWANIE_PROBLEMOW.md), and
-[release history](docs/HISTORIA_ZMIAN.md). The current panel and this document
-use **Obstruction**, **In range / Out of range**, **Ready / Pressed** and
-**Day / Night / Auto**. User-entered accessory names retain their language.
+[release history](docs/HISTORIA_ZMIAN.md). The panel supports **EN / PL** using the English / Polski dropdown in the System panel. English
+is the default; the browser remembers the selected language for this device.
+Settings, pairing dialogs, update messages, tooltips and the garage visualization
+share the selection. User-entered names, MAC addresses, configuration values and
+HomeKit names remain unchanged. The guides retain English field names for reference.
 
 Previous versions have run on a physical Plus 1, with OTA and encrypted
 Door/Window readings confirmed. Motion and Button1 readings have also been
@@ -27,7 +31,7 @@ A preview does not demonstrate successful BLE pairing or relay operation.
 | --- | --- |
 | Shelly Plus 1 | Garage relay, BLE receiver, web panel and HomeKit connection; ESP32 / Plus1 image. |
 | Shelly 1 Gen3 | Current separate ESP32-C3 / S1G3 image with the same Garage BLU features; physical tests pending. |
-| Two BLU Door/Window, SBDW-002C | Fully closed and fully open endpoints. |
+| Paired closing / opening sensors (Shelly BLU, supported Xiaomi and Qingping) | Garage endpoints plus separately named HomeKit Contact Sensor services. The latest stored endpoint state is restored after reboot; HomeKit StatusFault marks stale data. |
 | One BLU Motion, SBMO-003Z | Motion in the panel and an optional HomeKit Motion Sensor service. |
 | Two BLU H&T, SBHT-003C | Indoor/outdoor temperature and humidity in the panel and HomeKit. |
 | Xiaomi LYWSD03MMC (experimental) | Stock firmware direct GATT reads without a PIN, bindkey or Xiaomi account. Indoor/Outdoor H&T only. B1.4 / 2.1.1_0159 needs a physical test. |
@@ -103,14 +107,17 @@ Only one 20-second read transaction runs at a time, with a 3-second connection t
 Polling runs every 300 seconds, retries back off 60/120/300 seconds, and movement defers
 or cancels reads. Scanning resumes once connected; a bounded 4-second scan grace keeps
 fresh endpoints valid during connection setup, without extending their stale timeout.
-GATT thermometer freshness is at least 900 seconds; failures never refresh old readings.
+Since blu56: Indoor/Outdoor temperature and humidity
+remain valid for 3600 seconds, for Shelly BLU and both Xiaomi protocols. Each
+measurement keeps its own timestamp; battery-only packets and failed reads do
+not extend it. Endpoint and motion freshness settings remain independent.
 RPC reports `protocol: "xiaomi_gatt"`, `paired: true`, `secure: false`, per-role
 `timeout_s`, `voltage_mv`, `battery_estimated`, and `gatt` diagnostics (versions/error).
 HomeKit reuses existing H&T service IDs; each field retains normal fault/stale handling.
 
 NVS protocol **4** identifies this key-free client. Withdrawn manual-key protocols **2/3**
-remain rejected. Stock encrypted MiBeacon readings are not decrypted, old blu46 bindings
-are not restored automatically, and **MCCGQ02HL remains unsupported**. Host tests exercise
+remain rejected. In released blu55, stock encrypted MiBeacon readings are not decrypted. Old blu46 bindings
+are not restored automatically. The released blu55 does not support MCCGQ02HL; blu56 adds authenticated manual-bindkey support described below. Host tests exercise
 the production asynchronous client, malformed payloads, identity, mirror fallback,
 timeouts, cancellation, late callbacks, movement deferral, assignment commit/rollback,
 role isolation and unchanged endpoint freshness checks. Physical validation is pending.
@@ -156,6 +163,14 @@ can coexist with working readings from an earlier saved key; the panel reports
 recent encrypted readings separately from the result of that attempt.
 
 ## Dashboard and garage state
+
+New in blu53 (2026-10-26, not yet validated on hardware): accessory status
+badges in Garage Door settings turn blue for 650 ms when the panel observes a
+new accepted Bluetooth reading (`packet_seq`). Repeated status polls and the
+initial snapshot do not trigger the indication. The badge returns to its normal
+state color afterward. The indication follows status updates, not the exact RF
+arrival time. Verified with `node tests/blu_beacon_indicator_test.js
+node tests/garage_language_ui_test.js`.
 
 The dashboard receives state from the same firmware component as HomeKit.
 After a movement timeout, either valid endpoint clears both the timeout flag
@@ -286,6 +301,8 @@ node tests/garage_car_presence_test.js
 node tests/garage_named_status_test.js
 node tests/garage_scene_loading_test.js
 node tests/blu_button_indicator_test.js
+node tests/blu_beacon_indicator_test.js
+node tests/garage_language_ui_test.js
 node tests/ota_upload_ui_test.js
 node tests/garage_simulator_stop_test.js
 python3 tests/garage_http_assets_test.py
@@ -323,6 +340,15 @@ python3 tests/ota_release_models_test.py
 python3 tools/ota/prepare.py
 ```
 
+Use `tools/build-blu.sh` for firmware builds: it prepares the SDK dependencies
+and applies the reviewed HomeKit KVS write-safety patch before compilation.
+The patch verifies the exact upstream implementation and fails on an unreviewed
+change. A direct `make`/`mos build` does not apply this preparation step.
+Before returning a firmware ZIP, the helper also mounts its LittleFS image
+read-only on the host and requires at least 64 KiB of free blocks for runtime
+configuration, HomeKit keys and temporary files. This measures the fresh image;
+retired assets are separately reclaimed on startup and excluded from OTA merges.
+
 The publisher selects both models by default. Explicit `--model` options can
 select a subset, but the public channel should keep both model URLs. It validates
 model/platform, part hashes, slot/filesystem sizes and matching versions before
@@ -359,3 +385,15 @@ recovery, encrypted packets after reboot, name persistence and HomeKit labels,
 button presence transitions, late endpoint recovery after a timeout, OTA,
 Wi-Fi/BLE coexistence, runtime heap and reception near the metal door.
 The Gen3 build and archive are checked; physical Gen3 installation, BLE and relay validation remain pending.
+
+## Xiaomi BLE bindkey (blu56)
+
+Since blu56, Garage BLU supports **MCCGQ02HL** as either garage endpoint and **LYWSD03MMC** as either thermometer using stock encrypted MiBeacon v4/v5 packets. Choose the **Bindkey BLE** device variant, wake it, select the detected device and paste its 32-character hexadecimal key. The receiver validates a fresh authenticated reading before saving the key and assignment. This is manual key import, not automatic Xiaomi account access.
+
+The endpoint timeout remains unchanged; Xiaomi event-driven contacts may become stale between events, blocking garage controls until a fresh contact reading arrives. Temperature/humidity retains the independent one-hour freshness policy. Battery-only packets never refresh endpoint state. See [Bindkey BLE](docs/BINDKEY_BLE.md) for validation, storage and compatibility details. This feature has host/browser tests and still needs verification with physical sensors.
+
+## Qingping CGG1, CGH1 and CGPR1 (blu.58)
+
+Since 2.16.1_blu.58, Garage BLU supports CGG1 temperature/humidity, CGH1 endpoint contacts and CGPR1 motion/illuminance. Both native Qingping BLE advertisements and supported Xiaomi MiBeacon variants are recognized. The pairing dialog requests a verified 32-character bindkey when it detects authenticated MiBeacon encryption. Plaintext assignments are explicitly distinct and do not provide cryptographic authentication. Model/MAC checks, endpoint freshness, independent hourly thermometer freshness and existing HomeKit services remain in use. Battery-only packets do not revive contact or motion state. Physical sensor verification remains pending. See [Qingping support](docs/QINGPING.md).
+
+Since 2.16.1_blu.59 the thermometer selector has a single Xiaomi LYWSD03MMC entry. Encrypted MiBeacon discovery requests a verified BLE bindkey; direct GATT reading remains available for the other discovery variant. Existing GATT and bindkey assignments use the same model label.

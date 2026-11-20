@@ -16,6 +16,7 @@ struct Reading {
   int humidity = -1;
   int32_t illuminance100 = -1;  // BTHome 0x05: hundredths of a lux, -1 = absent.
   bool temperature_present = false;
+  int smoke = -1;
 };
 
 // BTHome v2 service payload, after UUID 0xFCD2. Only the objects used by
@@ -181,9 +182,11 @@ struct Sensor {
   double illuminance_last_seen = 0;
   bool temperature_seen = false, humidity_seen = false;
   double temperature_last_seen = 0, humidity_last_seen = 0;
+  bool smoke_seen = false;
+  double smoke_last_seen = 0;
   void Update(const Reading &reading, double now, int signal, int kind = 0) {
     seen = true;
-    active = kind == 1 ? reading.motion : kind == 0 ? !reading.window_open : false;
+    active = kind == 3 ? reading.smoke > 0 : kind == 1 ? reading.motion : kind == 0 ? !reading.window_open : false;
     if (kind == 2) {
       if (reading.temperature_present) {
         temperature10 = reading.temperature10;

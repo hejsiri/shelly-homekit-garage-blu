@@ -514,24 +514,65 @@ function garageRefresh(c, cd) {
 
 }
 
+function bluReadingAge(seconds) {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor(seconds / 3600) % 24;
+  const clock = [Math.floor(seconds / 60) % 60, seconds % 60];
+  if (hours > 0) clock.unshift(hours);
+  return (days > 0 ? `${days} ${days === 1 ? "dzień" : "dni"} ` : "") +
+      clock.map(value => String(value).padStart(2, "0")).join(":") + " temu";
+}
+
 // Fixed markup and numeric telemetry only; no icon assets or libraries.
-function bluSensorStatus(node, sensor, timeout, kind = false) {
+function bluSensorStatus(node, sensor, timeout, kind = false, source = "") {
   const paired = sensor.paired ?? sensor.secure;
   let html = "Not paired";
-  if (paired && !sensor.seen) html = `<span class="blu-badge blu-waiting">${sensor.protocol === "xiaomi_gatt" ? "Waiting for thermometer reading" : sensor.protocol === "xiaomi" ? "Waiting for beacon" : "Waiting for encrypted beacon"}</span>`;
-  if (paired && sensor.seen) {
-    const battery = Number.isFinite(sensor.battery) && sensor.battery >= 0 ? Math.min(100, Math.round(sensor.battery)) : -1;
+  const battery = Number.isFinite(sensor.battery) && sensor.battery >= 0 ? Math.min(100, Math.round(sensor.battery)) : -1;
+  const batteryHTML = `<span class="blu-power" title="${sensor.battery_estimated ? 'Estimated from battery voltage (' + sensor.voltage_mv + ' mV)' : 'Battery'}" aria-label="Battery ${battery < 0 ? 'unknown' : battery + '%'}"><span class="blu-battery" aria-hidden="true"><i style="width:${Math.max(0, battery)}%"></i></span>${battery < 0 ? '—' : (sensor.battery_estimated ? '~' : '') + battery + '%'}</span>`;
+  const hasState = kind === "smoke" ? sensor.smoke_seen : sensor.seen;
+  if (paired && !hasState) {
+    if (kind === "smoke" && sensor.seen) {
+      const age = Math.max(0, Math.floor(Number(sensor.age_s) || 0));
+      const stale = age > timeout || sensor.ready === false;
+      html = `<span class="blu-badge ${stale ? "blu-stale" : "blu-open"}">${stale ? "No recent beacon" : "Ready"}</span>` + batteryHTML;
+      const rssi = Number.isFinite(sensor.rssi) ? sensor.rssi : null;
+      const bars = rssi === null ? 0 : rssi >= -60 ? 4 : rssi >= -70 ? 3 : rssi >= -80 ? 2 : 1;
+      html += `<span class="blu-signal" title="${rssi === null ? 'Signal unknown' : rssi + ' dBm'}" role="img" aria-label="Signal ${bars} of 4 bars">${[1,2,3,4].map(n => `<i class="${n <= bars ? 'filled' : ''}"></i>`).join('')}</span><span class="blu-age">${bluReadingAge(age)}</span>`;
+    } else {
+      html = `<span class="blu-badge blu-waiting">${kind === "smoke" ? "Waiting for smoke status" : ["xiaomi_clock_gatt", "xiaomi_gatt"].includes(sensor.protocol) ? "Waiting for thermometer reading" : ["xiaomi", "qingping"].includes(sensor.protocol) ? "Waiting for beacon" : "Waiting for encrypted beacon"}</span>` + (battery >= 0 ? batteryHTML : "");
+    }
+  }
+  if (paired && hasState) {
     const rssi = Number.isFinite(sensor.rssi) ? sensor.rssi : null;
     const bars = rssi === null ? 0 : rssi >= -60 ? 4 : rssi >= -70 ? 3 : rssi >= -80 ? 2 : 1;
     const age = Math.max(0, Math.floor(Number(sensor.age_s) || 0));
-    const stale = age > timeout || sensor.ready === false;
-    const state = kind === "button" ? (stale ? "Out of range" : "In range") : kind === "ht" ? bluHTValues(sensor) : kind ? (sensor.active ? "Motion" : "No motion") : sensor.active ? "Closed" : "Open";
-    html = `<span class="blu-badge ${stale ? "blu-stale" : sensor.active ? "blu-closed" : "blu-open"}" title="${kind === 'ht' ? 'Temperature and humidity' : kind ? 'Motion sensor' : 'Sensor contact'}${stale ? ' — stale reading' : ''}">${state}${stale ? ' · stale' : ''}</span>` +
-      `<span class="blu-power" title="${sensor.battery_estimated ? 'Estimated from battery voltage (' + sensor.voltage_mv + ' mV)' : 'Battery'}" aria-label="Battery ${battery < 0 ? 'unknown' : battery + '%'}"><span class="blu-battery" aria-hidden="true"><i style="width:${Math.max(0, battery)}%"></i></span>${battery < 0 ? '—' : (sensor.battery_estimated ? '~' : '') + battery + '%'}</span>` +
+    const stateAge = kind === "smoke" && Number.isFinite(sensor.smoke_age_s) ? Math.max(0, Math.floor(sensor.smoke_age_s)) : age;
+    const stale = stateAge > timeout || sensor.ready === false;
+    const state = kind === "button" ? (stale ? "Out of range" : "In range") : kind === "ht" ? bluHTValues(sensor) : kind === "smoke" ? (sensor.active ? "Smoke detected" : stale ? "No data" : "No smoke detected") : kind ? (sensor.active ? "Motion" : "No motion") : sensor.active ? "Closed" : "Open";
+    html = `<span class="blu-badge ${kind === "smoke" && sensor.active ? "blu-alarm" : ""} ${stale ? "blu-stale" : sensor.active ? "blu-closed" : "blu-open"}" title="${kind === 'ht' ? 'Temperature and humidity' : kind === 'smoke' ? 'Smoke sensor' : kind ? 'Motion sensor' : 'Sensor contact'}${stale ? ' — stale reading' : ''}">${state}${stale ? ' · stale' : ''}</span>` +
+      batteryHTML +
       `<span class="blu-signal" title="${rssi === null ? 'Signal unknown' : rssi + ' dBm'}" role="img" aria-label="Signal ${bars} of 4 bars">${[1,2,3,4].map(n => `<i class="${n <= bars ? 'filled' : ''}"></i>`).join('')}</span>` +
-      `<span class="blu-age">${age}s ago</span>`;
+      `<span class="blu-age">${bluReadingAge(age)}</span>`;
   }
   if (node.bluHTML !== html) { node.innerHTML = html; node.bluHTML = html; }
+  // packet_seq advances only on an accepted reading, never on status polling.
+  const seq = sensor.packet_seq;
+  const fresh = paired && sensor.seen && (kind === "smoke" || sensor.ready !== false) &&
+      Number.isFinite(sensor.age_s) && sensor.age_s >= 0 && sensor.age_s <= timeout;
+  const validSequence = Number.isInteger(seq) && seq >= 0;
+  const previous = node.bluRx;
+  const received = fresh && validSequence && previous && previous.source === source &&
+      (seq > previous.seq || (previous.seq === 4294967295 && seq === 0));
+  node.bluRx = fresh && validSequence ? {source, seq} : null;
+  if (!fresh || !validSequence || (previous && previous.source !== source) ||
+      (previous && seq < previous.seq && !(previous.seq === 4294967295 && seq === 0))) {
+    clearTimeout(node.bluRxTimer);
+    node.classList.remove("blu-received");
+  } else if (received) {
+    clearTimeout(node.bluRxTimer);
+    node.classList.add("blu-received");
+    node.bluRxTimer = setTimeout(() => node.classList.remove("blu-received"), 650);
+  }
 }
 
 function bluPairStatus(c, message, state) {
@@ -540,21 +581,99 @@ function bluPairStatus(c, message, state) {
   status.className = "blu-pair-status blu-pair-" + state;
 }
 
+function bluPairDeviceInfo(candidate) {
+  const models = {
+    1: ["Shelly BLU Button1", "Bluetooth button"],
+    2: ["Shelly BLU Door Window", "Door and window sensor"],
+    3: ["Shelly BLU H&T (SBHT-003C)", "Temperature and humidity"],
+    5: ["Shelly BLU Motion", "Motion sensor"],
+    426: ["Xiaomi Temperature and Humidity Monitor (LYWSDCGQ/01ZM)", "Temperature and humidity"],
+    5860: ["Xiaomi E-Ink Clock (BHR5435GL)", "Temperature and humidity"],
+    9538: ["Xiaomi E-Ink Clock (BHR5435GL)", "Temperature and humidity"],
+    1371: ["Xiaomi Temperature and Humidity Monitor 2 (LYWSD03MMC)", "Temperature and humidity"],
+    2455: ["Xiaomi Honeywell Smoke Detector (JTYJ-GD-03MI/BB)", "Smoke sensor"],
+    2443: ["Xiaomi Door & Window Sensor 2", "Door and window sensor"],
+    839: ["Qingping Temperature & Humidity Monitor (CGG1)", "Temperature and humidity"],
+    2888: ["Qingping Temperature & Humidity Monitor (CGG1)", "Temperature and humidity"],
+    982: ["Qingping Door & Window Contact Sensor (CGH1)", "Door and window sensor"],
+    13617: ["Xiaomi Motion Sensor 2S", "Motion and illuminance sensor"],
+    19552: ["Xiaomi Motion Sensor 2S", "Motion and illuminance sensor"],
+    2691: ["Qingping Motion & Ambient Light Sensor (CGPR1)", "Motion and illuminance sensor"],
+  };
+  const model = models[Number(candidate.model)];
+  return {name: model ? model[0] : "Unknown Bluetooth device",
+    type: model ? model[1] : "Model not identified",
+    image: model && window.GarageBLUDeviceImages && window.GarageBLUDeviceImages[candidate.model]};
+}
+
+function bluPairDeviceCard(candidate, onSelect) {
+  const info = bluPairDeviceInfo(candidate);
+  const card = document.createElement(onSelect ? "button" : "div");
+  card.className = "blu-device-card";
+  if (onSelect) { card.type = "button"; card.onclick = onSelect; }
+  const photo = document.createElement(info.image ? "img" : "span");
+  photo.className = "blu-device-photo";
+  if (info.image) { photo.src = info.image; photo.alt = ""; photo.width = photo.height = 68; }
+  else { photo.textContent = "?"; photo.setAttribute("aria-hidden", "true"); }
+  const copy = document.createElement("span"); copy.className = "blu-device-copy";
+  const title = document.createElement("strong"); title.textContent = info.name;
+  title.setAttribute("data-i18n-ignore", "");
+  if (!candidate.model || ![1, 2, 3, 5, 426, 1371, 2443, 839, 2888, 982, 2691, 13617, 19552, 2455, 5860, 9538].includes(Number(candidate.model))) title.removeAttribute("data-i18n-ignore");
+  const type = document.createElement("span"); type.textContent = info.type;
+  const mac = document.createElement("span"); mac.className = "blu-device-mac";
+  mac.textContent = candidate.mac; mac.setAttribute("data-i18n-ignore", "");
+  const signal = document.createElement("span"); signal.className = "blu-device-signal";
+  signal.setAttribute("data-i18n-ignore", "");
+  signal.textContent = Number.isFinite(candidate.rssi) ? `${candidate.rssi} dBm` : "";
+  copy.append(title, type, mac); card.append(photo, copy, signal);
+  return card;
+}
+
+function bluPairRenderDevices(c, choosing) {
+  const preview = el(c, "blu_pair_preview"), list = el(c, "blu_pair_devices");
+  if (!preview || !list) return;
+  const selected = c.bluPairSelected;
+  preview.style.display = selected && !choosing ? "" : "none";
+  const previewKey = selected ? `${selected.model}:${selected.mac}` : "";
+  if (preview.dataset.device !== previewKey) {
+    preview.dataset.device = previewKey;
+    preview.replaceChildren(...(selected ? [bluPairDeviceCard(selected)] : []));
+  }
+  const signature = (c.bluPairCandidates || []).map(item => `${item.model}:${item.mac}`).join(",");
+  if (list.dataset.devices !== signature) {
+    list.dataset.devices = signature;
+    list.replaceChildren(...(c.bluPairCandidates || []).map(candidate => bluPairDeviceCard(candidate, () => {
+      const select = el(c, "blu_pair_candidate");
+      select.value = candidate.mac;
+      if (select.onchange) select.onchange();
+    })));
+  }
+  Array.from(list.children).forEach((card, i) => {
+    const candidate = c.bluPairCandidates[i];
+    card.setAttribute("aria-pressed", String(!!selected && selected.mac === candidate.mac));
+    card.disabled = c.bluPairState !== "scanning" || !!c.bluPairAction || !!c.bluPairClosing;
+    const signal = card.querySelector(".blu-device-signal");
+    signal.textContent = Number.isFinite(candidate.rssi) ? `${candidate.rssi} dBm` : "";
+  });
+}
+
 function bluPairClearPINs(c) {
   c.bluPairCredentials = null;
+  const bindkey = el(c, "blu_pair_bindkey");
+  if (bindkey) bindkey.value = "";
   el(c, "blu_pair_pin").value = "";
   el(c, "blu_pair_current_pin").value = "";
 }
 
 function bluPairNeedsCurrentPIN(c) {
   const credentials = c.bluPairCredentials;
-  return c.bluPairSelected && c.bluPairSelected.encrypted && credentials &&
+  return c.bluPairModel !== 5860 && !c.bluPairBindkey && c.bluPairSelected && c.bluPairSelected.encrypted && credentials &&
     !/^[1-9][0-9]{5}$/.test(credentials.current);
 }
 
 function bluPairHasRecentReadings(c) {
   const blu = c.bluPairTelemetry || (c.data && c.data.blu);
-  const role = ["closed", "open", "motion", "indoor", "outdoor", "button"][c.bluPairRole];
+  const role = ["closed", "open", "motion", "indoor", "outdoor", "button", "smoke"][c.bluPairRole];
   const sensor = blu && blu[role];
   const selected = c.bluPairSelected && c.bluPairSelected.mac;
   return !!(sensor && selected && String(blu[role + "_mac"] || "").toUpperCase() === selected.toUpperCase() &&
@@ -566,6 +685,9 @@ function bluPairRender(c) {
   const state = c.bluPairState;
   const needsSetup = state === "waiting_encryption_pin";
   const scanning = state === "scanning";
+  const needsBindkey = scanning && !!c.bluPairBindkey;
+  const bindField = el(c, "blu_pair_bindkey_container");
+  if (bindField) bindField.style.display = needsBindkey && !c.bluPairClosing ? "" : "none";
   const needsCurrent = scanning && bluPairNeedsCurrentPIN(c);
   const choosing = scanning && c.bluPairCandidates.length > 1;
   const finished = ["done", "error", "idle"].includes(state);
@@ -584,10 +706,10 @@ function bluPairRender(c) {
   const xiaomiGatt = c.bluPairModel === 1371;
   updateInnerText(el(c, "blu_pair_step"), finding ? "Step 1 of 2 · Find device" : state === "done" ? "Pairing complete" :
     finished ? "Pairing stopped" : "Step 2 of 2 · Set up device");
-  let help = needsSetup ? "This device needs a six-digit PIN to enable encrypted readings. Enter a new PIN to finish setup." :
+  let help = c.bluPairModel === 5860 && finding ? (c.bluPairBindkey ? "Place the activated Xiaomi clock near Shelly and enter its 32-character BLE bindkey." : "Place the clock near Shelly and close any Bluetooth app connected to it. Shelly saves the clock after receiving a temperature and humidity reading.") : c.bluPairRole === 6 && finding ? "Press the smoke sensor test button and enter its 32-character BLE bindkey. A test-button packet verifies the key without confirming a smoke alarm or all-clear." : c.bluPairQingping && finding ? (c.bluPairBindkey ? "This Qingping device broadcasts encrypted data. Paste its 32-character BLE bindkey to verify and add it." : "Keep the Qingping device near Shelly and trigger a reading. Move the magnet for CGH1 or walk in front of CGPR1. If encryption is detected, the panel will request a BLE bindkey.") : c.bluPairBindkey && finding ? "Wake the Xiaomi device, select it and paste its 32-character BLE bindkey. For a door sensor, move the magnet to send a new reading. The key is verified before saving." : needsSetup ? "This device needs a six-digit PIN to enable encrypted readings. Enter a new PIN to finish setup." :
     needsCurrent ? "This device requires its existing PIN to connect. Enter it once to continue." :
     choosing ? "More than one matching device is nearby. Select the one you want to pair." :
-    finding && xiaomiGatt ? "Keep the Xiaomi LYWSD03MMC powered on near Shelly. Close other apps connected to it. Shelly will try a direct reading automatically. No pairing mode, PIN, account or key is needed. Compatibility is experimental." :
+    finding && xiaomiGatt ? "Keep the Xiaomi LYWSD03MMC powered on near Shelly. Encrypted broadcasts require a BLE bindkey; otherwise Shelly will try a direct reading. Close other Bluetooth apps. Direct reading compatibility is experimental." :
     finding && xiaomi ? "Keep the Xiaomi LYWSDCGQ/01ZM powered on near Shelly. It broadcasts automatically; no pairing mode or PIN is needed. One detected device is added automatically. If several match, select yours." :
     finding ? "Hold the device button for more than 10 seconds, then release it. Keep it near Shelly. Pairing continues automatically when one matching device is detected." :
     state === "waiting_user_pairing" ? "Hold the same device's button for more than 10 seconds, then release it. Pairing resumes automatically when it is detected again." :
@@ -619,12 +741,38 @@ function bluPairRender(c) {
     ["scanning", "waiting_encryption_pin", "waiting_user_pairing", "waiting_pairing_mode", "waiting_security_retry", "waiting_encrypted_beacon", "waiting_beacon"].includes(state) ? "waiting" : "progress";
   bluPairStatus(c, message, tone);
   show("blu_pair_status", !!message);
-  const action = needsSetup ? "Enable encryption" : needsCurrent ? "Continue pairing" : choosing ? "Pair selected device" : "";
+  const action = needsBindkey ? "Verify bindkey and add" : needsSetup ? "Enable encryption" : needsCurrent ? "Continue pairing" : choosing ? "Pair selected device" : "";
   show("blu_pair_confirm", !!action && !c.bluPairClosing);
   updateInnerText(el(c, "blu_pair_confirm"), action);
-  el(c, "blu_pair_confirm").disabled = !!c.bluPairAction || (choosing && !c.bluPairSelected);
+  el(c, "blu_pair_confirm").disabled = !!c.bluPairAction || ((choosing || needsBindkey) && !c.bluPairSelected);
   updateInnerText(el(c, "blu_pair_cancel"), c.bluPairClosing ? "Cancelling…" : c.bluPairCancelFailed ? "Retry cancel" : finished ? "Close" : "Cancel");
   el(c, "blu_pair_cancel").disabled = !!c.bluPairClosing;
+  bluPairRenderDevices(c, choosing);
+  if (window.GarageI18n) window.GarageI18n.apply();
+}
+
+async function bluDeviceAction(c, role) {
+  const name = ["closed", "open", "motion", "indoor", "outdoor", "button", "smoke"][role];
+  const sensor = c.data && c.data.blu && c.data.blu[name];
+  if (!(sensor && (sensor.paired ?? sensor.secure))) return bluPairStart(c, role);
+  if (c.bluRemoving) return;
+  c.bluRemoving = true;
+  const button = el(c, "blu_pair_" + name);
+  button.disabled = true;
+  try {
+    await callDevice("Shelly.BLU.Unpair", {role});
+    for (const field of ["mac", "name"]) {
+      const input = el(c, "blu_" + name + "_" + field);
+      input.value = "";
+      input.dataset.changed = "false";
+    }
+    refreshUI();
+  } catch (e) {
+    alert(e.message || String(e));
+  } finally {
+    c.bluRemoving = false;
+    button.disabled = false;
+  }
 }
 
 function bluPairStart(c, role) {
@@ -637,7 +785,11 @@ function bluPairStart(c, role) {
   c.bluPairSession = (c.bluPairSession || 0) + 1;
   c.bluPairRevision = 0;
   c.bluPairRole = role;
-  c.bluPairModel = role === 3 || role === 4 ?
+  const typeField = el(c, "blu_" + ["closed", "open", "motion", "indoor", "outdoor", "button", "smoke"][role] + "_type");
+  c.bluPairQingping = !!typeField && typeField.value.startsWith("qingping_");
+  const qingpingModels = {qingping_cgg1:839,qingping_cgh1:982,qingping_cgpr1:2691};
+  c.bluPairBindkey = !!typeField && ["xiaomi_bindkey", "xiaomi_clock"].includes(typeField.value);
+  c.bluPairModel = typeField && ["xiaomi_clock", "xiaomi_clock_direct"].includes(typeField.value) ? 5860 : c.bluPairQingping ? qingpingModels[typeField.value] : c.bluPairBindkey ? (role === 6 ? 2455 : role < 2 ? 2443 : role === 2 ? 13617 : 1371) : role === 3 || role === 4 ?
     ({shelly: 3, xiaomi: 426, xiaomi_gatt: 1371}[el(c, role === 3 ? "blu_indoor_type" : "blu_outdoor_type").value] || 3) : 0;
   c.bluPairState = "starting";
   c.bluPairCandidates = [];
@@ -649,15 +801,16 @@ function bluPairStart(c, role) {
   c.bluPairValidationError = "";
   bluPairClearPINs(c);
   c.bluPairCredentials = {current: ""};
-  for (const id of ["blu_pair_pin", "blu_pair_current_pin"]) {
+  for (const id of ["blu_pair_pin", "blu_pair_current_pin", "blu_pair_bindkey"]) {
+    if (!el(c, id)) continue;
     el(c, id).oninput = () => { c.bluPairValidationError = ""; bluPairRender(c); };
   }
   el(c, "blu_pair_current_container").open = false;
   el(c, "blu_pair_candidate").replaceChildren();
-  updateInnerText(el(c, "blu_pair_title"), ["Pair closing sensor", "Pair opening sensor", "Pair motion sensor", "Pair indoor H&T", "Pair outdoor H&T", "Pair BLU Button1"][role]);
+  updateInnerText(el(c, "blu_pair_title"), ["Pair closing sensor", "Pair opening sensor", "Pair motion sensor", "Pair indoor H&T", "Pair outdoor H&T", "Pair BLU Button1", "Pair smoke sensor"][role]);
   bluPairRender(c);
   dialog.showModal();
-  bluPairRun(c, "Shelly.BLU.Discover", {model: c.bluPairModel}, () => { c.bluPairState = "scanning"; });
+  bluPairRun(c, "Shelly.BLU.Discover", {model: c.bluPairModel, bindkey: !!c.bluPairBindkey}, () => { c.bluPairState = "scanning"; });
 }
 
 function bluPairRun(c, method, params, success) {
@@ -691,8 +844,19 @@ function bluPairSubmit(c) {
       !c.bluPairCredentials || bluPairNeedsCurrentPIN(c)) return;
   const params = {role: c.bluPairRole, mac: c.bluPairSelected.mac,
     current_pin: c.bluPairCredentials.current};
-  c.bluPairState = "connecting";
-  bluPairRun(c, "Shelly.BLU.Pair", params, () => { bluPairClearPINs(c); });
+  if (c.bluPairBindkey) {
+    const input = el(c, "blu_pair_bindkey"), key = input.value.trim();
+    if (!/^[0-9a-fA-F]{32}$/.test(key)) {
+      c.bluPairValidationError = "Enter a 32-character hexadecimal bindkey.";
+      bluPairRender(c); input.focus(); return;
+    }
+    delete params.current_pin; params.bindkey = key; input.value = "";
+    c.bluPairState = "connecting";
+    bluPairRun(c, "Shelly.BLU.Bind", params, () => { bluPairClearPINs(c); });
+  } else {
+    c.bluPairState = "connecting";
+    bluPairRun(c, "Shelly.BLU.Pair", params, () => { bluPairClearPINs(c); });
+  }
 }
 
 function bluPairRefresh(c) {
@@ -716,11 +880,13 @@ function bluPairRefresh(c) {
     }
     if (status.state === "scanning") {
       const entries = (status.candidates || []).filter(candidate => !candidate.model ||
-        (c.bluPairRole === 5 ? candidate.model === 1 : c.bluPairRole >= 3 ? candidate.model === c.bluPairModel : candidate.model === (c.bluPairRole === 2 ? 5 : 2)))
+        (c.bluPairModel === 5860 ? (!c.bluPairBindkey || candidate.encrypted) && [5860, 9538].includes(candidate.model) : c.bluPairQingping ? candidate.model === c.bluPairModel || (c.bluPairModel === 839 && candidate.model === 2888) :
+        (c.bluPairRole === 5 ? candidate.model === 1 : c.bluPairRole >= 3 ? candidate.model === c.bluPairModel : (c.bluPairModel === 13617 && [13617,19552].includes(candidate.model)) || candidate.model === (c.bluPairBindkey ? c.bluPairModel : c.bluPairRole === 2 ? 5 : 2))))
         .sort((a, b) => a.mac.localeCompare(b.mac));
       c.bluPairCandidates = entries;
       const selected = c.bluPairSelected && c.bluPairSelected.mac;
       c.bluPairSelected = entries.length === 1 ? entries[0] : entries.find(item => item.mac === selected) || null;
+      if(c.bluPairQingping || c.bluPairModel === 1371)c.bluPairBindkey=!!(c.bluPairSelected && c.bluPairSelected.encrypted);
       const select = el(c, "blu_pair_candidate");
       const signature = entries.map(candidate => candidate.mac).join(",");
       // Polling RSSI must not rebuild an open sensor dropdown under the user.
@@ -731,7 +897,7 @@ function bluPairRefresh(c) {
         select.replaceChildren(placeholder, ...entries.map(candidate => {
           const option = document.createElement("option");
           option.value = candidate.mac;
-          option.textContent = `${candidate.mac} · ${candidate.rssi} dBm`;
+          option.textContent = `${bluPairDeviceInfo(candidate).name} · ${candidate.mac} · ${candidate.rssi} dBm`;
           return option;
         }));
       }
@@ -740,11 +906,12 @@ function bluPairRefresh(c) {
       select.onchange = () => {
         if (c.bluPairState !== "scanning" || c.bluPairAction || c.bluPairClosing) return;
         c.bluPairSelected = c.bluPairCandidates.find(item => item.mac === select.value) || null;
+        if(c.bluPairQingping || c.bluPairModel === 1371)c.bluPairBindkey=!!(c.bluPairSelected && c.bluPairSelected.encrypted);
         c.bluPairError = "";
         c.bluPairValidationError = "";
         bluPairRender(c);
       };
-      if (entries.length === 1 && !bluPairNeedsCurrentPIN(c)) {
+      if (entries.length === 1 && !c.bluPairBindkey && !bluPairNeedsCurrentPIN(c)) {
         bluPairSubmit(c);
         return;
       }
@@ -845,7 +1012,8 @@ function gdoSetConfig(c, cfg, spinner) {
       open_mac: el(c, "blu_open_mac").value.trim().toUpperCase(),
       stale_after_s: Number(el(c, "blu_stale_after_s").value),
     };
-    for (const role of ["closed", "open", "motion", "indoor", "outdoor", "button"]) {
+    for (const role of ["closed", "open", "motion", "indoor", "outdoor", "button", "smoke"]) {
+      cfg.blu[role + "_dashboard"] = el(c, "blu_" + role + "_dashboard").checked;
       if (!c.data.blu[role] || !(c.data.blu[role].paired ?? c.data.blu[role].secure)) continue;
       const name = el(c, "blu_" + role + "_name").value.trim();
       if (new TextEncoder().encode(name).length > 64) {
@@ -952,12 +1120,13 @@ function findOrAddContainer(cd) {
     case Component_Type.kGarageDoorOpener:
       c = el("gdo_template").cloneNode(true);
       c.id = elId;
-      el(c, "blu_pair_closed").onclick = () => bluPairStart(c, 0);
-      el(c, "blu_pair_open").onclick = () => bluPairStart(c, 1);
-      el(c, "blu_pair_motion").onclick = () => bluPairStart(c, 2);
-      el(c, "blu_pair_indoor").onclick = () => bluPairStart(c, 3);
-      el(c, "blu_pair_outdoor").onclick = () => bluPairStart(c, 4);
-      el(c, "blu_pair_button").onclick = () => bluPairStart(c, 5);
+      el(c, "blu_pair_closed").onclick = () => bluDeviceAction(c, 0);
+      el(c, "blu_pair_open").onclick = () => bluDeviceAction(c, 1);
+      el(c, "blu_pair_motion").onclick = () => bluDeviceAction(c, 2);
+      el(c, "blu_pair_indoor").onclick = () => bluDeviceAction(c, 3);
+      el(c, "blu_pair_outdoor").onclick = () => bluDeviceAction(c, 4);
+      el(c, "blu_pair_button").onclick = () => bluDeviceAction(c, 5);
+      el(c, "blu_pair_smoke").onclick = () => bluDeviceAction(c, 6);
       el(c, "blu_pair_confirm").onclick = () => bluPairConfirm(c);
       el(c, "blu_pair_cancel").onclick = () => bluPairClose(c);
       el(c, "blu_pairing").oncancel = event => {
@@ -1254,19 +1423,28 @@ function updateComponent(cd) {
         checkIfNotModified(el(c, "blu_enable"), cd.blu.enable);
         setValueIfNotModified(el(c, "blu_closed_mac"), cd.blu.closed_mac);
         setValueIfNotModified(el(c, "blu_open_mac"), cd.blu.open_mac);
-        for (const role of ["motion", "indoor", "outdoor", "button"])
+        for (const role of ["motion", "indoor", "outdoor", "button", "smoke"])
           setValueIfNotModified(el(c, "blu_" + role + "_mac"), cd.blu[role + "_mac"] || "");
         setValueIfNotModified(el(c, "blu_stale_after_s"), cd.blu.stale_after_s);
         updateInnerText(el(c, "blu_status"), !cd.blu.enable ? "Wired sensors selected" :
-          (cd.blu.ready ? "BLU sensors ready" : "BLU sensors missing, stale or conflicting — controls blocked"));
-        for (const role of ["closed", "open", "motion", "indoor", "outdoor", "button"]) {
+          (cd.blu.ready ? "" : "BLU sensors missing, stale or conflicting — controls blocked"));
+        el(c, "blu_status").style.display = cd.blu.enable && cd.blu.ready ? "none" : "";
+        for (const role of ["closed", "open", "motion", "indoor", "outdoor", "button", "smoke"]) {
           const sensor = cd.blu[role];
+          checkIfNotModified(el(c, "blu_" + role + "_dashboard"), !sensor || sensor.dashboard !== false);
           el(c, "blu_" + role + "_name_row").style.display = sensor && (sensor.paired ?? sensor.secure) ? "" : "none";
+          const paired = !!(sensor && (sensor.paired ?? sensor.secure));
+          const action = el(c, "blu_pair_" + role);
+          updateInnerText(action, paired ? "Remove" : "Pair");
+          action.classList.toggle("blu-remove", paired);
+          action.disabled = !!c.bluRemoving;
           if (!sensor) continue;
-          if (["indoor", "outdoor"].includes(role)) selectIfNotModified(el(c, "blu_" + role + "_type"), sensor.protocol === "xiaomi_gatt" ? "xiaomi_gatt" : sensor.protocol === "xiaomi" ? "xiaomi" : "shelly");
+          if(role === "motion")selectIfNotModified(el(c,"blu_motion_type"),(sensor.protocol || "").startsWith("qingping")?"qingping_cgpr1":sensor.protocol === "xiaomi_bindkey"?"xiaomi_bindkey":"shelly");
+          if (["closed", "open"].includes(role)) selectIfNotModified(el(c, "blu_" + role + "_type"), (sensor.protocol || "").startsWith("qingping") ? "qingping_cgh1" : sensor.protocol === "xiaomi_bindkey" ? "xiaomi_bindkey" : "shelly");
+          if (["indoor", "outdoor"].includes(role)) selectIfNotModified(el(c, "blu_" + role + "_type"), (sensor.protocol || "").startsWith("qingping") ? "qingping_cgg1" : sensor.protocol === "xiaomi_clock_gatt" ? "xiaomi_clock_direct" : sensor.protocol === "xiaomi_clock_bindkey" ? "xiaomi_clock" : ["xiaomi_bindkey", "xiaomi_gatt"].includes(sensor.protocol) ? "xiaomi_gatt" : sensor.protocol === "xiaomi" ? "xiaomi" : "shelly");
           const name = role === "button" ? cd.blu.button_name ?? sensor.name ?? "" : sensor.name || "";
           setValueIfNotModified(el(c, "blu_" + role + "_name"), name);
-          bluSensorStatus(el(c, "blu_" + role + "_status"), sensor, role === "button" ? cd.blu.presence_timeout_s || 45 : sensor.timeout_s || cd.blu.stale_after_s, role === "button" ? "button" : role === "motion" ? true : ["indoor", "outdoor"].includes(role) ? "ht" : false);
+          bluSensorStatus(el(c, "blu_" + role + "_status"), sensor, role === "button" ? cd.blu.presence_timeout_s || 45 : sensor.timeout_s || cd.blu.stale_after_s, role === "button" ? "button" : role === "motion" ? true : role === "smoke" ? "smoke" : ["indoor", "outdoor"].includes(role) ? "ht" : false, (cd.blu[role + "_mac"] || "") + ":" + (sensor.protocol || ""));
         }
         el(c, "blu_car_name_row").style.display = cd.blu.button && cd.blu.button.secure ? "" : "none";
         setValueIfNotModified(el(c, "blu_car_name"), cd.blu.car_name || "");
@@ -1436,6 +1614,10 @@ function updateElement(key, value, info) {
       break;
     case "wifi_sta_ps_mode":
       selectIfNotModified(el("wifi_sta_ps_mode"), value);
+      break;
+    case "wifi_min_ps_mode":
+      el("wifi_sta_ps_mode_0").disabled = (value > 0);
+      el("wifi_ps_note").style.display = (value > 0 ? "block" : "none");
       break;
     case "hap_paired":
       if (value) {
@@ -1618,7 +1800,6 @@ function getVar(key) {
 
 function setVar(key, value, maxAge) {
   if (value === undefined) {
-    console.log("Delete var", key);
     localStorage.removeItem(key);
     return;
   }
@@ -1626,7 +1807,6 @@ function setVar(key, value, maxAge) {
   if (maxAge > 0) {
     v.exp = (new Date()).getTime() + (maxAge * 1000);
   }
-  console.log("SetVar", key, v, maxAge);
   window.localStorage.setItem(key, JSON.stringify(v));
   // Clear out cookie storage. Added: 2021/04/24.
   document.cookie = `${key}=;max-age=1`;
@@ -1697,7 +1877,6 @@ function connectWebSocket() {
       let ri = pendingRequests[id];
       if (!ri) return;
       delete pendingRequests[id];
-      console.log("[<-]", resp);
       if (resp.error && resp.error.code == 401) {
         rpcAuth = null;
         let authReq = JSON.parse(resp.error.message);
@@ -1705,7 +1884,6 @@ function connectWebSocket() {
         if (!ri.ar) {
           authRealm = authReq.realm;
           ar = getAuthResp(authReq);
-          console.log(`Auth required for ${ri.method}`, authReq, ar);
         } else {
           console.log(`Auth failed for ${ri.method}`, authReq);
           el("forgot_password").style.display = "block";
@@ -1829,7 +2007,6 @@ function callDeviceAuth(method, params, ar) {
       } else if (rpcAuth) {
         frame.auth = rpcAuth;
       }
-      console.log("[->]", frame);
       socket.send(JSON.stringify(frame));
       let pr = {
         id: id,
@@ -1869,7 +2046,6 @@ el("auth_log_in_btn").onclick = function() {
 };
 
 el("auth_pass").onkeyup = function(e) {
-  console.log(e);
   if (e.code == "Enter") doLogin();
   return false;
 };
@@ -2012,7 +2188,6 @@ function selectIfNotModified(e, newSelection) {
 }
 
 function markInputChanged(ev) {
-  console.log("CHANGED", ev.target);
   ev.target.dataset.changed = "true";
 }
 
@@ -2141,21 +2316,20 @@ async function uploadFW(blob, spinner, status, ar) {
 
 // major.minor.patch-variantN
 function parseVersion(versionString) {
-  version =
-      versionString
-          .match(
-              /^(?<major>\d+).(?<minor>\d+).(?<patch>\d+)-?(?<variant>[a-z]*)(?<varSeq>\d*)$/)
-          .groups
+  const match = String(versionString).match(/^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?:[-_]?(?<variant>[a-z]+)\.?(?<varSeq>\d*))?$/);
+  if (!match) return null;
+  const version = match.groups;
   version.major = parseInt(version.major);
   version.minor = parseInt(version.minor);
   version.patch = parseInt(version.patch);
+  version.variant = version.variant || "";
   version.varSeq = parseInt(version.varSeq) || 0;
-
   return version;
 }
 
 function isNewer(v1, v2) {
   let vi1 = parseVersion(v1), vi2 = parseVersion(v2);
+  if (!vi1 || !vi2) return false;
   if (vi1.major != vi2.major) return (vi1.major > vi2.major);
   if (vi1.minor != vi2.minor) return (vi1.minor > vi2.minor);
   if (vi1.patch != vi2.patch) return (vi1.patch > vi2.patch);
@@ -2221,6 +2395,12 @@ function checkUpdate() {
           latestVersion = cfg.version;
           relNotesURL = cfg.rel_notes;
           if (cfg.urls) updateURL = cfg.urls[model];
+        }
+        if (cfg && cfg.incompatible_models && cfg.incompatible_models[model]) {
+          e.innerText = cfg.incompatible_models[model];
+          se.className = "";
+          setVar("update_available", false);
+          return;
         }
         console.log("Version:", latestVersion, "URL:", updateURL);
         if (!latestVersion || !updateURL) {
@@ -2391,7 +2571,13 @@ function garageDashboardRefresh(c, cd) {
   if (!garageDashboardAccess || updateInProgress) return;
   garageDashboardComponent = c;
   const motion = c.garageMotionState && c.garageMotionState.motion;
-  garageDashboardTelemetry = {status: cd, motion: motion ? {
+  const info = typeof lastInfo === "undefined" || !lastInfo ? {} : lastInfo;
+  garageDashboardTelemetry = {status: cd, network: {
+    wifi_connected: info.wifi_connected === true,
+    wifi_rssi: Number.isFinite(info.wifi_conn_rssi) && info.wifi_conn_rssi < 0 ? info.wifi_conn_rssi : null,
+    bt_enabled: !!(cd.blu && cd.blu.radio_enabled),
+    bt_running: !!(cd.blu && cd.blu.radio_running)
+  }, motion: motion ? {
     from:motion.from,to:motion.to,duration:motion.duration,
     elapsed:Math.max(0,performance.now()-motion.start)
   } : null};

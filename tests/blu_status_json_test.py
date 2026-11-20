@@ -18,10 +18,14 @@ start = source.index('std::string GetInfoJSON() {')
 end = source.index('\n}  // namespace blu', start)
 function = source[start:end]
 harness = r'''
+void RestoreContactReadings() {}
 #include <string>
+#include <ctime>
+#include <cstdint>
 #include <cstdarg>
 #include <iostream>
 #include "frozen.h"
+#include "shelly_blu_bthome.hpp"
 namespace mgos {
 std::string JSONPrintStringf(const char *fmt, ...) {
   std::string result;
@@ -34,17 +38,19 @@ std::string JSONPrintStringf(const char *fmt, ...) {
   return result;
 }
 }
-struct Sensor {
- bool seen = false, active = false;
- int battery = -1, rssi = 0, temperature10 = -1000, humidity = -1;
- double last_seen = 0;
-} sensors[6];
-struct Address { unsigned char addr[6]; } addresses[6] = {};
-bool known[6] = {true, true, true, true, false, true};
+shelly::blu::Sensor sensors[7];
+struct Address { unsigned char addr[6]; } addresses[7] = {};
+bool known[7] = {true, true, true, true, false, true};
 unsigned button_press_sequence = 0;
-int voltages[6] = {-1,-1,-1,-1,3000,-1};
-unsigned packet_sequence[6] = {1,2,3,4,5,6};
+int voltages[7] = {-1,-1,-1,-1,3000,-1};
+unsigned packet_sequence[7] = {1,2,3,4,5,6};
 double button_press_time = 0;
+bool mgos_sys_config_get_bt_enable() { return true; }
+constexpr int MGOS_BT_STARTED=1;
+int mgos_bt_get_status() { return MGOS_BT_STARTED; }
+double mgos_uptime();
+int cached_battery=31;
+int CachedBattery(int,const unsigned char*,int64_t,double){return cached_battery;}
 bool Enabled() { return true; }
 bool Ready() { return true; }
 bool CarPresent() { return false; }
@@ -54,21 +60,28 @@ const char *mgos_sys_config_get_blu_car_name() { return "Auto \"garaż\" <test>"
 int mgos_sys_config_get_blu_presence_timeout_s() { return 45; }
 int mgos_sys_config_get_blu_stale_after_s() { return 180; }
 double mgos_uptime() { return 150; }
+bool QingpingFor(int,const unsigned char*){return false;}
+bool XiaomiClockFor(int,const unsigned char*){return false;}
+bool XiaomiBindkeyFor(int role,const unsigned char*){return role<2;}
 bool SecureFor(int role, const unsigned char *) { return role!=3; }
 bool XiaomiFor(int role, const unsigned char *) { return role==3; }
 bool XiaomiGATTFor(int role, const unsigned char *) { return role==4; }
 std::string XiaomiGATTStatusJSON(int) { return "{}"; }
 int SensorTimeout(int role) { return role==4 ? 900 : 180; }
 bool SensorPaired(int role) { return role!=4; }
+bool SensorDashboard(int role) { return role!=1; }
 bool SensorReady(int role) { return role!=4; }
 bool HTReady(int role,bool) { return role==3; }
 const char *SensorName(int) { return "Czujnik \"garaż\" <test>"; }
 const char *SensorMAC(int role) { return role == 4 ? "" : "AA:BB:CC:DD:EE:FF"; }
 '''
 main = r'''
-int main() {
+int main(int argc, char **) {
+ if(argc>1)cached_battery=-1;
  sensors[0].seen = sensors[0].active = true;
  sensors[0].battery = 76; sensors[0].rssi = -40; sensors[0].last_seen = 144;
+ sensors[2].seen = true; sensors[2].illuminance100 = 2500;
+ sensors[2].illuminance_last_seen = argc>1 ? -40 : 147;
  sensors[3].seen = true; sensors[3].temperature10 = -52; sensors[3].humidity = 65;
  std::cout << GetInfoJSON();
 }
@@ -77,13 +90,24 @@ with tempfile.TemporaryDirectory(prefix='shelly-status-json-') as temp:
     d = Path(temp)
     (d / 'test.cpp').write_text(harness + function + main)
     subprocess.run(['clang', '-I', str(frozen), '-c', str(frozen / 'frozen.c'), '-o', str(d / 'frozen.o')], check=True)
-    subprocess.run(['clang++', '-std=c++14', '-I', str(frozen), str(d / 'test.cpp'), str(d / 'frozen.o'), '-o', str(d / 'test')], check=True)
+    subprocess.run(['clang++', '-std=c++14', '-I', str(frozen), '-I', str(root / 'src'), str(d / 'test.cpp'), str(d / 'frozen.o'), '-o', str(d / 'test')], check=True)
     result = json.loads(subprocess.check_output([str(d / 'test')]))
-    for role in ['closed', 'open', 'motion', 'indoor', 'outdoor', 'button']:
+    for role in ['closed', 'open', 'motion', 'indoor', 'outdoor', 'button', 'smoke']:
         assert isinstance(result[role + '_mac'], str)
         assert isinstance(result[role], dict)
         assert result[role]['name'] == 'Czujnik "garaż" <test>'
-        assert result[role]['packet_seq'] > 0
+        assert result[role]['packet_seq'] >= 0
+        assert result[role]['dashboard'] is (role != 'open')
+    assert result['closed']['battery'] == 31
+    assert result['open']['battery'] == 31 and result['open']['seen'] is False
+    expired = json.loads(subprocess.check_output([str(d / 'test'), 'expired']))
+    assert expired['closed']['battery'] == -1 and expired['open']['battery'] == -1
+    assert result['motion']['illuminance'] == 25
+    assert result['motion']['illuminance_ready'] is True
+    assert result['motion']['illuminance_age_s'] == 3
+    assert expired['motion']['illuminance_ready'] is False
+    assert result['outdoor']['illuminance_ready'] is False
+    assert result['outdoor']['illuminance_age_s'] == -1
     assert result['car_present'] is False
     assert result['car_presence_ready'] is True
     assert result['button_name'] == ''
@@ -97,4 +121,4 @@ with tempfile.TemporaryDirectory(prefix='shelly-status-json-') as temp:
     assert result['outdoor']['seen'] is False
     assert result['outdoor']['secure'] is False
     assert result['outdoor']['age_s'] == -1
-print('PASS: production BLE status is strict JSON for all six roles, including unseen sensors')
+print('PASS: production BLE status is strict JSON for all seven roles, including unseen sensors')

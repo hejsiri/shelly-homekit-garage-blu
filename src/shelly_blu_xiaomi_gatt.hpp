@@ -1,4 +1,5 @@
 #pragma once
+#include <string.h>
 #include "shelly_blu_bthome.hpp"
 
 namespace shelly {
@@ -23,13 +24,30 @@ inline bool Xiaomi03Advertisement(const uint8_t *data, size_t size) {
   }
   return false;
 }
+inline uint16_t ClockAdvertisement(const uint8_t *data, size_t size) {
+  bool named = false;
+  uint16_t product = 0;
+  for (size_t i = 0; i < size;) {
+    const size_t n = data[i++];
+    if (!n) break;
+    if (n > size - i) return 0;
+    if (n >= 8 && data[i] == 0x16 && data[i+1] == 0x95 && data[i+2] == 0xfe) {
+      product = data[i+5] | uint16_t(data[i+6]) << 8;
+      if (product != 0x16e4 && product != 0x2542) return 0;
+    }
+    const char name[] = "LYWSD02MMC";
+    if (data[i] == 9 && n == sizeof(name) && !memcmp(data+i+1, name, n-1)) named = true;
+    i += n;
+  }
+  return product ? product : named ? 0x16e4 : 0;
+}
 inline bool DecodeXiaomi03GATT(const uint8_t *data, size_t size, Reading *out,
-                              int *voltage_mv) {
-  if (size != 5) return false;
+                              int *voltage_mv, bool clock = false) {
+  if (size != 5 && !(clock && size == 3)) return false;
   const int temperature = int16_t(uint16_t(data[0]) | uint16_t(data[1]) << 8);
-  const int voltage = uint16_t(data[3]) | uint16_t(data[4]) << 8;
+  const int voltage = size == 5 ? (uint16_t(data[3]) | uint16_t(data[4]) << 8) : -1;
   if (temperature < -5000 || temperature > 10000 || data[2] > 100 ||
-      voltage < 1800 || voltage > 3600) return false;
+      (size == 5 && (voltage < 1800 || voltage > 3600))) return false;
   Reading reading;
   reading.temperature_present = true;
   reading.temperature10 = (temperature + (temperature >= 0 ? 5 : -5)) / 10;
@@ -38,6 +56,7 @@ inline bool DecodeXiaomi03GATT(const uint8_t *data, size_t size, Reading *out,
   reading.battery = (voltage - 2100 + 5) / 10;
   if (reading.battery < 0) reading.battery = 0;
   if (reading.battery > 100) reading.battery = 100;
+  if (size == 3) reading.battery = -1;
   *out = reading;
   *voltage_mv = voltage;
   return true;
@@ -53,8 +72,9 @@ namespace shelly {
 namespace blu {
 using XiaomiGATTCallback = std::function<void(const Sensor &, int, const std::string &)>;
 void XiaomiGATTInit();
-bool XiaomiGATTStart(int role, const mgos_bt_addr &peer, XiaomiGATTCallback callback);
+bool XiaomiGATTStart(int role, const mgos_bt_addr &peer, XiaomiGATTCallback callback, bool clock = false);
 void XiaomiGATTCancel();
+void XiaomiGATTForget(int role);
 bool XiaomiGATTConnecting();
 bool XiaomiGATTScanPaused();
 void XiaomiGATTSetGarageMoving(bool moving);

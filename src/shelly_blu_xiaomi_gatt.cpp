@@ -20,7 +20,7 @@ extern "C" {
 namespace shelly {
 namespace blu {
 namespace {
-// One short, read-only connection at a time. Never starts SMP or writes GATT.
+// One short connection at a time. Clock subscriptions write only the measurement CCCD.
 std::atomic<unsigned> ticket(0);
 bool busy = false, connecting = false, moving = false;
 uint16_t connection = BLE_HS_CONN_HANDLE_NONE;
@@ -30,6 +30,10 @@ double expires = 0, cooldown = 5, scan_grace = 0;
 XiaomiGATTCallback completion;
 std::vector<uint8_t> value;
 std::array<uint16_t, 5> handles = {};
+bool clock_mode = false, notifications_requested = false;
+uint16_t descriptor_end = 0xffff, cccd = 0;
+uint8_t properties = 0;
+const char *Model() { return clock_mode ? "LYWSD02MMC" : "LYWSD03MMC"; }
 bool ambiguous = false, invalid_value = false;
 int response_length = -1;
 std::string primary_failure;
@@ -80,7 +84,58 @@ std::string ResponseDetails() {
   return mgos::SPrintf("UUID %s, handle 0x%04x, length %d, bytes %s", uuids[step],
       handles[step], response_length, hex.empty() ? "none" : hex.c_str());
 }
+void ClockSample(const uint8_t *bytes, size_t size) {
+  Reading decoded;
+  int voltage = -1;
+  if (!DecodeXiaomi03GATT(bytes, size, &decoded, &voltage, true)) {
+    Fail("Invalid Xiaomi clock measurement");
+    return;
+  }
+  Sensor sensor;
+  sensor.Update(decoded, mgos_uptime(), signal, 2);
+  Finish(sensor, voltage, "");
+}
+
+int Subscribed(uint16_t handle, const ble_gatt_error *error, ble_gatt_attr *, void *arg) {
+  unsigned current = uintptr_t(arg);
+  int result = error->status;
+  mgos::InvokeCB([current, handle, result] {
+    if (busy && current == ticket && handle == connection && result)
+      Fail(mgos::SPrintf("Clock subscription failed (GATT 0x%x)", result));
+  });
+  return 0;
+}
+
+int ClockDescriptor(uint16_t handle, const ble_gatt_error *error, uint16_t owner,
+                    const ble_gatt_dsc *dsc, void *arg) {
+  const unsigned current = uintptr_t(arg);
+  const int result = error->status;
+  uint16_t found = 0;
+  if (!result && dsc && ble_uuid_u16(&dsc->uuid.u) == 0x2902) found = dsc->handle;
+  mgos::InvokeCB([current, handle, owner, result, found] {
+    if (!busy || current != ticket || handle != connection) return;
+    if (!result) {
+      if (found && owner == handles[3]) {
+        if (cccd) { Fail("Ambiguous clock notification descriptor"); return; }
+        cccd = found;
+      }
+      return;
+    }
+    if (result != BLE_HS_EDONE || !cccd) { Fail("Clock notification descriptor unavailable"); return; }
+    const uint8_t enable[] = {1, 0};
+    notifications_requested = true;
+    if (ble_gattc_write_flat(handle, cccd, enable, sizeof(enable), Subscribed,
+                             reinterpret_cast<void *>(uintptr_t(++ticket))))
+      Fail("Cannot subscribe to clock measurements");
+  });
+  return 0;
+}
 void ReadFinished(int result) {
+  if (clock_mode) {
+    if (result || invalid_value) Fail("Cannot read Xiaomi clock measurement");
+    else ClockSample(value.data(), value.size());
+    return;
+  }
   if (step == 0) {
     if (result || invalid_value || TextValue() != "LYWSD03MMC") {
       Fail(mgos::SPrintf("Cannot verify LYWSD03MMC model (GATT 0x%x; %s); expected LYWSD03MMC", result, ResponseDetails().c_str()));
@@ -163,13 +218,31 @@ int Characteristic(uint16_t handle, const ble_gatt_error *error,
     }
     attribute = chr->val_handle;
   }
-  mgos::InvokeCB([current, handle, result, index, attribute] {
+  uint16_t declaration = chr && !result ? chr->def_handle : 0;
+  uint8_t flags = chr && !result ? chr->properties : 0;
+  mgos::InvokeCB([current, handle, result, index, attribute, declaration, flags] {
     if (!busy || current != ticket || handle != connection) return;
     if (!result) {
-      if (index >= 0) {
+      if (clock_mode && handles[3] && declaration > handles[3] && declaration <= descriptor_end)
+        descriptor_end = declaration - 1;
+      if (index == 3) properties = flags;
+      if (index >= 0 && (!clock_mode || index == 3)) {
         ambiguous = ambiguous || !attribute || handles[index] != 0;
         handles[index] = attribute;
       }
+      return;
+    }
+    if (clock_mode) {
+      if (result != BLE_HS_EDONE || ambiguous || !handles[3]) {
+        Fail("Xiaomi clock measurement characteristic unavailable");
+      } else if (properties & BLE_GATT_CHR_PROP_NOTIFY) {
+        if (ble_gattc_disc_all_dscs(connection, handles[3], descriptor_end, ClockDescriptor,
+                                    reinterpret_cast<void *>(uintptr_t(++ticket))))
+          Fail("Cannot discover clock notification descriptor");
+      } else if (properties & BLE_GATT_CHR_PROP_READ) {
+        step = 3;
+        Read();
+      } else Fail("Xiaomi clock does not expose a live measurement");
       return;
     }
     if (result != BLE_HS_EDONE || ambiguous || !handles[0]) {
@@ -184,13 +257,16 @@ int Characteristic(uint16_t handle, const ble_gatt_error *error,
 }
 void DiscoverCharacteristics() {
   handles.fill(0);
+  descriptor_end = 0xffff;
+  cccd = properties = 0;
+  notifications_requested = false;
   ambiguous = false;
   const unsigned current = ++ticket;
   // Enumerate standard characteristic declarations, then read the discovered
   // value handles. No fixed firmware-specific handles or read-by-type shortcut.
   const int result = ble_gattc_disc_all_chrs(connection, 1, 0xffff,
       Characteristic, reinterpret_cast<void *>(uintptr_t(current)));
-  if (result) Fail(mgos::SPrintf("Cannot start LYWSD03MMC characteristic discovery (GATT 0x%x)", result));
+  if (result) Fail(mgos::SPrintf("Cannot start %s characteristic discovery (GATT 0x%x)", Model(), result));
 }
 int GapEvent(ble_gap_event *event, void *arg) {
   // Connection ticket stays distinct from each subsequent GATT read ticket.
@@ -204,18 +280,29 @@ int GapEvent(ble_gap_event *event, void *arg) {
         return;
       }
       connecting = false;
-      if (result) { Fail(mgos::SPrintf("LYWSD03MMC connection failed (0x%x); close other Bluetooth apps and retry", result)); return; }
+      if (result) { Fail(mgos::SPrintf("%s connection failed (0x%x); close other Bluetooth apps and retry", Model(), result)); return; }
       connection = handle;
       int8_t rssi = 0;
       if (!ble_gap_conn_rssi(handle, &rssi)) signal = rssi;
       DiscoverCharacteristics();
     });
+  } else if (event->type == BLE_GAP_EVENT_NOTIFY_RX) {
+    const auto &rx = event->notify_rx;
+    const uint16_t handle = rx.conn_handle, attr = rx.attr_handle;
+    const int size = OS_MBUF_PKTLEN(rx.om);
+    std::array<uint8_t, 5> bytes{};
+    if ((size == 3 || size == 5) && !os_mbuf_copydata(rx.om, 0, size, bytes.data())) {
+      mgos::InvokeCB([current, handle, attr, bytes, size] {
+        if (busy && clock_mode && notifications_requested && current == session &&
+            handle == connection && attr == handles[3]) ClockSample(bytes.data(), size);
+      });
+    }
   } else if (event->type == BLE_GAP_EVENT_DISCONNECT) {
     const uint16_t handle = event->disconnect.conn.conn_handle;
     const int reason = event->disconnect.reason;
     mgos::InvokeCB([current, handle, reason] {
       if (busy && current == session && handle == connection)
-        Fail(mgos::SPrintf("LYWSD03MMC disconnected (0x%x); close other Bluetooth apps and retry", reason));
+        Fail(mgos::SPrintf("%s disconnected (0x%x); close other Bluetooth apps and retry", Model(), reason));
     });
   }
   return 0;
@@ -223,7 +310,7 @@ int GapEvent(ble_gap_event *event, void *arg) {
 void Tick(void *) {
   const double now = mgos_uptime();
   if (busy) {
-    if (now >= expires) Fail("LYWSD03MMC read timed out; close other Bluetooth apps and keep it near Shelly");
+    if (now >= expires) Fail(clock_mode ? "Clock read timed out; close other Bluetooth apps and keep it near Shelly" : "LYWSD03MMC read timed out; close other Bluetooth apps and keep it near Shelly");
     return;
   }
   if (moving || PairingBusy() || PairingScan() || now < cooldown || mgos_bt_get_status() != MGOS_BT_STARTED) return;
@@ -232,23 +319,31 @@ void Tick(void *) {
     if (now < status[role - 3].next || !ValidMAC(SensorMAC(role)) ||
         !mgos_bt_addr_from_str(mg_mk_str(SensorMAC(role)), &peer) ||
         !XiaomiGATTFor(role, peer.addr)) continue;
+    const bool clock = XiaomiClockFor(role, peer.addr);
+    if (clock) {
+      SecureRecord record;
+      if (!LoadRecord(role, &record)) continue;
+      peer.type = static_cast<decltype(peer.type)>(record.key[0]);
+    }
     const auto address = peer;
     XiaomiGATTStart(role, peer, [role, address](const Sensor &reading, int voltage, const std::string &error) {
       if (error.empty() && XiaomiGATTFor(role, address.addr))
         SetThermometerReading(role, address, reading, voltage);
-    });
+    }, clock);
     break;
   }
 }
 }  // namespace
-bool XiaomiGATTStart(int role, const mgos_bt_addr &peer, XiaomiGATTCallback callback) {
+bool XiaomiGATTStart(int role, const mgos_bt_addr &peer, XiaomiGATTCallback callback, bool clock) {
   if (busy || moving || (role != 3 && role != 4)) return false;
+  clock_mode = clock;
+  notifications_requested = false;
   busy = connecting = true;
   selected = role;
   signal = -127;
   primary_failure.clear();
   completion = std::move(callback);
-  expires = mgos_uptime() + 20;
+  expires = mgos_uptime() + (clock ? 40 : 20);
   status[role - 3].firmware.clear();
   status[role - 3].hardware.clear();
   status[role - 3].error.clear();
@@ -262,13 +357,18 @@ bool XiaomiGATTStart(int role, const mgos_bt_addr &peer, XiaomiGATTCallback call
   if (ble_hs_id_infer_auto(0, &own_type)) { Fail("Cannot select BLE address"); return true; }
   const int result = ble_gap_connect(own_type, &native, 3000, nullptr, GapEvent,
       reinterpret_cast<void *>(uintptr_t(current)));
-  if (result) Fail(mgos::SPrintf("Cannot connect to LYWSD03MMC (0x%x)", result));
+  if (result) Fail(mgos::SPrintf("Cannot connect to %s (0x%x)", Model(), result));
   return true;
 }
 void XiaomiGATTCancel() {
   // Cancel does not deliver a measurement or a completion callback.
   completion = nullptr;
   if (busy) Fail("Read cancelled");
+}
+void XiaomiGATTForget(int role) {
+  if (role != 3 && role != 4) return;
+  if (busy && selected == role) XiaomiGATTCancel();
+  status[role - 3] = Status();
 }
 bool XiaomiGATTConnecting() { return connecting; }
 bool XiaomiGATTScanPaused() { return mgos_uptime() < scan_grace; }

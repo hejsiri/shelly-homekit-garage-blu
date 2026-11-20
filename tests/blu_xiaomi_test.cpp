@@ -11,6 +11,17 @@ int main() {
       0x50,0x20,0xaa,1,0xa3,0xbf,0x2e,0x3b,0x34,0x2d,0x58,
       0x0d,0x10,4,0xb4,0,0x95,2,0x0a,0x10,1,59};
   Reading r;
+  // LYWSD02MMC revisions can combine float temperature, byte humidity and battery.
+  for (uint8_t ns : {0x48, 0x4c}) {
+    const uint8_t measurements[] = {1,ns,4,0,0,0xb0,0x41, 2,ns,1,49, 3,ns,1,82};
+    assert(DecodeThermometerObjects(measurements,sizeof(measurements),0,true,&r));
+    assert(r.temperature_present && r.temperature10==220 && r.humidity==49 && r.battery==82);
+    assert(!DecodeThermometerObjects(measurements,sizeof(measurements),0,false,&r));
+    uint8_t humidity[] = {8,ns,4,0,0,0x45,0x42}; // 49.25% RH
+    assert(DecodeThermometerObjects(humidity,sizeof(humidity),0,true,&r) && r.humidity==49);
+    humidity[5]=0xc0; humidity[6]=0x7f; // NaN is never a measurement.
+    assert(!DecodeThermometerObjects(humidity,sizeof(humidity),0,true,&r));
+  }
   assert(DecodeXiaomi(packet.data(),packet.size(),mac,&r));
   assert(r.temperature_present && r.temperature10==180 && r.humidity==66 && r.battery==59);
   Sensor sensor;

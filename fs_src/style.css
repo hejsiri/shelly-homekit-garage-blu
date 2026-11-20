@@ -466,3 +466,69 @@ input:checked + .slider:before {
 .blu-pair-existing .form-control{margin-top:12px}
 .blu-pair-dialog .blu-pair-status{overflow-wrap:anywhere}
 .blu-pair-dialog .button-container{margin-top:20px}
+
+/* Brief feedback for a newly accepted Bluetooth reading. */
+.blu-sensor.blu-received .blu-badge { background:#2389e8; color:#fff; }
+
+
+html[lang="pl"] .form label { white-space:normal !important; overflow-wrap:break-word; vertical-align:middle; }
+html[lang="pl"] .form-wrap-control { align-items:center; }
+
+.blu-accessory-separator { border:0; border-top:1px solid rgba(128,128,128,.3); margin:16px 0; }
+.ui-language-row { display:flex; align-items:center; gap:4px; margin-top:18px; }
+#ui_language_mount { display:inline-block; }
+
+/* Give translated garage labels room without changing switches or dialogs. */
+.garage-settings .form-control > label:first-child:not(.switch),
+.garage-settings .form-wrap-control > label:first-child:not(.switch) {
+  min-width: 140px;
+  max-width: 140px;
+  white-space: normal;
+  vertical-align: middle;
+}
+.garage-settings .blu-pair-dialog .form-control > label:first-child:not(.switch) {
+  min-width: 100px;
+  max-width: 100px;
+}
+@media (max-width: 460px) {
+  .garage-settings .form-control > label:first-child:not(.switch),
+  .garage-settings .form-wrap-control > label:first-child:not(.switch) {
+    display: block;
+    min-width: 0;
+    max-width: none;
+    margin-bottom: 6px;
+  }
+  .garage-settings .form-wrap-control { display: block; }
+}
+
+.garage-settings button.blu-remove { background: #62666b; }
+.garage-settings button.blu-remove:hover { background: #4b4f54; }
+
+/* Local product catalog: recognition uses the advertised model ID, not MAC. */
+.blu-visually-hidden { position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important;min-width:0!important; }
+.blu-device-list { display:grid;gap:8px;width:100%; }
+.blu-device-card { box-sizing:border-box;display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:1px solid rgba(128,128,128,.35);border-radius:12px;background:#fff;color:#484b57;text-align:left; }
+button.blu-device-card:hover,button.blu-device-card[aria-pressed="true"] { border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary); }
+button.blu-device-card:focus-visible {outline:2px solid var(--primary);outline-offset:2px;}
+.blu-device-photo {flex:0 0 68px;width:68px;height:68px;object-fit:contain;border-radius:9px;background:white;color:#777;display:grid;place-items:center;font-size:28px;}
+.blu-device-copy {display:flex;flex-direction:column;gap:4px;min-width:0;flex:1;font-size:13px;line-height:1.35;}
+.blu-device-copy strong {font-size:15px;overflow-wrap:anywhere;}
+.blu-device-mac {font-size:12px;opacity:.65;overflow-wrap:anywhere;}
+.blu-device-signal {font-size:12px;white-space:nowrap;opacity:.7;}
+@media(max-width:420px) {.blu-device-card{gap:9px;padding:10px;flex-wrap:wrap}.blu-device-signal{margin-left:77px;margin-top:-8px}.blu-device-copy strong{font-size:14px}}
+
+.ui-language-select { min-width:130px; max-width:100%; font:inherit; }
+
+/* Separate, labelled settings panels for the six accessory roles. */
+.blu-accessory-panel { margin:16px 0; padding:16px 12px; border:1px solid rgba(128,128,128,.28); border-radius:10px; background:var(--background); min-width:0; }
+.blu-accessory-title { margin:0 0 14px; font-size:18px; line-height:1.35; text-align:left; }
+.garage-settings .blu-accessory-panel .form-control { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.garage-settings .blu-accessory-panel .form-control > label:first-child { flex:0 0 96px; min-width:96px; max-width:96px; margin:0; }
+.blu-accessory-panel .form-control > input[type="text"], .blu-accessory-panel .form-control > select { flex:1 1 140px; width:0; min-width:100px; max-width:none; }
+.blu-accessory-panel .form-control > button { flex:0 0 auto; }
+.blu-accessory-panel .blu-sensor { margin:12px 0 0; }
+@media(max-width:400px) { .garage-settings .blu-accessory-panel .form-control > label:first-child { flex:0 0 100%; max-width:none; } }
+
+.blu-sensor .blu-badge.blu-alarm { background:#c9272c; color:#fff; }
+.garage-settings .blu-accessory-panel .form-control > label.blu-dashboard-option { display:inline-flex; align-items:center; gap:10px; flex:0 1 auto; min-width:0; max-width:100%; cursor:pointer; }
+.blu-dashboard-option > input[type="checkbox"] { flex:none; margin:0; }

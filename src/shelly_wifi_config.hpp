@@ -20,6 +20,7 @@
 #include <string>
 
 #include "shelly_common.hpp"
+#include "shelly_wifi_policy.hpp"
 
 namespace shelly {
 

@@ -28,7 +28,8 @@ using ScopedCPtr=std::unique_ptr<void,Free>;
 Status Errorf(int,const char*,...){return {false};}
 }
 void mgos_conf_set_str(char **p,const char *s){free(*p);*p=strdup(s);}
-std::string names[6], car_name;
+std::string names[7], car_name;
+bool dashboards[7]={true,true,true,true,true,true,true};
 const char *mgos_sys_config_get_blu_car_name(){return car_name.c_str();}
 void mgos_sys_config_set_blu_car_name(const char *s){car_name=s;}
 bool enabled=false;int stale=180;std::string closed_mac="AA:BB:CC:DD:EE:01",open_mac="AA:BB:CC:DD:EE:02";
@@ -50,20 +51,29 @@ class GarageDoorOpener {
  ~GarageDoorOpener(){free(config.name);}
 };
 '''
-for i,role in enumerate(['closed','open','motion','indoor','outdoor','button']):
+for i,role in enumerate(['closed','open','motion','indoor','outdoor','button','smoke']):
     harness+=f'const char *mgos_sys_config_get_blu_{role}_name(){{return names[{i}].c_str();}}\n'
     harness+=f'void mgos_sys_config_set_blu_{role}_name(const char *s){{names[{i}]=s;}}\n'
+    harness+=f'bool mgos_sys_config_get_blu_{role}_dashboard(){{return dashboards[{i}];}}\n'
+    harness+=f'void mgos_sys_config_set_blu_{role}_dashboard(bool visible){{dashboards[{i}]=visible;}}\n'
 harness+='namespace blu {\nint invalidations=0;void Invalidate(){invalidations++;}\nbool ValidMAC(const char *s){return strlen(s)==17;}\n'
-for sig in ['const char *SensorName(', 'void SetSensorName(']:
+for sig in ['const char *SensorName(', 'void SetSensorName(', 'bool SensorDashboard(', 'void SetSensorDashboard(']:
     harness+=extract('src/shelly_blu_garage.cpp',sig)+'\n'
 harness+='}\n'+extract('src/shelly_hap_garage_door_opener.cpp','Status GarageDoorOpener::SetConfig(')
 harness+=r'''
 int main(){
  GarageDoorOpener g;bool restart=false;
- assert(g.SetConfig(R"({"blu":{"motion_name":"Ruch \"garaż\"","button_name":"Auto","closed_name":"Krańcówka dół","open_name":"Krańcówka góra","indoor_name":"Garaż","outdoor_name":"Ogród"}})",&restart).ok);
+ for(int i=0;i<7;i++)assert(blu::SensorDashboard(i));
+ assert(g.SetConfig(R"({"blu":{"open_dashboard":false,"motion_dashboard":false,"indoor_dashboard":false,"button_dashboard":false}})",&restart).ok);
+ assert(!restart&&blu::invalidations==0);
+ assert(blu::SensorDashboard(0)&&!blu::SensorDashboard(1)&&!blu::SensorDashboard(2)&&!blu::SensorDashboard(3)&&blu::SensorDashboard(4)&&!blu::SensorDashboard(5)&&blu::SensorDashboard(6));
+ assert(g.SetConfig("{}",&restart).ok&&!blu::SensorDashboard(1));
+ assert(!g.SetConfig(R"({"blu":{"open_dashboard":true,"stale_after_s":1}})",&restart).ok&&!blu::SensorDashboard(1));
+ assert(g.SetConfig(R"({"blu":{"open_dashboard":true}})",&restart).ok&&blu::SensorDashboard(1)&&!restart);
+ assert(g.SetConfig(R"({"blu":{"motion_name":"Ruch \"garaż\"","button_name":"Auto","closed_name":"Krańcówka dół","open_name":"Krańcówka góra","indoor_name":"Garaż","outdoor_name":"Ogród","smoke_name":"Czujnik dymu"}})",&restart).ok);
  assert(restart&&blu::invalidations==0); // Renaming must not discard live readings/keys.
  assert(names[2]=="Ruch \"garaż\""&&names[5]=="Auto");
- for(int i=0;i<6;i++)assert(std::string(blu::SensorName(i))==names[i]);
+ for(int i=0;i<7;i++)assert(std::string(blu::SensorName(i))==names[i]);
  restart=false;assert(g.SetConfig("{}",&restart).ok&&!restart); // Old clients preserve names.
  const std::string old=names[2];
  assert(!g.SetConfig("{\"blu\":{\"closed_name\":\"Changed\",\"motion_name\":\""+std::string(65,'x')+"\"}}",&restart).ok);
@@ -103,4 +113,4 @@ with tempfile.TemporaryDirectory() as temp:
     subprocess.run(['clang','-I',str(frozen),'-c',str(frozen/'frozen.c'),'-o',str(p/'frozen.o')],check=True)
     subprocess.run(['clang++','-std=c++14','-Wall','-Wextra','-Werror','-I',str(frozen),str(p/'test.cpp'),str(p/'frozen.o'),'-o',str(p/'test')],check=True)
     subprocess.run([str(p/'test')],check=True)
-print('PASS: six device names and independent car name, defaults, atomic validation and retained telemetry')
+print('PASS: seven device names and independent car name, defaults, atomic validation and retained telemetry')

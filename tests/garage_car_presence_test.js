@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const source=fs.readFileSync('fs_src/garage.html','utf8');
 const start=source.indexOf('let lastPresenceMAC='),end=source.indexOf("window.addEventListener('message',e=>{",start);
-const ctx={car:'empty',changes:0,apply(){this.changes++;}};
+const ctx={car:'empty',changes:0,apply(){this.changes++;},document:{addEventListener(){}}};
 vm.createContext(ctx);vm.runInContext(source.slice(start,end),ctx);
 const blu={button_mac:'AA:BB:CC:DD:EE:01',presence_timeout_s:45,button:{secure:true,seen:true,age_s:0,packet_seq:1}};
 const update=()=>ctx.syncCarPresence(blu);

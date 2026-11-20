@@ -2,17 +2,22 @@
 
 # Shelly HomeKit Garage BLU
 
+**Pierwsza instalacja:** najnowszy stabilny firmware fabryczny, potem
+[jeden adres Garage BLU](https://hejsiri.pl/firmware/garage-blu/update/).
+Serwer rozpoznaje model. Układy sprawdzone: Plus 1 — stock 1.7.6, Gen3 — stock 2.2.0.
+[Zgodność i ograniczenia](docs/INSTALACJA_JEDEN_ADRES.md).
+
 Firmware dla **Shelly Plus 1** i **Shelly 1 Gen3**, który łączy bramę garażową z Apple HomeKit
 bez dodatkowego mostka. Dwa bezprzewodowe kontaktrony **Shelly BLU, Xiaomi lub Qingping** potwierdzają
 pełne zamknięcie i otwarcie. Sterownik komunikuje się z HomeKit przez Wi-Fi,
 a z urządzeniami BLU przez Bluetooth. Projekt bazuje na
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
 
-**Publiczne OTA: Shelly Plus 1 — 2.16.1_blu.65; Shelly 1 Gen3 — 2.16.1_blu.59 (2026-10-27).**
+**Publiczne OTA: Shelly Plus 1 i Shelly 1 Gen3 — 2.16.1_blu.82 (2026-11-20).**
 Dla każdego modelu jest osobny ZIP i suma SHA-256. Panel WWW obsługuje **polski i angielski**;
 wybór języka znajduje się w sekcji System. Dokumentacja użytkownika jest po polsku.
 
-**Najnowsza aktualizacja Plus 1:** zapisywanie baterii Xiaomi Door & Window Sensor 2 na 24 godziny, także po restarcie, oraz rozwijane menu języka „English / Polski” z zapamiętywaniem wyboru.
+**Nowość w blu.82** — zegar Xiaomi BHR5435GL może udostępniać temperaturę i wilgotność przez Bluetooth bez wpisywania klucza.
 
 [Instalacja i aktualizacje](docs/AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](docs/KONFIGURACJA.md) ·
@@ -47,11 +52,13 @@ napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 <tr><th colspan="3" align="left">Temperatura i wilgotność: wewnątrz i na zewnątrz</th></tr>
 <tr><td width="340"><strong>Shelly BLU H&amp;T</strong><br><code>SBHT-003C</code></td><td align="center"><a href="https://www.shelly.com/products/shelly-blu-h-t-ivory"><img src="https://www.shelly.com/cdn/shop/files/Shelly-BLU-H-and-T-Ivory-main-image.png?v=1739798205" alt="SBHT-003C" width="96"></a></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><td width="340"><strong>Xiaomi Mi Temperature and Humidity Monitor</strong><br><code>LYWSDCGQ/01ZM</code></td><td align="center"><a href="https://www.mi.com/uk/mi-temperature-and-humidity-monitor/"><img src="docs/images/devices/lywsdcgq-01zm.webp" alt="LYWSDCGQ/01ZM" width="96"></a></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
-<tr><td width="340"><strong>Zegar Xiaomi E-Ink z termometrem i higrometrem</strong><br><code>BHR5435GL / LYWSD02MMC</code><br>EAN 6934177756016</td><td align="center"><a href="https://www.mi.com/global/product/xiaomi-temperature-and-humidity-monitor-clock/"><img src="https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1666841408.15629447.png" alt="Zegar Xiaomi BHR5435GL" width="96"></a></td><td>Temperatura (°C) i wilgotność (%) w HomeKit. W panelu wybierz czujnik wewnętrzny lub zewnętrzny i podaj 32-znakowy klucz BLE zegara. Obsługa w wersji testowej <code>2.16.1_blu.81</code>. Dekoder sprawdzono na zapisanych ramkach Bluetooth. Test z fizycznym zegarem jest jeszcze przed nami.</td></tr>
+<tr><td width="340"><strong>Zegar Xiaomi E-Ink z termometrem i higrometrem</strong><br><code>BHR5435GL / LYWSD02MMC</code><br>EAN 6934177756016</td><td align="center"><a href="https://www.mi.com/global/product/xiaomi-temperature-and-humidity-monitor-clock/"><img src="https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1666841408.15629447.png" alt="Zegar Xiaomi BHR5435GL" width="96"></a></td><td>Temperatura (°C) i wilgotność (%) w HomeKit. Od wersji <code>2.16.1_blu.82</code> wybierz zegar z opcją „bez klucza” jako czujnik wewnętrzny lub zewnętrzny. Shelly co 5 minut łączy się z nim przez Bluetooth. Od blu.81 dostępny jest też nasłuch z kluczem BLE. Test z fizycznym zegarem jest jeszcze przed nami.</td></tr>
 <tr><td width="340"><strong>Xiaomi Mi Temperature and Humidity Monitor 2</strong><br><code>LYWSD03MMC</code></td><td align="center"><a href="https://www.mi.com/co/product/mi-temperature-and-humidity-monitor-2/specs/"><img src="https://i02.appmifile.com/540_operator_sg/30/06/2021/e16eb0570f3712376f4234988faf5481.png" alt="LYWSD03MMC" width="96"></a></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%; z GATT szacowany z napięcia)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><td width="340"><strong>Qingping Temperature &amp; Humidity Monitor</strong><br><code>CGG1</code></td><td align="center"><a href="https://custom-components.github.io/ble_monitor/by_brand#qingping"><img src="https://custom-components.github.io/ble_monitor/assets/images/CGG1.png" alt="CGG1" width="96"></a></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><th colspan="3" align="left">Przycisk i obecność auta</th></tr>
 <tr><td width="340"><strong>Shelly BLU Button1</strong><br><code>SBBT-002C</code></td><td align="center"><a href="https://www.shelly.com/products/shelly-blu-button1-white"><img src="https://www.shelly.com/cdn/shop/files/Shelly-BLU-Button1-White-main-image.png?v=1760452782" alt="SBBT-002C" width="96"></a></td><td><ul><li>Pojedyncze, podwójne i długie naciśnięcie</li><li>Obecność przycisku w zasięgu BLE</li><li>Sterowanie bramą pojedynczym naciśnięciem</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
+<tr><th colspan="3" align="left">Czujniki dymu</th></tr>
+<tr><td width="340"><strong>Xiaomi Honeywell Smoke Detector</strong><br><code>JTYJ-GD-03MI/BB</code></td><td>—</td><td><ul><li>Alarm dymu / potwierdzenie braku dymu</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li><li>Smoke Sensor w HomeKit</li></ul></td></tr>
 </tbody>
 </table>
 
@@ -72,8 +79,8 @@ Instrukcja dla Gen3: [instalacja i konfiguracja Shelly 1 Gen3](docs/SHELLY_1_GEN
 | Temperatura | Dwa niezależne miejsca: wewnątrz i na zewnątrz. Ostatni pomiar zachowywany przez godzinę. |
 | Szyfrowane odczyty | AES-CCM BTHome v2 i MiBeacon v4/v5, sprawdzanie MAC i klucza oraz ochrona przed ponownym użyciem pakietów. |
 | Wiarygodny stan | Polecenia są blokowane przy brakujących, nieaktualnych lub sprzecznych odczytach krańcówek oraz podczas parowania. |
-| Nazwy akcesoriów | Name pod Pair zapisuje nazwę urządzenia; Motion, Button1 i H&T używają jej na wizualizacji. Oddzielne Car name pod Button1 nazywa kafelek auta. Nazwa bramy pochodzi z Name w sekcji Garage Door. Krańcówki są opisane w ustawieniach. |
-| Wizualizacja | Motywy Day / Night / Auto, animacja bramy, kafelki ruchu i Button1, odczyty temperatury i wilgotności. Przy włączonym haśle widok jest dostępny po zalogowaniu; podczas OTA jest ukryty. |
+| Nazwy akcesoriów | Name pod Pair zapisuje nazwę urządzenia. Oddzielne Car name pod Button1 nazywa odczyt obecności auta. Nazwa bramy pochodzi z Name w sekcji Garage Door. Własne nazwy pozostają zachowane w ustawieniach i HomeKit. |
+| Wizualizacja | Motywy Day / Night / Auto, animacja bramy, temperatura/wilgotność/światło nad garażem, pozostałe odczyty pod garażem. Checkbox „Pokazuj w dashboard” osobno dla każdego urządzenia. Przy włączonym haśle widok jest dostępny po zalogowaniu; podczas OTA jest ukryty. |
 | Obecność auta | Nowy poprawnie odszyfrowany pakiet Button1 pokazuje auto, brak pakietów przez 45 s je ukrywa. Ręczny wybór zmienia równocześnie grafikę i kafelek Car presence do następnego pakietu lub zmiany obecności. |
 | Oświetlenie | Light sensor w HomeKit korzysta z LUX sparowanego czujnika ruchu. Ma oddzielną kontrolę świeżości pomiaru i status dostępności. |
 | Sterowanie Button1 | Pojedynczy nacisk: otwórz / zatrzymaj / zamknij zgodnie ze stanem bramy. W HomeKit: obecność auta i przycisk programowalny (pojedyncze / podwójne / długie naciśnięcie), we wspólnym akcesorium Shelly. Sam beacon nie uruchamia przekaźnika. |
@@ -106,10 +113,10 @@ Instrukcje budowania, testów i struktura kodu są w [README-BLU.md](README-BLU.
 ## Pobieranie i aktualizacja
 
 - [Paczki i opis na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/)
-- [ZIP 2.16.1_blu.65 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.65.zip)
-- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.65.zip.sha256)
-- [ZIP 2.16.1_blu.59 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.59.zip)
-- [SHA-256 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.59.zip.sha256)
+- [ZIP 2.16.1_blu.82 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.82.zip)
+- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.82.zip.sha256)
+- [ZIP 2.16.1_blu.82 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.82.zip)
+- [SHA-256 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.82.zip.sha256)
 - [Instrukcja instalacji, aktualizacji i kontroli po restarcie](docs/AKTUALIZACJA.md)
 
 Kanały dla Plus 1 i Gen3 mogą udostępniać różne wersje. Paczki mają osobne profile sprzętu.
@@ -132,3 +139,5 @@ komunikat błędu. Nie publikuj haseł, PIN-ów, kodu HomeKit ani kluczy BTHome.
 
 Projekt korzysta z pracy autorów [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit)
 wymienionych w [AUTHORS.md](AUTHORS.md). Licencja: [Apache 2.0](LICENSE).
+
+Szczegóły obsługi czujnika dymu JTYJ-GD-03MI/BB: [parowanie i odczyty](docs/XIAOMI_SMOKE.md).

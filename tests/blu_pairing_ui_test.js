@@ -13,15 +13,15 @@ const deferred = () => {
 const sensor = (model = 2, encrypted = false, mac = 'AA:BB:CC:DD:EE:03') => ({mac, model, encrypted, rssi:-50});
 function fixture(candidates = [sensor()]) {
   const elements = {};
-  for (const id of ['indoor_type','outdoor_type','pairing','pair_title','pair_step','pair_help','pair_selected','pair_status','pair_candidate_container',
-    'pair_candidate','pair_new_container','pair_current_container','pair_current_summary','pair_confirm','pair_cancel','pair_pin','pair_current_pin']) {
+  for (const id of ['smoke_type','motion_type','indoor_type','outdoor_type','pairing','pair_title','pair_step','pair_help','pair_selected','pair_status','pair_candidate_container',
+    'pair_bindkey','pair_bindkey_container','pair_candidate','pair_new_container','pair_current_container','pair_current_summary','pair_confirm','pair_cancel','pair_pin','pair_current_pin']) {
     elements['blu_' + id] = {open:false, value:'', disabled:false, style:{display:''},
       showModal(){ this.open=true; }, close(){ this.open=false; }, focus(){ this.focused=true; },
       replaceChildren(...children){ this.children=children; this.value=children[0]?.value || ''; }};
   }
   const calls=[], handlers={};
   let status={state:'scanning', candidates, error:''};
-  const ctx={lastInfo:{auth_en:true}, el:(_,id)=>elements[id], updateInnerText:(e,t)=>{ e.textContent=t; },
+  const ctx={window:{},lastInfo:{auth_en:true}, el:(_,id)=>elements[id], updateInnerText:(e,t)=>{ e.textContent=t; },
     document:{createElement:()=>({})}, alert:()=>{ throw Error('Unexpected alert'); },
     callDevice(method,params){
       calls.push({method, params});
@@ -145,7 +145,7 @@ function fixture(candidates = [sensor()]) {
   assert.equal(f.count('Pair'),1);
   f=fixture([sensor(426)]);f.start(3);await tick();assert.equal(f.count('Pair'),0);
   f=fixture([sensor(1371)]);f.e.blu_outdoor_type.value='xiaomi_gatt';f.start(4);
-  assert.match(f.e.blu_pair_help.textContent,/No pairing mode, PIN, account or key/);await tick();
+  assert.match(f.e.blu_pair_help.textContent,/Encrypted broadcasts require a BLE bindkey/);await tick();
   assert.equal(f.count('Pair'),1);assert.equal(f.calls.find(call=>call.method==='Shelly.BLU.Discover').params.model,1371);
   await f.refresh({state:'reading_xiaomi',candidates:[],error:''});
   assert.match(f.e.blu_pair_status.textContent,/Reading thermometer/);f.hidden('pair_current_container');f.hidden('pair_new_container');
@@ -204,6 +204,53 @@ function fixture(candidates = [sensor()]) {
   await f.ctx.bluPairClose(f.c);assert.equal(f.e.blu_pairing.open,true);
   assert.equal(f.e.blu_pair_cancel.textContent,'Retry cancel');
   delete f.handlers['Shelly.BLU.Cancel'];await f.ctx.bluPairClose(f.c);assert.equal(f.e.blu_pairing.open,false);
+  // One LYWSD03MMC model routes encrypted beacons to Bind and plain discovery to GATT.
+  for (const encrypted of [false, true]) {
+    f=fixture([sensor(1371, encrypted)]);
+    f.e.blu_indoor_type.value='xiaomi_gatt';
+    f.start(3); await tick();
+    assert.equal(f.count('Discover'),1);
+    assert.equal(f.calls.find(x=>x.method==='Shelly.BLU.Discover').params.bindkey,false);
+    assert.equal(f.count('Pair'),encrypted ? 0 : 1);
+    if (encrypted) {
+      f.visible('pair_bindkey_container'); f.hidden('pair_current_container');
+      f.e.blu_pair_bindkey.value='017e52d2684779298709b117c0a75a7b';
+      f.ctx.bluPairSubmit(f.c); await tick();
+      assert.equal(f.count('Bind'),1); assert.equal(f.count('Pair'),0);
+    }
+  }
+  for (const [role, model] of [[3, 5860], [4, 9538]]) {
+    f=fixture([sensor(model,false)]);
+    f.e[role===3?'blu_indoor_type':'blu_outdoor_type'].value='xiaomi_clock_direct';
+    f.start(role);await tick();
+    assert.equal(f.count('Bind'),0);assert.equal(f.count('Pair'),1);
+    assert.equal(f.calls.find(x=>x.method==='Shelly.BLU.Discover').params.bindkey,false);
+    f.hidden('pair_bindkey_container');
+  }
+  for (const [role, model] of [[3, 5860], [4, 9538]]) {
+    f=fixture([sensor(model,true)]);
+    f.e[role === 3 ? 'blu_indoor_type' : 'blu_outdoor_type'].value='xiaomi_clock';
+    f.start(role);await tick();
+    const discovery=f.calls.find(x=>x.method==='Shelly.BLU.Discover').params;
+    assert.equal(discovery.model,5860);assert.equal(discovery.bindkey,true);
+    assert.equal(f.c.bluPairSelected.model,model);f.visible('pair_bindkey_container');
+    f.e.blu_pair_bindkey.value='000102030405060708090a0b0c0d0e0f';
+    f.ctx.bluPairSubmit(f.c);await tick();assert.equal(f.count('Bind'),1);assert.equal(f.count('Pair'),0);
+  }
+  for (const model of [13617,19552]) {
+    f=fixture([sensor(model,true)]);f.e.blu_motion_type.value='xiaomi_bindkey';
+    assert.equal(f.ctx.bluPairDeviceInfo({model}).name,'Xiaomi Motion Sensor 2S');
+    f.start(2);await tick();
+    assert.equal(f.calls.find(x=>x.method==='Shelly.BLU.Discover').params.model,13617);
+    assert.equal(f.count('Pair'),0);assert.equal(f.c.bluPairSelected.model,model);
+    f.e.blu_pair_bindkey.value='685d647dc5e7bc9bcfcf5a1357bd2114';
+    f.ctx.bluPairSubmit(f.c);await tick();assert.equal(f.count('Bind'),1);
+  }
+  f=fixture([sensor(2455,true)]);f.e.blu_smoke_type.value='xiaomi_bindkey';f.start(6);await tick();
+  assert.equal(f.calls.find(x=>x.method==='Shelly.BLU.Discover').params.model,2455);
+  assert.equal(f.count('Pair'),0);f.e.blu_pair_bindkey.value='5b51a7c91cde6707c9ef18dfda143a58';
+  f.ctx.bluPairSubmit(f.c);await tick();assert.equal(f.count('Bind'),1);
+  assert.equal(f.calls.find(x=>x.method==='Shelly.BLU.Bind').params.role,6);
   console.log('PASS: automatic discovery/pairing without PIN, conditional legacy PIN and encryption activation, multi-device selection');
   console.log('PASS: automatic wake resume, duplicate clicks, stale polls and pending-RPC cancellation');
 })().catch(e=>{console.error(e);process.exitCode=1;});

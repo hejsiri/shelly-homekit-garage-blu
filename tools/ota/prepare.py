@@ -4,10 +4,12 @@ import argparse
 import hashlib
 import html
 import json
+import re
 from pathlib import Path
 from string import Template
 import zipfile
 from urllib.parse import quote
+from check_stock_layout import partitions
 
 root = Path(__file__).resolve().parents[2]
 base = 'https://hejsiri.pl/firmware/garage-blu/'
@@ -19,7 +21,7 @@ parser.add_argument('--model', action='append', choices=['ShellyPlus1', 'Shelly1
 models = list(dict.fromkeys(parser.parse_args().model or ['ShellyPlus1', 'Shelly1Gen3']))
 targets = {
     'ShellyPlus1': ('Plus1', 'esp32', 0x190000, 0x60000),
-    'Shelly1Gen3': ('S1G3', 'esp32c3', 0x2B0000, 0xD0000),
+    'Shelly1Gen3': ('S1G3', 'esp32c3', 0x300000, 0xE0000),
 }
 releases = {}
 prepared = []
@@ -43,9 +45,16 @@ for model in models:
             assert hashlib.sha256(data).hexdigest() == part['cs_sha256'], 'Part checksum mismatch'
         assert manifest['parts']['app']['size'] <= app_slot, 'Application exceeds model slot'
         assert manifest['parts']['fs']['size'] == fs_size, 'Wrong filesystem size for model'
+        table = partitions(archive.read(manifest['parts']['pt']['src']))
+        app0, fs0, app1, fs1 = ((0x20000, 0x320000, 0x400000, 0x700000)
+                              if model == 'Shelly1Gen3' else
+                              (0x10000, 0x1A0000, 0x200000, 0x390000))
+        for name, address, size in [('app_0', app0, app_slot), ('app_1', app1, app_slot),
+                                    ('fs_0', fs0, fs_size), ('fs_1', fs1, fs_size)]:
+            assert table[name][2:4] == (address, size), f'Wrong {name} layout for model'
     version = manifest['version']
-    assert version.startswith('2.16.1-blu'), 'Unexpected channel version'
-    assert all(c.isalnum() or c in '.-' for c in version)
+    assert re.fullmatch(r'2\.16\.1(?:-blu[0-9]+|_blu\.[0-9]+)', version), 'Unexpected channel version'
+    assert all(c.isalnum() or c in '.-_'  for c in version)
     prepared.append((model, manifest, source.read_bytes()))
 assert len({manifest['version'] for _, manifest, _ in prepared}) == 1, 'Selected builds must have the same version'
 for model, manifest, payload in prepared:
@@ -58,15 +67,36 @@ for model, manifest, payload in prepared:
         'build_id': manifest.get('build_id'), 'url': base + name,
         'size': len(payload), 'sha256': checksum, 'hardware_tested': False}
     (out / f'release-{model}.json').write_text(json.dumps(releases[model], indent=2) + '\n')
-channel = [['.*', {'version': version, 'rel_notes': base,
-    'urls': {model: r['url'] for model, r in releases.items()}}]]
+urls = {model: r['url'] for model, r in releases.items()}
+message = (f'Ten Gen3 ma starszy układ partycji. Bezpośrednia aktualizacja do {version} '
+           'jest zablokowana. Procedura przejścia: ' + base + 'update/')
+fallback = {'version': version, 'rel_notes': base,
+            'urls': {model: url for model, url in urls.items() if model != 'Shelly1Gen3'},
+            'incompatible_models': {'Shelly1Gen3': message}}
+# Only the new Gen3 layout may receive the current Gen3 ZIP through HomeKit OTA.
+# The stock installer gates exact compatible stock versions, with one ZIP per model.
+channel = [[r'^2\.16\.1_blu\.(?:79|[89][0-9]|[1-9][0-9]{2,})$',
+            {'version': version, 'rel_notes': base, 'urls': urls}], ['.*', fallback]]
+# Old embedded panels cannot parse underscores or a dotted variant sequence.
+# Advertise a legacy alias only to their version strings; ZIPs/manifests and
+# canonical release metadata always retain the requested version format.
+if '_blu.' in version:
+    legacy = version.replace('_blu.', '-blu')
+    channel.insert(1, [r'^[^_]+$', {**fallback, 'version': legacy}])
 (out / 'update.json').write_text(json.dumps(channel, indent=2) + '\n')
 (out / 'release.json').write_text(json.dumps(releases, indent=2) + '\n')
+(out / 'install.json').write_text(json.dumps(releases, indent=2) + '\n')
+(out / 'update').mkdir(exist_ok=True)
+for resource in ('index.php', 'installer.js', 'compatibility.json'):
+    (out / 'update' / resource).write_bytes((Path(__file__).parent / 'update' / resource).read_bytes())
 downloads = ''.join(
     f'<li><strong>{html.escape(model)}</strong>: <a href="{r["url"]}">ZIP {html.escape(r["version"])} ({r["size"]:,} bajtów)</a> · '
     f'<a href="{r["url"]}.sha256">SHA-256</a></li>' for model, r in releases.items())
-for guide in ['AKTUALIZACJA.md', 'KONFIGURACJA.md', 'ROZWIAZYWANIE_PROBLEMOW.md', 'HISTORIA_ZMIAN.md', 'SHELLY_1_GEN3.md']:
+for guide in ['AKTUALIZACJA.md', 'KONFIGURACJA.md', 'ROZWIAZYWANIE_PROBLEMOW.md', 'HISTORIA_ZMIAN.md', 'SHELLY_1_GEN3.md', 'INSTALACJA_JEDEN_ADRES.md']:
     (out / guide).write_bytes((root / 'docs' / guide).read_bytes())
+for guide in ['BINDKEY_BLE.md', 'BLU_DEVICE_PHOTOS.json', 'QINGPING.md', 'XIAOMI_SMOKE.md']:
+    if (root / 'docs' / guide).exists():
+        (out / guide).write_bytes((root / 'docs' / guide).read_bytes())
 (out / '.htaccess').write_text('''Options -Indexes
 AddType application/zip .zip
 AddType application/json .json

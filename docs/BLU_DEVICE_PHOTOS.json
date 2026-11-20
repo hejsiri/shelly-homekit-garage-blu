@@ -1,0 +1,50 @@
+{
+  "description": "Manufacturer product photos, cropped and resized to 136 px WebP thumbnails. Reference appearance only; colour is not identified over BLE. Bundled in fs_src/blu-devices.js.",
+  "retrieved": "2026-10-26",
+  "sources": {
+    "2": {
+      "page": "https://www.shelly.com/products/shelly-blu-door-window-white",
+      "image": "https://www.shelly.com/cdn/shop/files/Shelly-BLU-Door-Window-White-main-image.png?v=1744696327"
+    },
+    "3": {
+      "page": "https://www.shelly.com/products/shelly-blu-h-t-ivory",
+      "image": "https://www.shelly.com/cdn/shop/files/Shelly-BLU-H-and-T-Ivory-main-image.png?v=1739798205"
+    },
+    "5": {
+      "page": "https://www.shelly.com/products/shelly-blu-motion",
+      "image": "https://www.shelly.com/cdn/shop/files/Shelly-BLU-Motion-main-image.png?v=1728244913"
+    },
+    "1": {
+      "page": "https://www.shelly.com/products/shelly-blu-button1-white",
+      "image": "https://www.shelly.com/cdn/shop/files/Shelly-BLU-Button1-White-main-image.png?v=1760452782"
+    },
+    "1371": {
+      "page": "https://www.mi.com/co/product/mi-temperature-and-humidity-monitor-2/specs/",
+      "image": "https://i02.appmifile.com/540_operator_sg/30/06/2021/e16eb0570f3712376f4234988faf5481.png"
+    },
+    "426": {
+      "page": "https://www.mi.com/uk/mi-temperature-and-humidity-monitor/",
+      "image": "https://i01.appmifile.com/webfile/globalimg/products/pc/mi-temperature-and-humidity-monitor/mj-humiture-01.jpg"
+    },
+    "2443": {
+      "page": "https://www.mi.com/global/product/mi-door-and-window-sensor-2/specs/",
+      "image": "https://i02.appmifile.com/223_operator_sg/11/08/2021/26f988f91e7740c848f95a2d2d26e2a4.png"
+    },
+    "839": {
+      "page": "https://custom-components.github.io/ble_monitor/by_brand#qingping",
+      "image": "https://custom-components.github.io/ble_monitor/assets/images/CGG1.png"
+    },
+    "2888": {
+      "page": "https://custom-components.github.io/ble_monitor/by_brand#qingping",
+      "image": "https://custom-components.github.io/ble_monitor/assets/images/CGG1.png"
+    },
+    "982": {
+      "page": "https://custom-components.github.io/ble_monitor/by_brand#qingping",
+      "image": "https://custom-components.github.io/ble_monitor/assets/images/CGH1.png"
+    },
+    "2691": {
+      "page": "https://custom-components.github.io/ble_monitor/by_brand#qingping",
+      "image": "https://custom-components.github.io/ble_monitor/assets/images/CGPR1.png"
+    }
+  }
+}

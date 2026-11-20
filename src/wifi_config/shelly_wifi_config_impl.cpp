@@ -25,6 +25,10 @@
 
 #include "shelly_rpc_service.hpp"
 
+#if SHELLY_WIFI_MIN_PS_MODE > 0
+#include "esp_wifi.h"
+#endif
+
 namespace shelly {
 
 class WifiConfigManager {
@@ -94,6 +98,24 @@ WifiConfigManager::WifiConfigManager()
   STAConfigFromSys(mgos_sys_config.wifi.sta, cur_.sta);
   STAConfigFromSys(mgos_sys_config.wifi.sta1, cur_.sta1);
   cur_.sta_ps_mode = mgos_sys_config_get_wifi_sta_ps_mode();
+  const int safe_ps_mode = WifiBootPowerSaveMode(cur_.sta_ps_mode);
+  if (safe_ps_mode != cur_.sta_ps_mode) {
+    LOG(LL_WARN, ("WiFi: correcting unsupported power saving mode %d to %d",
+                  cur_.sta_ps_mode, safe_ps_mode));
+    cur_.sta_ps_mode = safe_ps_mode;
+    mgos_sys_config_set_wifi_sta_ps_mode(safe_ps_mode);
+#if SHELLY_WIFI_MIN_PS_MODE > 0
+    const esp_err_t result = esp_wifi_set_ps((wifi_ps_type_t) safe_ps_mode);
+    if (result != ESP_OK) {
+      LOG(LL_ERROR, ("WiFi: applying corrected power saving mode failed: %d", result));
+    }
+#endif
+    char *message = nullptr;
+    if (!mgos_sys_config_save(&mgos_sys_config, false, &message)) {
+      LOG(LL_ERROR, ("WiFi: saving corrected power saving mode failed"));
+    }
+    free(message);
+  }
   mgos_event_add_group_handler(
       MGOS_WIFI_EV_BASE,
       [](int ev, void *ev_data, void *arg) {
@@ -111,6 +133,12 @@ void WifiConfigManager::Start() {
 }
 
 Status WifiConfigManager::SetConfig(const WifiConfig &cfg) {
+  // Reject before changing runtime mode, credentials or connection state.
+  if (!WifiPowerSaveModeAllowed(cfg.sta_ps_mode)) {
+    return mgos::Errorf(STATUS_INVALID_ARGUMENT,
+                        "Unsupported Wi-Fi power saving mode: this hardware requires mode %d or higher",
+                        kWifiMinPowerSaveMode);
+  }
   Status st = ValidateAPConfig(cfg.ap);
   if (!st.ok()) {
     return mgos::Annotatef(st, "Invalid %s config", "AP");
@@ -309,6 +337,8 @@ void WifiConfigManager::Process() {
           LOG(LL_INFO,
               ("Reverting to previous config: %s", cur_.ToJSON().c_str()));
           act_ = &cur_;
+          // A failed trial must restore both credentials and its radio mode.
+          mgos_sys_config_set_wifi_sta_ps_mode(cur_.sta_ps_mode);
         }
         SetState(State::kDisconnect);
       }

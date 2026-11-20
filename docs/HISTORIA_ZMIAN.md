@@ -1,5 +1,137 @@
 # Historia zmian Garage BLU
 
+## 2.16.1_blu.82 — 2026-11-20
+
+Shelly Plus 1 i Shelly 1 Gen3 mogą odczytywać temperaturę i wilgotność z zegara Xiaomi BHR5435GL (LYWSD02MMC) bez klucza BLE. W panelu wybierz zegar z opcją „bez klucza” i kliknij „Sparuj”. Shelly zapisuje przypisanie po odebraniu pomiaru. Tryb z kluczem BLE jest nadal dostępny. Sprawdzono parowanie w symulatorze. Odczyt z fizycznego zegara wymaga potwierdzenia.
+
+## 2.16.1_blu.80 — kandydat Gen3, 2026-11-12
+
+- Na Gen3 panel blokuje Power saving Disabled i wyjaśnia wymóg trybu 1 lub 2.
+- RPC odrzuca niedozwolony tryb przed zmianą konfiguracji i rozłączaniem Wi-Fi.
+- Start firmware koryguje zapisane 0 do 1, stosuje tryb w sterowniku i zapisuje
+  poprawkę. Błąd zapisu jest logowany, a korekta ponawiana przy następnym starcie.
+- Nieudana próba konfiguracji przywraca poprzedni tryb razem z poświadczeniami.
+- Testy wykonują produkcyjny kod walidacji, migracji i rollbacku na atrapach
+  radia i pamięci; osobno sprawdzono panel. Plus 1 nadal dopuszcza 0/1/2.
+- Weryfikacja blu.80 na fizycznym Gen3 pozostaje do wykonania; kanał publiczny
+  pozostaje na blu.79 do czasu weryfikacji kandydata.
+
+## 2026-11-12 — Gen3: połączenie Wi-Fi, zmiana źródeł do następnej kompilacji
+
+- Na fizycznym Gen3 blu.79 połączenie z dotychczasową siecią działa po zmianie
+  Power saving z Disabled na 1; model i wersję potwierdzono przez RPC.
+- Domyślny `wifi.sta_ps_mode` Gen3 zmieniono w źródłach na 1, tak jak dla Plus 1.
+  Opublikowany ZIP blu.79 pozostaje bez zmian i wymaga ręcznego ustawienia.
+- Potwierdzono instalację, start i Wi-Fi; BLE oraz przekaźnik nadal niezweryfikowane.
+
+## 2.16.1_blu.79 (2026-11-11) — jeden adres instalacji
+
+- Wspólny endpoint `https://hejsiri.pl/firmware/garage-blu/update/` wybiera paczkę
+  po modelu z nagłówka `X-MGOS-Device-ID`. Dodano sprawdzenie wersji stock,
+  modelu sprzętowego, generacji i aplikacji przed pokazaniem linku oraz bramkę wersji
+  na serwerze. Weryfikacja w przeglądarce nie wymaga nowej paczki firmware.
+- Jedna bieżąca paczka na model: Plus 1 zgodny z układem stock 1.7.6, Gen3 z 2.2.0.
+  Wersje potwierdzone w oficjalnym API; porównano obrazy i partycje.
+- Większy układ Gen3 jest domyślny. Starszym Gen3 kanał nie oferuje niezgodnego ZIP-a.
+- Instalator objaśnia błędy modelu i partycji. Konwersja i działanie blu.79 na
+  fizycznych urządzeniach pozostają niepotwierdzone.
+
+## 2.16.1_blu.78 (2026-10-28) — Shelly Plus 1 i Shelly 1 Gen3
+
+- Oczyszczenie 11 wycofanych grafik garażu przed inicjalizacją konfiguracji
+  i HomeKit; wykluczenie tych plików z kolejnych aktualizacji OTA.
+- Ochrona pliku kluczy HomeKit oraz danych logowania przed zastąpieniem
+  niepełnym zapisem przy braku miejsca lub błędzie systemu plików.
+- Usunięcie nieużywanych i nadpisywanych reguł CSS garażu oraz zbędnych logów
+  przeglądarki zawierających pełne żądania lub dane uwierzytelniania.
+- Kontrola rzeczywistego zajęcia bloków LittleFS: budowanie wymaga co najmniej
+  64 KiB wolnego miejsca w świeżym obrazie systemu plików.
+- Testy błędów zapisu i odczytu po ponownym otwarciu plików. Sprawdzenie
+  na fizycznym sterowniku pozostaje do wykonania.
+
+## 2.16.1_blu.77 (2026-10-28) — Shelly Plus 1 i Shelly 1 Gen3
+
+- Temperatura i wilgotność na dashboardzie odświeżają się bez migającego badge. Pozostałe wskaźniki zachowują dotychczasowe działanie.
+- Bez zmian w parowaniu BLE i sterowaniu bramą. Weryfikacja na fizycznych sterownikach pozostaje do wykonania.
+
+## 2.16.1_blu.76 (2026-10-27) — Shelly Plus 1 i Shelly 1 Gen3
+
+- Nieaktywna ikona przycisku w okrągłym tle jest biała, zgodnie z ikoną bramy garażowej.
+- Krótszy status czujnika dymu na dashboardzie: Ready / Gotowy przy świeżym pakiecie zamiast Waiting for smoke status. Alarm i brak świeżych danych zachowują osobne komunikaty.
+- Bez zmian w parowaniu BLE i sterowaniu bramą. Weryfikacja na fizycznych sterownikach pozostaje do wykonania.
+
+## 2.16.1_blu.75 (2026-10-27) — Shelly Plus 1 i Shelly 1 Gen3
+
+- Odczyty wyśrodkowane w pionie i poziomie w obszarach nad i pod garażem.
+- Pokazywanie i ukrywanie samochodu przeniesione z górnego paska na odczyt obecności auta. Nowy uwierzytelniony pakiet czujnika nadal aktualizuje widoczność auta.
+- Ikona przycisku ma okrągłe tło zgodne z ikoną bramy.
+- Polskie etykiety ustawień: „Model:” i „MAC:”; usunięty komunikat „Czujniki BLU gotowe”. Ostrzeżenia o braku gotowości pozostają widoczne.
+- Bez zmian w parowaniu BLE; błąd 0x505 pozostaje do potwierdzenia na urządzeniach.
+- Weryfikacja na fizycznych sterownikach pozostaje do wykonania.
+
+## 2.16.1_blu.74 (2026-10-27) — Shelly Plus 1 i Shelly 1 Gen3
+
+- Nowy, kompaktowy dashboard: temperatura, wilgotność i światło nad garażem;
+  osobne krańcówki, ruch, czujnik dymu i obecność auta pod garażem.
+- Ujednolicone ikony, polskie opisy, kolory trybu dziennego i nocnego oraz
+  badge z przezroczystymi literami przy detekcji i nowych odczytach.
+- Checkbox „Pokazuj w dashboard” przy każdym urządzeniu. Widoczność jest
+  zapisywana na sterowniku bez restartu, a układ odczytów automatycznie się centruje.
+- Zakresy temperatury i wilgotności uwzględniają tylko wyświetlane termometry.
+- Odczyt światła w panelu korzysta z rzeczywistego pomiaru i jego świeżości.
+- Gen3 otrzymuje również wcześniejsze zmiany Plus 1, w tym osobne usługi
+  kontaktronów w HomeKit i aktualną obsługę gotowości czujnika dymu.
+- Zmiany parowania BLE nie są częścią tego wydania; zgłoszony błąd 0x505
+  nadal wymaga potwierdzenia na fizycznym czujniku.
+- Testy i kompilacje sprawdzane lokalnie; weryfikacja nowego wydania na fizycznych
+  sterownikach pozostaje do wykonania.
+
+## 2.16.1_blu.73 (2026-10-27) — Shelly Plus 1
+
+- Sparowane krańcówki Closing sensor i Opening sensor są wystawiane w HomeKit jako usługi Contact Sensor na akcesorium bramy.
+- HomeKit zachowuje ostatni zapamiętany stan krańcówki po restarcie; StatusFault sygnalizuje brak świeżego odczytu.
+- Parowanie i usuwanie krańcówek odświeża konfigurację usług HomeKit.
+- Shelly 1 Gen3 pozostaje na 2.16.1_blu.59.
+
+## 2.16.1_blu.72 (2026-10-27) — Shelly Plus 1
+
+- Usługi HomeKit czujników H&T mają teraz osobne, jednoznaczne nazwy, np. „Temperature Outdoor” i „Humidity Outdoor”. Własna nazwa lokalizacji jest zachowana.
+- Shelly 1 Gen3 pozostaje na 2.16.1_blu.59.
+
+## 2.16.1_blu.71 (2026-10-27) — Shelly Plus 1
+
+- Czujnik dymu uznaje świeży, poprawnie odszyfrowany beacon (np. baterię lub przycisk) za potwierdzenie łączności. Sam beacon życia nie zmienia stanu alarmu; zmienia go tylko pole stanu dymu.
+- Panel pokazuje „Gotowy” po odebraniu beacona życia, zamiast czekać na osobny pakiet stanu dymu.
+- Shelly 1 Gen3 pozostaje na 2.16.1_blu.59.
+
+## 2.16.1_blu.70 (2026-10-27) — Shelly Plus 1
+
+- Gdy krańcówki BLU są nieaktualne, HomeKit odczytuje stan bramy jako zatrzymaną z przeszkodą zamiast oznaczać akcesorium jako nieosiągalne. Sterowanie pozostaje zablokowane do czasu odebrania świeżych odczytów.
+- Shelly 1 Gen3 pozostaje na 2.16.1_blu.59.
+
+## 2.16.1_blu.69 (2026-10-27) — Shelly Plus 1
+
+- Button1 udostępnia w HomeKit przycisk programowalny i jeden czujnik obecności auta. Osobne urządzenia Shelly BLU Motion i Qingping Motion pozostają czujnikami ruchu, a usługa Light Sensor jest zachowana.
+- Zwiększono wersję migracji układu HAP, aby HomeKit odświeżył listę usług.
+- Gen3 pozostaje na 2.16.1_blu.59.
+
+## 2.16.1_blu.67 (2026-10-27) — Shelly Plus 1
+
+- Pojedyncze naciśnięcie sparowanego Shelly BLU Button1 wysyła impuls do jednokanałowego przekaźnika także wtedy, gdy odczyty krańcówek są nieaktualne. Sterownik nie zgaduje wtedy położenia bramy; wizualizacja i sterowanie z panelu pozostają zablokowane do czasu odebrania świeżych odczytów.
+- Czujnik obecności auta wygasza stan po upływie limitu beaconów. HomeKit dostaje zdarzenie „brak obecności” także wtedy, gdy czujnik przestaje być gotowy lub zostanie odparowany; usunięcie parowania odświeża listę usług.
+- Dla czujnika dymu pakiety baterii i testu odświeżają RSSI oraz czas kontaktu, ale nie są zamieniane w stan „brak dymu”. Panel odróżnia odebrany beacon od oczekiwania na właściwy status dymu.
+
+## 2.16.1_blu.66 (2026-10-27) — tylko Shelly Plus 1
+
+- Xiaomi Honeywell Smoke Detector JTYJ-GD-03MI/BB: osobny panel czujnika dymu, szyfrowany MiBeacon 0x0997 i parowanie przez Bindkey BLE. Alarm, potwierdzenie braku dymu, bateria i RSSI. Opcjonalna usługa Smoke Sensor w HomeKit zachowuje dotychczasowe identyfikatory innych usług.
+- Pakiet przycisku testowego może zweryfikować klucz, ale nie potwierdza braku dymu. Pakiet baterii nie kasuje alarmu ani nie odświeża stanu dymu. Brak aktualnego stanu powoduje Status Fault, a odebrany alarm nie jest kasowany samym timeoutem. Testy obejmują publiczne zaszyfrowane próbki, siedem ról, parowanie, usuwanie i rzeczywiste odczyty/serializację SDK HomeKit; próba na fizycznym czujniku pozostaje do wykonania.
+
+- Każde akcesorium ma osobny panel z nagłówkiem roli: Closing sensor, Opening sensor, Motion sensor, Indoor H&T, Outdoor H&T i Button. Nagłówki są tłumaczone na polski; typ, parowanie, nazwa i odczyty są zgrupowane w obrębie panelu.
+
+- Xiaomi MCCGQ02HL: zapis stanu krańcówki, MAC i czasu ostatniego odczytu w pamięci trwałej. Po restarcie stan jest przywracany po synchronizacji czasu, z uwzględnieniem czasu wyłączenia. Nowy beacon zastępuje zapis; usunięcie parowania kasuje go.
+- Restart nie odnawia ważności odczytu. Obowiązuje istniejący limit świeżości krańcówek, a sprzeczne stany nadal blokują sterowanie.
+- Nazwa Qingping Temperature & Humidity Monitor w panelu.
+
 ## 2.16.1_blu.65 (2026-10-27) — tylko Shelly Plus 1
 
 - Język wybiera się z menu „English / Polski” w sekcji System. Wybór jest zapamiętywany w przeglądarce i wspólny dla panelu oraz wizualizacji.

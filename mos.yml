@@ -1,6 +1,6 @@
 author: Shelly-HomeKit contributors
 description: Garage BLU HomeKit firmware for Shelly Plus 1 and Shelly 1 Gen3
-version: 2.16.1-blu50
+version: 2.16.1_blu.82
 
 libs_version: latest
 modules_version: latest
@@ -244,9 +244,10 @@ conds:
         NVS_ADDR: 0x14000
         NVS_SIZE: 0xC000
         APP_OFFSET: 0x20000
-        APP_SLOT_SIZE: 0x2B0000
+        APP_SLOT_SIZE: 0x300000
         MGOS_ROOT_FS_TYPE: LFS
-        MGOS_ROOT_FS_SIZE: 0xD0000
+        MGOS_ROOT_FS_SIZE: 0xE0000
+        MGOS_FW_EXTRA_ATTRS: shelly_hk_model=${build_vars.MODEL} garage_blu_layout=stock22
         ESP_IDF_EXTRA_PARTITION: "scratch,data,0x80,0x7E0000,0x10000,encrypted"
         ESP_IDF_EXTRA_PARTITION_2: "shelly,data,0x88,0x7F0000,64K,encrypted"
         ESP_IDF_SDKCONFIG_OPTS: >
@@ -258,6 +259,7 @@ conds:
             CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
             CONFIG_PARTITION_TABLE_OFFSET=0xF000
       cdefs:
+        SHELLY_WIFI_MIN_PS_MODE: 1
         SHELLY_GARAGE_BLE: 1
         LED_GPIO: 19
         LED_ON: 0
@@ -273,6 +275,8 @@ conds:
         ADDON_IN_GPIO: 21
         ADDON_DIG_GPIO: 6
       config_schema:
+        # ESP32-C3 with Bluetooth: mode 0 prevented STA connection in hardware testing.
+        - ["wifi.sta_ps_mode", 1]
         - ["bt.enable", true]
         - ["bt.keep_enabled", true]
         - ["bt.adv_enable", false]
@@ -291,6 +295,15 @@ conds:
         - ["blu.indoor_name", "s", "", {title: "BLU indoor accessory name"}]
         - ["blu.outdoor_name", "s", "", {title: "BLU outdoor accessory name"}]
         - ["blu.button_name", "s", "", {title: "BLU button accessory name"}]
+        - ["blu.smoke_mac", "s", "", {title: "Xiaomi smoke sensor MAC"}]
+        - ["blu.smoke_name", "s", "", {title: "Smoke sensor accessory name"}]
+        - ["blu.closed_dashboard", "b", true, {title: "Show closed sensor in dashboard"}]
+        - ["blu.open_dashboard", "b", true, {title: "Show open sensor in dashboard"}]
+        - ["blu.motion_dashboard", "b", true, {title: "Show motion sensor in dashboard"}]
+        - ["blu.indoor_dashboard", "b", true, {title: "Show indoor sensor in dashboard"}]
+        - ["blu.outdoor_dashboard", "b", true, {title: "Show outdoor sensor in dashboard"}]
+        - ["blu.button_dashboard", "b", true, {title: "Show button sensor in dashboard"}]
+        - ["blu.smoke_dashboard", "b", true, {title: "Show smoke sensor in dashboard"}]
         - ["blu.car_name", "s", "", {title: "Car presence tile name"}]
         - ["blu.hap_layout_version", "i", 0, {title: "Internal BLU HomeKit layout revision"}]
         - ["blu.presence_timeout_s", "i", 45, {title: "Button presence timeout seconds"}]
@@ -375,6 +388,15 @@ conds:
         - ["blu.indoor_name", "s", "", {title: "BLU indoor accessory name"}]
         - ["blu.outdoor_name", "s", "", {title: "BLU outdoor accessory name"}]
         - ["blu.button_name", "s", "", {title: "BLU button accessory name"}]
+        - ["blu.smoke_mac", "s", "", {title: "Xiaomi smoke sensor MAC"}]
+        - ["blu.smoke_name", "s", "", {title: "Smoke sensor accessory name"}]
+        - ["blu.closed_dashboard", "b", true, {title: "Show closed sensor in dashboard"}]
+        - ["blu.open_dashboard", "b", true, {title: "Show open sensor in dashboard"}]
+        - ["blu.motion_dashboard", "b", true, {title: "Show motion sensor in dashboard"}]
+        - ["blu.indoor_dashboard", "b", true, {title: "Show indoor sensor in dashboard"}]
+        - ["blu.outdoor_dashboard", "b", true, {title: "Show outdoor sensor in dashboard"}]
+        - ["blu.button_dashboard", "b", true, {title: "Show button sensor in dashboard"}]
+        - ["blu.smoke_dashboard", "b", true, {title: "Show smoke sensor in dashboard"}]
         - ["blu.car_name", "s", "", {title: "Car presence tile name"}]
         - ["blu.hap_layout_version", "i", 0, {title: "Internal BLU HomeKit layout revision"}]
         - ["blu.presence_timeout_s", "i", 45, {title: "Button presence timeout seconds"}]

@@ -2,6 +2,7 @@
 
 #ifdef SHELLY_GARAGE_BLE
 #include <ctype.h>
+#include <time.h>
 #include <string.h>
 #include <strings.h>
 #include <utility>
@@ -12,13 +13,14 @@
 #include "shelly_blu_keys.hpp"
 #include "shelly_blu_pairing.hpp"
 #include "shelly_blu_xiaomi.hpp"
+#include "shelly_blu_mibeacon.hpp"
 #include "shelly_blu_xiaomi_gatt.hpp"
 
 namespace shelly {
 namespace blu {
 namespace {
-Sensor sensors[6];
-mgos_bt_addr addresses[6];
+Sensor sensors[7];
+mgos_bt_addr addresses[7];
 bool configured = false;
 ButtonEvents button_events;
 ProgrammableButtonEvents programmable_button_events;
@@ -26,19 +28,51 @@ std::function<void(uint8_t)> button_event_handler;
 bool button_pending = false;
 double button_press_time = 0;
 uint32_t button_press_sequence = 0;
-uint32_t packet_sequence[6] = {};
-bool known[6] = {};
-int voltages[6] = {-1, -1, -1, -1, -1, -1};
+uint32_t packet_sequence[7] = {};
+bool known[7] = {};
+int voltages[7] = {-1, -1, -1, -1, -1, -1, -1};
+
+void RestoreContactReadings() {
+  for (int i = 0; i < 2; ++i) {
+    if (!known[i]) continue;
+    bool active; int rssi; double age;
+    if (CachedContact(i, addresses[i].addr, time(nullptr), mgos_uptime(), &active, &rssi, &age) && !sensors[i].seen) {
+      sensors[i].seen = true; sensors[i].active = active;
+      sensors[i].last_seen = mgos_uptime() - age; sensors[i].rssi = rssi;
+    }
+  }
+}
 
 void ScanResult(int, void *event_data, void *) {
   PairingAdvertisement(event_data);
   auto *result = static_cast<mgos_bt_gap_scan_result *>(event_data);
   int index = -1;
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 7; i++) {
     if (known[i] && memcmp(addresses[i].addr, result->addr.addr, 6) == 0)
       index = i;
   }
   if (index < 0) return;
+  if (XiaomiBindkeyFor(index, result->addr.addr)) {
+    const uint8_t *service = nullptr; size_t length = 0;
+    if (!FindMiService(reinterpret_cast<const uint8_t *>(result->adv_data.p), result->adv_data.len, &service, &length) &&
+        !FindMiService(reinterpret_cast<const uint8_t *>(result->scan_rsp.p), result->scan_rsp.len, &service, &length)) return;
+    uint8_t plain[64]; size_t size=sizeof(plain); uint16_t model;
+    Reading reading; bool contact;
+    if (!AcceptMi(index,result->addr.addr,service,length,plain,&size,&model) ||
+        !MiObjects(model,plain,size,&reading,&contact)) return;
+    ApplyMiReading(index,result->addr,reading,contact,result->rssi);
+    if (SensorReady(index)) PairingVerified(index);
+    return;
+  }
+  if (QingpingFor(index,result->addr.addr)) {
+    const uint8_t *service=nullptr;size_t size=0;Reading reading;bool state;
+    if((!FindQingpingService(reinterpret_cast<const uint8_t *>(result->adv_data.p),result->adv_data.len,&service,&size) &&
+        !FindQingpingService(reinterpret_cast<const uint8_t *>(result->scan_rsp.p),result->scan_rsp.len,&service,&size)) ||
+       !AcceptQingping(index,result->addr.addr,service,size,&reading,&state))return;
+    ApplyMiReading(index,result->addr,reading,state,result->rssi);
+    if(SensorReady(index))PairingVerified(index);
+    return;
+  }
   if (XiaomiFor(index, result->addr.addr)) {
     Reading reading;
     if (!DecodeXiaomiAdvertisement(
@@ -94,10 +128,11 @@ void ScanResult(int, void *event_data, void *) {
 }
 
 void Scan(void *) {
+  RestoreContactReadings();
   // Monitoring a securely paired sensor is independent of selecting BLU
   // as the garage's control inputs, including while only one role is paired.
   bool paired = false;
-  for (int i = 0; i < 6; i++)
+  for (int i = 0; i < 7; i++)
     paired = paired || SensorPaired(i);
   if ((!Enabled() && !paired && !PairingScan()) || PairingConnecting() ||
       mgos_bt_get_status() != MGOS_BT_STARTED || mgos_bt_gap_scan_in_progress())
@@ -140,13 +175,70 @@ void ResetReadings() {
   button_events = ButtonEvents();
   programmable_button_events = ProgrammableButtonEvents();
   button_pending = false;
-  const char *macs[6] = {SensorMAC(0), SensorMAC(1), SensorMAC(2), SensorMAC(3), SensorMAC(4), SensorMAC(5)};
-  for (int i = 0; i < 6; i++) {
+  const char *macs[7] = {SensorMAC(0), SensorMAC(1), SensorMAC(2), SensorMAC(3), SensorMAC(4), SensorMAC(5), SensorMAC(6)};
+  for (int i = 0; i < 7; i++) {
     known[i] = ValidMAC(macs[i]) &&
                mgos_bt_addr_from_str(mg_mk_str(macs[i]), &addresses[i]);
   }
   configured = known[0] && known[1] &&
                memcmp(addresses[0].addr, addresses[1].addr, 6) != 0;
+  RestoreContactReadings();
+}
+
+void ForgetReading(int role) {
+  if (role < 0 || role > 6) return;
+  ForgetBattery(role);
+  ForgetContact(role);
+  sensors[role] = Sensor();
+  voltages[role] = -1;
+  packet_sequence[role] = 0;
+  known[role] = false;
+  addresses[role] = {};
+  if (role < 2) configured = false;
+  if (role == 5) {
+    button_events = ButtonEvents();
+    programmable_button_events = ProgrammableButtonEvents();
+    button_pending = false;
+    button_press_time = 0;
+    button_press_sequence = 0;
+  }
+}
+
+void ApplyMiReading(int role, const mgos_bt_addr &address, const Reading &reading,
+                    bool contact, int rssi) {
+  if (role<0 || (role>4 && role!=6)) return;
+  if (!XiaomiBindkeyFor(role,address.addr) && !QingpingFor(role,address.addr)) return;
+  addresses[role]=address; known[role]=true;
+  configured=known[0] && known[1] && memcmp(addresses[0].addr,addresses[1].addr,6)!=0;
+  if (role == 6 && reading.smoke < 0) {
+    // Battery and test-button packets prove the beacon is alive, but they do
+    // not establish whether smoke is present. Keep radio telemetry separate
+    // from the smoke state so the panel can show RSSI without claiming clear.
+    sensors[role].seen = true;
+    sensors[role].last_seen = mgos_uptime();
+    sensors[role].rssi = rssi;
+    if (reading.battery >= 0) sensors[role].battery = reading.battery;
+    if (reading.illuminance100 >= 0) {
+      sensors[role].illuminance100 = reading.illuminance100;
+      sensors[role].illuminance_last_seen = mgos_uptime();
+    }
+  } else if ((role>=3 && role<=4) || contact) {
+    sensors[role].Update(reading,mgos_uptime(),rssi,role==6?3:role>=3?2:role==2?1:0);
+    if (role == 6 && reading.smoke >= 0) {
+      sensors[role].smoke_seen = true;
+      sensors[role].smoke_last_seen = mgos_uptime();
+    }
+  }
+  else {
+    if(reading.battery>=0)sensors[role].battery=reading.battery;
+    if(reading.illuminance100>=0){
+      sensors[role].illuminance100=reading.illuminance100;
+      sensors[role].illuminance_last_seen=mgos_uptime();
+    }
+  }
+  if (contact && role < 2) CacheContact(role, address.addr, !reading.window_open, rssi, time(nullptr), mgos_uptime());
+  if (reading.battery >= 0) CacheBattery(role, address.addr, reading.battery, time(nullptr), mgos_uptime());
+  ++packet_sequence[role];
 }
 
 void Init() {
@@ -162,8 +254,9 @@ void Init() {
 }
 
 bool Ready() {
-  return configured && !PairingBusy() && SecureFor(0, addresses[0].addr) &&
-         SecureFor(1, addresses[1].addr) &&
+  RestoreContactReadings();
+  return configured && !PairingBusy() && (SecureFor(0, addresses[0].addr) || XiaomiBindkeyFor(0, addresses[0].addr) || QingpingFor(0, addresses[0].addr)) &&
+         (SecureFor(1, addresses[1].addr) || XiaomiBindkeyFor(1, addresses[1].addr) || QingpingFor(1, addresses[1].addr)) &&
          mgos_bt_get_status() == MGOS_BT_STARTED &&
          (mgos_bt_gap_scan_in_progress() || XiaomiGATTScanPaused()) &&
          blu::Ready(sensors[0], sensors[1], mgos_uptime(),
@@ -183,6 +276,7 @@ const char *SensorMAC(int role) {
     case 3: return mgos_sys_config_get_blu_indoor_mac();
     case 4: return mgos_sys_config_get_blu_outdoor_mac();
     case 5: return mgos_sys_config_get_blu_button_mac();
+    case 6: return mgos_sys_config_get_blu_smoke_mac();
     default: return "";
   }
 }
@@ -190,7 +284,7 @@ const Sensor &MotionReading() { return sensors[2]; }
 const char *SensorName(int role) {
   const char *name = nullptr;
   static const char *defaults[] = {"Closing sensor", "Opening sensor",
-                                 "Motion sensor", "Indoor", "Outdoor", "Button"};
+                                 "Motion sensor", "Indoor", "Outdoor", "Button", "Smoke sensor"};
   switch (role) {
     case 0: name = mgos_sys_config_get_blu_closed_name(); break;
     case 1: name = mgos_sys_config_get_blu_open_name(); break;
@@ -198,6 +292,7 @@ const char *SensorName(int role) {
     case 3: name = mgos_sys_config_get_blu_indoor_name(); break;
     case 4: name = mgos_sys_config_get_blu_outdoor_name(); break;
     case 5: name = mgos_sys_config_get_blu_button_name(); break;
+    case 6: name = mgos_sys_config_get_blu_smoke_name(); break;
     default: return "";
   }
   return name && *name ? name : defaults[role];
@@ -210,30 +305,54 @@ void SetSensorName(int role, const char *name) {
     case 3: mgos_sys_config_set_blu_indoor_name(name); break;
     case 4: mgos_sys_config_set_blu_outdoor_name(name); break;
     case 5: mgos_sys_config_set_blu_button_name(name); break;
+    case 6: mgos_sys_config_set_blu_smoke_name(name); break;
+  }
+}
+bool SensorDashboard(int role) {
+  switch (role) {
+    case 0: return mgos_sys_config_get_blu_closed_dashboard();
+    case 1: return mgos_sys_config_get_blu_open_dashboard();
+    case 2: return mgos_sys_config_get_blu_motion_dashboard();
+    case 3: return mgos_sys_config_get_blu_indoor_dashboard();
+    case 4: return mgos_sys_config_get_blu_outdoor_dashboard();
+    case 5: return mgos_sys_config_get_blu_button_dashboard();
+    case 6: return mgos_sys_config_get_blu_smoke_dashboard();
+    default: return true;
+  }
+}
+void SetSensorDashboard(int role, bool visible) {
+  switch (role) {
+    case 0: mgos_sys_config_set_blu_closed_dashboard(visible); break;
+    case 1: mgos_sys_config_set_blu_open_dashboard(visible); break;
+    case 2: mgos_sys_config_set_blu_motion_dashboard(visible); break;
+    case 3: mgos_sys_config_set_blu_indoor_dashboard(visible); break;
+    case 4: mgos_sys_config_set_blu_outdoor_dashboard(visible); break;
+    case 5: mgos_sys_config_set_blu_button_dashboard(visible); break;
+    case 6: mgos_sys_config_set_blu_smoke_dashboard(visible); break;
   }
 }
 const Sensor &ReadingFor(int role) { return sensors[role]; }
 bool SensorPaired(int role) {
   mgos_bt_addr address;
   const char *mac = SensorMAC(role);
-  return role >= 0 && role < 6 && ValidMAC(mac) &&
+  return role >= 0 && role < 7 && ValidMAC(mac) &&
          mgos_bt_addr_from_str(mg_mk_str(mac), &address) &&
-         (SecureFor(role, address.addr) || XiaomiFor(role, address.addr) ||
+         (SecureFor(role, address.addr) || XiaomiBindkeyFor(role,address.addr) || QingpingFor(role,address.addr) || XiaomiFor(role, address.addr) ||
           XiaomiGATTFor(role, address.addr));
 }
 int SensorTimeout(int role) {
-  const int configured = mgos_sys_config_get_blu_stale_after_s();
-  mgos_bt_addr address;
-  if ((role == 3 || role == 4) && ValidMAC(SensorMAC(role)) &&
-      mgos_bt_addr_from_str(mg_mk_str(SensorMAC(role)), &address) &&
-      XiaomiGATTFor(role, address.addr) && configured < 900) return 900;
-  return configured;
+  // Thermometers may broadcast infrequently. Keep each measurement valid for
+  // an hour, independently of the garage endpoints' shorter safety timeout.
+  if (role == 3 || role == 4) return 3600;
+  return mgos_sys_config_get_blu_stale_after_s();
 }
 void SetThermometerReading(int role, const mgos_bt_addr &address,
                            const Sensor &reading, int voltage_mv) {
   if (role != 3 && role != 4) return;
   mgos_bt_addr assigned;
-  if (!mgos_bt_addr_from_str(mg_mk_str(SensorMAC(role)), &assigned) ||
+  const char *assigned_mac = SensorMAC(role);
+  if (!ValidMAC(assigned_mac) ||
+      !mgos_bt_addr_from_str(mg_mk_str(assigned_mac), &assigned) ||
       memcmp(assigned.addr, address.addr, 6) != 0) return;
   addresses[role] = address;
   known[role] = true;
@@ -243,7 +362,13 @@ void SetThermometerReading(int role, const mgos_bt_addr &address,
 }
 bool SensorReady(int role) {
   if (role == 3 || role == 4) return HTReady(role, true) && HTReady(role, false);
-  return role >= 0 && role < 6 && known[role] && SecureFor(role, addresses[role].addr) &&
+  // A verified MiBeacon heartbeat/test/battery packet proves the detector is
+  // reachable even when that packet does not carry object 0x1015 (smoke state).
+  // Keep alarm state separate: only object 0x1015 may change SmokeDetected.
+  if (role == 6) return SensorPaired(role) && sensors[role].Fresh(
+         mgos_uptime(), mgos_sys_config_get_blu_stale_after_s()) &&
+         mgos_bt_get_status() == MGOS_BT_STARTED;
+  return role >= 0 && role < 7 && known[role] && (SecureFor(role, addresses[role].addr) || XiaomiBindkeyFor(role, addresses[role].addr) || QingpingFor(role, addresses[role].addr)) &&
          mgos_bt_get_status() == MGOS_BT_STARTED &&
          sensors[role].Fresh(mgos_uptime(), mgos_sys_config_get_blu_stale_after_s());
 }
@@ -267,11 +392,11 @@ const char *CarName() {
 }
 bool CarPresenceReady() {
   return SensorPaired(5) && mgos_bt_get_status() == MGOS_BT_STARTED &&
-         (mgos_bt_gap_scan_in_progress() || XiaomiGATTScanPaused());
+         (mgos_bt_gap_scan_in_progress() || XiaomiGATTScanPaused()) &&
+         sensors[5].Fresh(mgos_uptime(), mgos_sys_config_get_blu_presence_timeout_s());
 }
 bool CarPresent() {
-  return CarPresenceReady() &&
-         sensors[5].Fresh(mgos_uptime(), mgos_sys_config_get_blu_presence_timeout_s());
+  return CarPresenceReady();
 }
 bool MotionReady() { return SensorReady(2); }
 bool MotionLightReady() {
@@ -279,8 +404,9 @@ bool MotionLightReady() {
                               mgos_uptime(), mgos_sys_config_get_blu_stale_after_s());
 }
 std::string GetInfoJSON() {
+  RestoreContactReadings();
   std::string result = mgos::JSONPrintStringf(
-      "{enable:%B,button_press_seq:%u,button_press_age_ms:%d,presence_timeout_s:%d,stale_after_s:%d,ready:%B", Enabled(),
+      "{radio_enabled:%B,radio_running:%B,enable:%B,button_press_seq:%u,button_press_age_ms:%d,presence_timeout_s:%d,stale_after_s:%d,ready:%B", mgos_sys_config_get_bt_enable(), mgos_bt_get_status() == MGOS_BT_STARTED, Enabled(),
       button_press_sequence, button_press_sequence ? int((mgos_uptime() - button_press_time) * 1000) : -1,
       mgos_sys_config_get_blu_presence_timeout_s(),
       mgos_sys_config_get_blu_stale_after_s(), Ready());
@@ -289,19 +415,30 @@ std::string GetInfoJSON() {
   result += mgos::JSONPrintStringf(
       ",button_name:%Q,car_name:%Q,car_present:%B,car_presence_ready:%B",
       button_name ? button_name : "", car_name ? car_name : "", CarPresent(), CarPresenceReady());
-  const char *roles[] = {"closed", "open", "motion", "indoor", "outdoor", "button"};
-  for (int i = 0; i < 6; i++) {
+  const char *roles[] = {"closed", "open", "motion", "indoor", "outdoor", "button", "smoke"};
+  for (int i = 0; i < 7; i++) {
     const auto &sensor = sensors[i];
+    const int battery = i < 2 && known[i] && XiaomiBindkeyFor(i, addresses[i].addr) && !QingpingFor(i, addresses[i].addr)
+        ? CachedBattery(i, addresses[i].addr, time(nullptr), mgos_uptime()) : sensor.battery;
     result += mgos::JSONPrintStringf(
-        ",%Q:%Q,%Q:{name:%Q,packet_seq:%u,paired:%B,protocol:%Q,ready:%B,temperature_ready:%B,humidity_ready:%B,secure:%B,seen:%B,active:%B,battery:%d,rssi:%d,age_s:%d,temperature:%.1f,humidity:%d,timeout_s:%d,battery_estimated:%B,voltage_mv:%d,gatt:%s}",
+        ",%Q:%Q,%Q:{name:%Q,dashboard:%B,packet_seq:%u,paired:%B,protocol:%Q,ready:%B,temperature_ready:%B,humidity_ready:%B,secure:%B,seen:%B,smoke_seen:%B,smoke_age_s:%d,active:%B,battery:%d,rssi:%d,age_s:%d,temperature:%.1f,humidity:%d,illuminance:%.2f,illuminance_ready:%B,illuminance_age_s:%d,timeout_s:%d,battery_estimated:%B,voltage_mv:%d,gatt:%s}",
         (std::string(roles[i]) + "_mac").c_str(), SensorMAC(i) ? SensorMAC(i) : "", roles[i],
-        SensorName(i), packet_sequence[i],
-        SensorPaired(i), known[i] && XiaomiGATTFor(i, addresses[i].addr) ? "xiaomi_gatt" :
+        SensorName(i), SensorDashboard(i), packet_sequence[i],
+        SensorPaired(i), known[i] && QingpingFor(i,addresses[i].addr) ?
+          (XiaomiBindkeyFor(i,addresses[i].addr)?"qingping_bindkey":"qingping") :
+                         known[i] && XiaomiClockFor(i, addresses[i].addr) ?
+                           (XiaomiGATTFor(i, addresses[i].addr) ? "xiaomi_clock_gatt" : "xiaomi_clock_bindkey") :
+                         known[i] && XiaomiBindkeyFor(i, addresses[i].addr) ? "xiaomi_bindkey" :
+                         known[i] && XiaomiGATTFor(i, addresses[i].addr) ? "xiaomi_gatt" :
                          known[i] && XiaomiFor(i, addresses[i].addr) ? "xiaomi" : "bthome",
         SensorReady(i), HTReady(i, true), HTReady(i, false),
-        known[i] && SecureFor(i, addresses[i].addr), sensor.seen, sensor.active,
-        sensor.battery, sensor.rssi, sensor.seen ? int(mgos_uptime() - sensor.last_seen) : -1,
-        sensor.temperature10 / 10.0, sensor.humidity, SensorTimeout(i), voltages[i] >= 0,
+        known[i] && (SecureFor(i, addresses[i].addr) || XiaomiBindkeyFor(i, addresses[i].addr)), sensor.seen,
+        sensor.smoke_seen, sensor.smoke_seen ? int(mgos_uptime() - sensor.smoke_last_seen) : -1, sensor.active,
+        battery, sensor.rssi, sensor.seen ? int(mgos_uptime() - sensor.last_seen) : -1,
+        sensor.temperature10 / 10.0, sensor.humidity, sensor.illuminance100 / 100.0,
+        SensorReady(i) && sensor.IlluminanceFresh(mgos_uptime(), SensorTimeout(i)),
+        sensor.illuminance100 >= 0 ? int(mgos_uptime() - sensor.illuminance_last_seen) : -1,
+        SensorTimeout(i), voltages[i] >= 0,
         voltages[i], XiaomiGATTStatusJSON(i).c_str());
   }
   return result + "}";

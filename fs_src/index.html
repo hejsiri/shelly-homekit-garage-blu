@@ -262,6 +262,7 @@
             <option id="wifi_sta_ps_mode_1" value="1">1</option>
             <option id="wifi_sta_ps_mode_2" value="2">2</option>
           </select>
+          <small id="wifi_ps_note" style="display:none">This device requires Wi-Fi power saving mode 1 or 2 while Bluetooth is enabled.</small>
         </div>
         <div class="form-control" id="wifi_status_container">
           <label>Status:</label>
@@ -360,6 +361,10 @@
           <button class="btn" id="reset_btn">
             <label>Reset</label>
           </button>
+        </div>
+        <div class="form-control ui-language-row">
+          <label>Language:</label>
+          <div id="ui_language_mount"></div>
         </div>
       </div>
     </div>
@@ -783,7 +788,7 @@
       </div>
     </div>
 
-    <div class="container" id="gdo_template" style="display: none">
+    <div class="container garage-settings" id="gdo_template" style="display: none">
       <a class="helpbadge" href="https://github.com/hejsiri/shelly-homekit-garage-blu/blob/master/README-BLU.md#pair-and-name-devices"
         target="_blank">?</a>
       <h1 id="head">Garage Door</h1>
@@ -805,8 +810,15 @@
                 <span class="slider round"></span>
               </label>
             </div>
+            <section class="blu-accessory-panel" aria-labelledby="blu_closed_heading">
+              <h3 id="blu_closed_heading" class="blu-accessory-title">Closing sensor</h3>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_closed_dashboard" checked></label></div>
             <div class="form-control">
-              <label>Closing sensor:</label>
+              <label>Device type:</label>
+              <select id="blu_closed_type"><option value="shelly">Shelly BLU Door Window</option><option value="xiaomi_bindkey">Xiaomi Door &amp; Window Sensor 2</option><option value="qingping_cgh1">Qingping Door &amp; Window Contact Sensor</option></select>
+            </div>
+            <div class="form-control">
+              <label>Device:</label>
               <input type="text" id="blu_closed_mac" readonly placeholder="AA:BB:CC:DD:EE:01" maxlength="17">
               <button type="button" id="blu_pair_closed">Pair</button>
             </div>
@@ -815,8 +827,16 @@
               <input type="text" id="blu_closed_name" aria-label="Closed device name" maxlength="64">
             </div>
             <p id="blu_closed_status" class="blu-sensor"></p>
+            </section>
+            <section class="blu-accessory-panel" aria-labelledby="blu_open_heading">
+              <h3 id="blu_open_heading" class="blu-accessory-title">Opening sensor</h3>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_open_dashboard" checked></label></div>
             <div class="form-control">
-              <label style="white-space: nowrap;">Opening sensor:</label>
+              <label>Device type:</label>
+              <select id="blu_open_type"><option value="shelly">Shelly BLU Door Window</option><option value="xiaomi_bindkey">Xiaomi Door &amp; Window Sensor 2</option><option value="qingping_cgh1">Qingping Door &amp; Window Contact Sensor</option></select>
+            </div>
+            <div class="form-control">
+              <label>Device:</label>
               <input type="text" id="blu_open_mac" readonly placeholder="AA:BB:CC:DD:EE:02" maxlength="17">
               <button type="button" id="blu_pair_open">Pair</button>
             </div>
@@ -825,8 +845,16 @@
               <input type="text" id="blu_open_name" aria-label="Open device name" maxlength="64">
             </div>
             <p id="blu_open_status" class="blu-sensor"></p>
+            </section>
+            <section class="blu-accessory-panel" aria-labelledby="blu_motion_heading">
+              <h3 id="blu_motion_heading" class="blu-accessory-title">Motion sensor</h3>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_motion_dashboard" checked></label></div>
             <div class="form-control">
-              <label style="white-space:nowrap">Motion sensor:</label>
+              <label>Device type:</label>
+              <select id="blu_motion_type"><option value="shelly">Shelly BLU Motion</option><option value="qingping_cgpr1">Qingping Motion &amp; Ambient Light Sensor</option><option value="xiaomi_bindkey">Xiaomi Motion Sensor 2S</option></select>
+            </div>
+            <div class="form-control">
+              <label>Device:</label>
               <input type="text" id="blu_motion_mac" readonly placeholder="Not paired" maxlength="17">
               <button type="button" id="blu_pair_motion">Pair</button>
             </div>
@@ -835,9 +863,13 @@
               <input type="text" id="blu_motion_name" aria-label="Motion device name" maxlength="64">
             </div>
             <p id="blu_motion_status" class="blu-sensor"></p>
+            </section>
+            <section class="blu-accessory-panel" aria-labelledby="blu_indoor_heading">
+              <h3 id="blu_indoor_heading" class="blu-accessory-title">Indoor H&amp;T</h3>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_indoor_dashboard" checked></label></div>
             <div class="form-control">
-              <label style="white-space:nowrap">Indoor H&T:</label>
-              <select id="blu_indoor_type" aria-label="Indoor thermometer type"><option value="shelly">Shelly BLU H&amp;T</option><option value="xiaomi">Xiaomi LYWSDCGQ/01ZM</option><option value="xiaomi_gatt">Xiaomi LYWSD03MMC (experimental)</option></select>
+              <label>Device type:</label>
+              <select id="blu_indoor_type" aria-label="Indoor thermometer type"><option value="shelly">Shelly BLU H&amp;T</option><option value="xiaomi">Xiaomi Temperature and Humidity Monitor</option><option value="xiaomi_gatt">Xiaomi Temperature and Humidity Monitor 2</option><option value="xiaomi_clock_direct">Xiaomi E-Ink Clock (BHR5435GL) · without key</option><option value="xiaomi_clock">Xiaomi E-Ink Clock (BHR5435GL) · BLE bindkey</option><option value="qingping_cgg1">Qingping Temperature &amp; Humidity Monitor</option></select>
             </div>
             <div class="form-control">
               <label>Device:</label>
@@ -849,9 +881,13 @@
               <input type="text" id="blu_indoor_name" aria-label="Indoor device name" maxlength="64">
             </div>
             <p id="blu_indoor_status" class="blu-sensor"></p>
+            </section>
+            <section class="blu-accessory-panel" aria-labelledby="blu_outdoor_heading">
+              <h3 id="blu_outdoor_heading" class="blu-accessory-title">Outdoor H&amp;T</h3>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_outdoor_dashboard" checked></label></div>
             <div class="form-control">
-              <label style="white-space:nowrap">Outdoor H&T:</label>
-              <select id="blu_outdoor_type" aria-label="Outdoor thermometer type"><option value="shelly">Shelly BLU H&amp;T</option><option value="xiaomi">Xiaomi LYWSDCGQ/01ZM</option><option value="xiaomi_gatt">Xiaomi LYWSD03MMC (experimental)</option></select>
+              <label>Device type:</label>
+              <select id="blu_outdoor_type" aria-label="Outdoor thermometer type"><option value="shelly">Shelly BLU H&amp;T</option><option value="xiaomi">Xiaomi Temperature and Humidity Monitor</option><option value="xiaomi_gatt">Xiaomi Temperature and Humidity Monitor 2</option><option value="xiaomi_clock_direct">Xiaomi E-Ink Clock (BHR5435GL) · without key</option><option value="xiaomi_clock">Xiaomi E-Ink Clock (BHR5435GL) · BLE bindkey</option><option value="qingping_cgg1">Qingping Temperature &amp; Humidity Monitor</option></select>
             </div>
             <div class="form-control">
               <label>Device:</label>
@@ -863,7 +899,12 @@
               <input type="text" id="blu_outdoor_name" aria-label="Outdoor device name" maxlength="64">
             </div>
             <p id="blu_outdoor_status" class="blu-sensor"></p>
-            <div class="form-control"><label>BLU Button1:</label><input type="text" id="blu_button_mac" readonly placeholder="Not paired" maxlength="17"><button type="button" id="blu_pair_button">Pair</button></div>
+            </section>
+            <section class="blu-accessory-panel" aria-labelledby="blu_button_heading">
+              <h3 id="blu_button_heading" class="blu-accessory-title">Button</h3>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_button_dashboard" checked></label></div>
+            <div class="form-control"><label>Device type:</label><span data-i18n-ignore>Shelly BLU Button1</span></div>
+            <div class="form-control"><label>Device:</label><input type="text" id="blu_button_mac" readonly placeholder="Not paired" maxlength="17"><button type="button" id="blu_pair_button">Pair</button></div>
             <div class="form-control" id="blu_button_name_row" style="display:none">
               <label>Name:</label>
               <input type="text" id="blu_button_name" aria-label="Button device name" placeholder="Button" maxlength="64">
@@ -874,6 +915,15 @@
             </div>
             <p id="blu_button_status" class="blu-sensor"></p>
             <p class="help">Presence beacon: the button is within BLE range. Keep it in your car. Single press: open / stop / close. Beacons never trigger the garage door.</p>
+            </section>
+            <section class="blu-accessory-panel" aria-labelledby="blu_smoke_heading">
+              <h3 id="blu_smoke_heading" class="blu-accessory-title">Smoke sensor</h3>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_smoke_dashboard" checked></label></div>
+              <div class="form-control"><label>Device type:</label><select id="blu_smoke_type"><option value="xiaomi_bindkey">Xiaomi Honeywell Smoke Detector</option></select></div>
+              <div class="form-control"><label>Device:</label><input type="text" id="blu_smoke_mac" readonly placeholder="Not paired" maxlength="17"><button type="button" id="blu_pair_smoke">Pair</button></div>
+              <div class="form-control" id="blu_smoke_name_row" style="display:none"><label>Name:</label><input type="text" id="blu_smoke_name" aria-label="Smoke device name" maxlength="64"></div>
+              <p id="blu_smoke_status" class="blu-sensor"></p>
+            </section>
             <div class="form-control">
               <label>Sensor timeout:</label>
               <input type="number" id="blu_stale_after_s" min="30" max="3600"> seconds
@@ -884,9 +934,15 @@
               <p id="blu_pair_step" class="blu-pair-step"></p>
               <h3 id="blu_pair_title">Pair device</h3>
               <p id="blu_pair_help"></p>
-              <p id="blu_pair_selected" class="blu-pair-device" style="display:none"></p>
+              <div id="blu_pair_preview"></div>
+              <p id="blu_pair_selected" class="blu-visually-hidden" style="display:none"></p>
               <div class="form-control" id="blu_pair_candidate_container" style="display:none">
-                <label for="blu_pair_candidate">Device:</label><select id="blu_pair_candidate" aria-label="Device"></select>
+                <div id="blu_pair_devices" class="blu-device-list" aria-label="Nearby devices"></div>
+                <label class="blu-visually-hidden" for="blu_pair_candidate">Device:</label><select class="blu-visually-hidden" id="blu_pair_candidate" aria-label="Device" tabindex="-1"></select>
+              </div>
+              <div class="form-control" id="blu_pair_bindkey_container" style="display:none">
+                <label for="blu_pair_bindkey">Bindkey BLE:</label>
+                <input id="blu_pair_bindkey" aria-label="Bindkey BLE" type="password" autocomplete="off" spellcheck="false" maxlength="32" placeholder="32 hexadecimal characters">
               </div>
               <div class="form-control" id="blu_pair_new_container" style="display:none">
                 <label for="blu_pair_pin">Encryption PIN:</label>
@@ -1068,6 +1124,10 @@
       <script src="sha256.js">
       </script>
       <script src="qrcode.js">
+      </script>
+      <script src="i18n.js">
+      </script>
+      <script src="blu-devices.js">
       </script>
       <script src="script.js">
       </script>

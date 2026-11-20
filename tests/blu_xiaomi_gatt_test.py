@@ -17,7 +17,8 @@ harness=r'''
 #include <vector>
 #define SHELLY_GARAGE_BLE
 #include "shelly_blu_xiaomi_gatt.hpp"
-struct mgos_bt_addr { unsigned char addr[6]={}; };
+#include "shelly_blu_keys.hpp"
+struct mgos_bt_addr { unsigned char addr[6]={};int type=0; };
 struct mg_str { const char *p; size_t len; };
 mg_str mg_mk_str(const char *s) {return {s,strlen(s)};}
 struct ble_addr_t {unsigned char val[6]={};};
@@ -27,13 +28,19 @@ struct ble_uuid_any_t {ble_uuid_t u;};
 struct Mbuf {std::vector<uint8_t> bytes;};
 struct ble_gatt_error {int status;};
 struct ble_gatt_attr {Mbuf *om;};
-struct ble_gatt_chr {ble_uuid_any_t uuid;uint16_t val_handle;};
+struct ble_gatt_chr {ble_uuid_any_t uuid;uint16_t val_handle;uint16_t def_handle=0;uint8_t properties=0;};
+struct ble_gatt_dsc {uint16_t handle; ble_uuid_any_t uuid;};
+uint16_t ble_uuid_u16(const ble_uuid_t *u){return u->text=="2902"?0x2902:0;}
 int ble_uuid_cmp(const ble_uuid_t *a,const ble_uuid_t *b){return a->text.compare(b->text);}
 struct ble_gap_event {
  int type;
+ struct {uint16_t conn_handle,attr_handle;Mbuf *om;} notify_rx;
  struct {int status; uint16_t conn_handle;} connect;
  struct {struct {uint16_t conn_handle;} conn; int reason;} disconnect;
 };
+#define BLE_GAP_EVENT_NOTIFY_RX 3
+#define BLE_GATT_CHR_PROP_READ 2
+#define BLE_GATT_CHR_PROP_NOTIFY 16
 #define BLE_GAP_EVENT_CONNECT 1
 #define BLE_GAP_EVENT_DISCONNECT 2
 #define BLE_HS_CONN_HANDLE_NONE 0xffff
@@ -75,6 +82,16 @@ void mgos_bt_uuid_from_str(mg_str s,mgos_bt_uuid *out){out->text=std::string(s.p
 void mgos_bt_uuid_to_esp32(const mgos_bt_uuid *s,ble_uuid_any_t *out){out->u.text=s->text;}
 int ble_gattc_disc_all_chrs(uint16_t h,int begin,int end,Chr cb,void *arg){assert(h==7&&begin==1&&end==0xffff);discoveries++;chr_cb=cb;chr_arg=arg;return discover_result;}
 int ble_gattc_read(uint16_t h,uint16_t attribute,Reader cb,void *arg){assert(h==7&&attribute>handle_base&&attribute<=handle_base+5);reads.push_back(expected_uuids[attribute-handle_base-1]);read_cb=cb;read_arg=arg;return read_result;}
+using Desc=int(*)(uint16_t,const ble_gatt_error*,uint16_t,const ble_gatt_dsc*,void*);
+Desc desc_cb=nullptr; void*desc_arg=nullptr;
+bool enabled=false;
+int ble_gattc_disc_all_dscs(uint16_t h,uint16_t first,uint16_t last,Desc cb,void*arg){
+ assert(h==7&&first==84&&last>=85);desc_cb=cb;desc_arg=arg;return 0;
+}
+int ble_gattc_write_flat(uint16_t h,uint16_t cccd,const void *data,uint16_t len,Reader cb,void*arg){
+ assert(h==7&&cccd==85&&len==2&&memcmp(data,"\x01\x00",2)==0);
+ enabled=true;ble_gatt_error ok{0};cb(h,&ok,nullptr,arg);return 0;
+}
 int mgos_bt_get_status(){return MGOS_BT_STARTED;}
 int mgos_set_timer(int delay,int flags,void (*)(void *),void *){assert(delay==500&&flags==1);return 1;}
 bool pairing=false;int updates=0;
@@ -83,6 +100,8 @@ bool PairingBusy(){return pairing;}
 bool PairingScan(){return pairing;}
 bool ValidMAC(const char *s){return s&&strlen(s)==17;}
 const char *SensorMAC(int role){return role==3?"01:02:03:04:05:06":"";}
+bool XiaomiClockFor(int,const uint8_t*){return false;}
+bool LoadRecord(int,SecureRecord*){return false;}
 bool XiaomiGATTFor(int role,const uint8_t *){return role==3;}
 void SetThermometerReading(int,const mgos_bt_addr &,const Sensor &s,int voltage){assert(s.seen&&voltage==3000);updates++;}
 }}
@@ -124,6 +143,38 @@ int main(){
  const uint8_t adv[]={7,0x16,0x95,0xfe,0x58,0x58,0x5b,0x05};
  assert(Xiaomi03Advertisement(adv,sizeof(adv)));
  for(size_t n=0;n<sizeof(adv);n++)assert(!Xiaomi03Advertisement(adv,n));
+ // Clock-only discovery, subscribe to the measured value's actual CCCD and use one sample.
+ const uint8_t name[]={11,9,'L','Y','W','S','D','0','2','M','M','C'};
+ assert(ClockAdvertisement(name,sizeof(name)) && !ClockAdvertisement(name,sizeof(name)-1));
+ for (int len : {3,5}) {
+   Reset();enabled=false;
+   assert(XiaomiGATTStart(4,mgos_bt_addr(),[](const Sensor &s,int volts,const std::string &e){
+     ++delivered;received=s;mv=volts;failure=e;
+   },true));
+   Connected(0,false);
+   ble_gatt_error ok{0},end{BLE_HS_EDONE};
+   ble_gatt_chr measure{{{expected_uuids[3]}},84,83,BLE_GATT_CHR_PROP_NOTIFY};
+   chr_cb(7,&ok,&measure,chr_arg);DiscoveryDone();assert(!enabled);
+   ble_gatt_dsc config{85,{{"2902"}}};desc_cb(7,&ok,84,&config,desc_arg);
+   desc_cb(7,&end,84,nullptr,desc_arg);Drain();assert(enabled&&!delivered);
+   Mbuf data{{0xc6,0x07,58,0xb8,0x0b}};data.bytes.resize(len);
+   ble_gap_event rx{};rx.type=BLE_GAP_EVENT_NOTIFY_RX;rx.notify_rx={7,86,&data};
+   gap_cb(&rx,gap_arg);Drain();assert(!delivered);
+   rx.notify_rx.attr_handle=84;gap_cb(&rx,gap_arg);Drain();
+   assert(delivered==1&&failure.empty()&&received.temperature10==199&&received.humidity==58&&mv==(len==3?-1:3000));
+ }
+ // No sample -> no assignment. Timeouts terminate the connection and late data is ignored.
+ Reset();assert(XiaomiGATTStart(4,mgos_bt_addr(),[](const Sensor &s,int,const std::string &e){
+   ++delivered;received=s;failure=e;
+ },true));Connected(0,false);
+ now+=41;Tick(nullptr);assert(delivered==1&&!failure.empty()&&!received.seen&&terminates==1);
+ // Clock firmware can expose the same characteristic through a read instead.
+ Reset();assert(XiaomiGATTStart(4,mgos_bt_addr(),[](const Sensor &s,int,const std::string &e){
+   ++delivered;received=s;failure=e;
+ },true));Connected(0,false);
+ {ble_gatt_error ok{0};ble_gatt_chr measure{{{expected_uuids[3]}},84,83,BLE_GATT_CHR_PROP_READ};
+  chr_cb(7,&ok,&measure,chr_arg);DiscoveryDone();}
+ Reply({0xc6,0x07,101});assert(delivered==1&&!received.seen&&!failure.empty());
  // UUID lookup, mandatory identity, optional versions and a complete fresh sample.
  Reset();Begin();assert(XiaomiGATTConnecting()&&XiaomiGATTScanPaused());
  assert(!XiaomiGATTStart(4,mgos_bt_addr(),nullptr));Connected();assert(!XiaomiGATTConnecting());

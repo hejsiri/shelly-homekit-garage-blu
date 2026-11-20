@@ -1,6 +1,6 @@
 # Rozwiązywanie problemów Garage BLU
 
-Dla **2.16.1-blu50 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-25**.
+Dla **2.16.1_blu.78 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-28**.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](KONFIGURACJA.md) · [Historia zmian](HISTORIA_ZMIAN.md)
@@ -13,6 +13,27 @@ dotyczy osobnego czujnika lub przycisku. Przy diagnozie podawaj obie osobno.
 Sprawdź MAC wybranej roli, status, baterię, RSSI oraz liczbę sekund od odczytu.
 Nowy odczyt z bieżącym stanem i małym wiekiem danych jest mocniejszym potwierdzeniem
 niż sam fakt, że adres MAC jest zapisany w panelu.
+
+## HomeKit traci parowanie po ponownym uruchomieniu
+
+Sprawdź `Sys.GetInfo`: `ram_free` i `ram_min_free` dotyczą RAM, natomiast
+`fs_free` pokazuje miejsce na trwały zapis konfiguracji i kluczy HomeKit.
+Na Plus 1 wartość `fs_free: 4096` oznacza tylko jeden wolny blok systemu plików.
+Może wtedy zabraknąć miejsca na bezpieczny zapis nowego pliku `kvs.json.tmp`.
+
+`FS.ListExt` pokazuje same nazwy i rozmiary plików. Starsze aktualizacje mogły
+zachowywać 11 wycofanych grafik garażu (około 103 kB). Dokładna lista jest w
+`src/shelly_obsolete_garage_assets.hpp`; bieżące grafiki `garage-v16-*`,
+`garage-tesla-s-*`, ikony i pliki HTML pozostają potrzebne.
+Nie usuwaj `kvs.json`, `kvs.json.tmp`, konfiguracji ani danych uwierzytelniania.
+Samo zwolnienie miejsca nie przywróci utraconych kluczy HomeKit.
+
+Od blu.78 firmware usuwa wyłącznie wycofane grafiki przed zapisem
+konfiguracji i zapobiega kopiowaniu ich podczas kolejnych aktualizacji OTA.
+Zabezpiecza też zapis KVS przed krótkim zapisem i błędami opróżnienia bufora,
+zamknięcia lub zastąpienia pliku. Testy sprawdzają ponowny odczyt poprzednich
+kluczy po tych błędach. Potwierdzenie poprawki na fizycznym sterowniku pozostaje
+do wykonania.
 
 ## Parowanie BLU
 
@@ -167,7 +188,7 @@ krokami zwykłej aktualizacji.
 - Nazwy urządzeń BLU zapisuje Save w sekcji bramy; własne polskie nazwy nie są automatycznie tłumaczone.
 - Krańcówki nie są pokazywane nad garażem. Ich statusy są w ustawieniach.
 - Przy haśle dashboard ładuje się po zalogowaniu; podczas aktualizacji jest ukryty.
-- Jeśli widzisz dawny dom, auto lub polskie statusy systemowe, sprawdź zainstalowaną wersję i odśwież stronę po OTA. Blu38 nie ładuje starszych grafik startowych.
+- Jeśli widzisz dawny dom lub auto, sprawdź zainstalowaną wersję i odśwież stronę po OTA. Blu38 nie ładuje starszych grafik startowych.
 - Język natywnego okna wyboru pliku zależy od przeglądarki i systemu.
 
 ## Co dołączyć do zgłoszenia
@@ -214,8 +235,43 @@ z takimi danymi. MAC można zamaskować, zachowując możliwość rozróżnienia
 - B1.4 z 2.1.1_0159 nie został jeszcze fizycznie zweryfikowany. Jeśli firmware
   odmawia odczytu bez zabezpieczenia, panel pokaże błąd; nie przechodzimy na tokeny.
 
-## Wycofane modele Xiaomi z ręcznym kluczem
+## Xiaomi Bindkey BLE (blu56)
 
-Obsługa szyfrowanych beaconów LYWSD03MMC z blu46 i MCCGQ02HL z blu47 pozostaje
-wycofana. Blu49 dodaje osobną próbę LYWSD03MMC przez GATT, bez przywracania
-pól bindkey ani protokołów z ręcznymi kluczami. MCCGQ02HL nadal nie jest obsługiwany.
+W blu56 dostępna jest nowa obsługa MCCGQ02HL i LYWSD03MMC przez ręczne podanie 32-znakowego klucza. Starsze wpisy protokołów 2/3 nie są przywracane. Dodaj urządzenie ponownie wariantem **Bindkey BLE**. Po błędzie weryfikacji sprawdź klucz, wywołaj nowy odczyt (dla kontaktronu przesuń magnes) i ponów próbę. Sam pakiet baterii nie potwierdza stanu krańcówki. [Szczegóły](BINDKEY_BLE.md).
+
+## Język panelu
+
+Od blu54 przyciski **EN / PL** w panelu System zmieniają jego język bez przeładowania.
+Jeśli po aktualizacji ich nie widać, odśwież stronę po zakończeniu OTA. Gdy
+przeglądarka blokuje pamięć lokalną, język działa w bieżącej karcie, lecz może
+wrócić do EN po ponownym otwarciu. Własne nazwy urządzeń i auta nie są tłumaczone.
+
+## Zawieszenie podczas usuwania Shelly BLU Motion
+
+Zgłoszono brak odpowiedzi aż do restartu zasilania przy usuwaniu Shelly BLU Motion. Poprawka w blu.60 dla Shelly Plus 1 zastępuje nieograniczoną pętlę kasowania rekordów NimBLE kontrolowanym odczytem i usuwaniem dokładnych rekordów wybranego MAC/typu adresu. Obowiązuje limit pojemności magazynu, a błąd lub brak postępu zatrzymuje operację przed usunięciem przypisania aplikacji. Pozostaje czyszczenie rekordów prywatności wybranego urządzenia; inne przypisania i klucze są zachowane.
+
+Log diagnostyczny pokazuje etapy `BLU unpair role=2`: kasowanie powiązania, klucza aplikacji, zapis usunięcia i odświeżenie HomeKit. Nie zawiera kluczy BLE. Testy hosta obejmują magazyn zwracający sukces bez usunięcia rekordu. Przyczyna fizycznego zawieszenia i skuteczność poprawki wymagają potwierdzenia na Shelly — odczyt logu urządzenia podczas diagnozy nie był dostępny.
+
+### Poprawka blu.61 — tylko Shelly Plus 1
+
+Potwierdzono, że blu.60 nadal potrafi przestać odpowiadać przy usuwaniu czujników ruchu i otwarcia Shelly BLU. Kolejna poprawka przenosi operacje magazynu NimBLE/NVS do oddzielnego zadania FreeRTOS. Wynik wraca przez okresowe sprawdzenie w głównej pętli, bez wykonywania kasowania BLE w obsłudze RPC. Dopiero sukces pozwala skasować przypisanie aplikacji i odświeżyć HomeKit. Po 8 sekundach zwracany jest błąd; spóźniony wynik nie odpowiada drugi raz ani nie usuwa przypisania. Nie uruchamia się kolejnego zadania do czasu wyjścia poprzedniego. Zabezpieczenie wymaga weryfikacji na fizycznym urządzeniu; limit pętli z blu.60 sam nie rozwiązał zgłoszenia.
+
+### Potwierdzona przyczyna restartu — pusty slot MAC
+
+2026-10-28 odtworzono dwukrotnie usuwanie Shelly BLU Motion w Chrome na blu.61: zamrożenie statusu, `Request timeout`, następnie automatyczny restart; przypisanie pozostało. Log HTTP na żywo nie zdążył wysłać wpisów usuwania. Brak pliku logu wynikał z `file_logger.enable=false`; tymczasowe ustawienia diagnostyczne przywrócono po analizie.
+
+W pętli sprawdzającej współdzielenie powiązania BLE przekazywano MAC każdego innego slotu wprost do `mgos_bt_addr_from_str`. Mongoose OS przechowuje puste ciągi konfiguracji jako NULL (`mgos_conf_copy_str`), a rzeczywisty parser z `bt-common/src/mgos_bt.c` używa `sscanf(addr_str.p, ...)` bez kontroli NULL. W konfiguracji był pusty slot wewnętrznego termometru. Dodano sprawdzenie `ValidMAC(other_mac)` przed wywołaniem parsera. Poprzednie limity pętli i zadanie FreeRTOS nie usuwały tej przyczyny — kontrola pozostałych slotów wykonywana jest wcześniej.
+
+Test `tests/blu_unpair_test.py` używa teraz rzeczywistego parsera SDK, odwzorowuje NULL dla pustych slotów i obejmuje usuwanie ruchu, krańcówek oraz przycisku przy różnych pustych slotach. Wersja bez sprawdzenia NULL odtwarza błąd AddressSanitizer; poprawiona przechodzi. Weryfikacja poprawionego firmware na urządzeniu pozostaje do wykonania.
+
+### Próba urządzenia z blu.62 (2026-10-28)
+
+Po rozszerzeniu testów do 768 kombinacji wgrano lokalnie na użytkowany Shelly Plus 1 paczkę blu.62, build `20261027-124704`; odczyt `/rpc/Shelly.GetInfo` potwierdził nową wersję i poprawny start. Publiczny kanał OTA nadal wskazuje blu.61. Końcowa próba usunięcia pozostaje wstrzymana: urządzenie ma wyłączone logowanie (`auth_en=false`), a wspólny warunek autoryzacji BLE wymaga ustawionego hasła również dla Unpair.
+
+W tej konfiguracji panelowa próba GET `/update` utknęła na etapie uwierzytelniania. Wgranie przez zwykły formularz multipart POST `/update` zakończyło się `Update applied, rebooting`; nie opublikowano nowej paczki w OTA. Lokalny serwer formularza wyłączono po wgraniu.
+
+### Wynik próby usuwania BLU Motion na blu.62
+
+Po ponownym ustawieniu hasła wykonano usunięcie Shelly BLU Motion przez panel Chrome na fizycznym Plus 1. MAC czujnika zniknął, przycisk zmienił się z Remove na Pair, a status na Not paired. Odświeżenie panelu zachowało ten stan. Czas pracy wzrósł z 14:28 do 15:03 zamiast wyzerować się; sterownik nadal odpowiadał. Okno wyszukiwania otwarte kolejnym kliknięciem przycisku Pair zostało zamknięte bez przypisania nowego urządzenia.
+
+Weryfikacja sprzętowa dotyczy usuwania BLU Motion przy pustym slocie termometru. Nie wykonano dodatkowego usuwania czujnika otwarcia, ponieważ w międzyczasie jego przypisanie zmieniło się na Xiaomi MCCGQ02HL. Publiczny kanał OTA nadal blu.61; blu.62 została wgrana lokalnie.

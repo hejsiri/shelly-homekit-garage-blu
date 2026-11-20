@@ -3,7 +3,7 @@ const source=fs.readFileSync('fs_src/script.js','utf8');const bridge=source.slic
 let listener,clicks=0,messages=[];const peer={},button={disabled:false,click(){clicks++}},view={motion:{from:0,to:.96,duration:20000,start:100}};const component={garageMotionState:view};
 const attrs={'data-src':'garage.html'},frame={contentWindow:peer,getAttribute:n=>attrs[n]||null,setAttribute:(n,v)=>{attrs[n]=v},removeAttribute:n=>{delete attrs[n]}},header={style:{display:'none'}};
 const other={style:{},innerHTML:''};
-const context={updateInProgress:false,updateCommonVisibility(){},document:{documentElement:{dataset:{}}},window:{addEventListener(type,fn){listener=fn}},location:{origin:'http://shelly'},performance:{now:()=>1100},el(c,id){if(c==='garage_dashboard')return frame;if(c==='header_container')return header;if(id==='toggle_btn')return button;return id==='garage_view'?view:other}};
+const context={lastInfo:{wifi_connected:true,wifi_conn_rssi:-64},updateInProgress:false,updateCommonVisibility(){},document:{documentElement:{dataset:{}}},window:{addEventListener(type,fn){listener=fn}},location:{origin:'http://shelly'},performance:{now:()=>1100},el(c,id){if(c==='garage_dashboard')return frame;if(c==='header_container')return header;if(id==='toggle_btn')return button;return id==='garage_view'?view:other}};
 peer.postMessage=(d,o)=>{assert.equal(o,'http://shelly');messages.push(d)};vm.createContext(context);vm.runInContext(bridge,context);
 // No iframe request or telemetry/control access before server-verified access.
 const html=fs.readFileSync('fs_src/index.html','utf8');
@@ -15,7 +15,8 @@ listener({origin:'http://shelly',source:peer,data:{garageAction:'theme',theme:'n
 assert.equal(messages.length,0);assert.equal(clicks,0);assert.equal(attrs.src,undefined);
 assert.equal(context.document.documentElement.dataset.theme,undefined);
 context.garageDashboardSetAccess(true);assert.equal(attrs.src,'garage.html');assert.equal(header.style.display,'block');
-context.garageDashboardRefresh(component,{cur_state_str:'opening'});assert.equal(messages[0].garageTelemetry.motion.elapsed,1000);
+context.garageDashboardRefresh(component,{cur_state_str:'opening',blu:{enable:false,radio_enabled:true,radio_running:true}});assert.equal(messages[0].garageTelemetry.motion.elapsed,1000);
+assert.deepEqual(JSON.parse(JSON.stringify(messages[0].garageTelemetry.network)),{wifi_connected:true,wifi_rssi:-64,bt_enabled:true,bt_running:true});
 for(const [origin,source] of [['http://evil',peer],['http://shelly',{}]])listener({origin,source,data:{garageAction:'toggle'}});assert.equal(clicks,0);
 listener({origin:'http://shelly',source:peer,data:{garageAction:'toggle'}});assert.equal(clicks,1);
 button.disabled=true;listener({origin:'http://shelly',source:peer,data:{garageAction:'toggle'}});assert.equal(clicks,1);

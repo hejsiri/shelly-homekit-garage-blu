@@ -1,0 +1,18 @@
+{
+  "ShellyPlus1": {
+    "name": "Shelly Plus 1",
+    "prefix": "shellyplus1",
+    "app": "Plus1",
+    "gen": 2,
+    "hardware_models": ["SNSW-001X16EU"],
+    "stock_version": "1.7.6"
+  },
+  "Shelly1Gen3": {
+    "name": "Shelly 1 Gen3",
+    "prefix": "shelly1g3",
+    "app": "S1G3",
+    "gen": 3,
+    "hardware_models": ["S3SW-001X16EU"],
+    "stock_version": "2.2.0"
+  }
+}

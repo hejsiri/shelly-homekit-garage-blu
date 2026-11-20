@@ -10,7 +10,7 @@ class Image {
   set src(value){this.path=value;images.push(this);}
   decode(){return Promise.resolve();}
 }
-const ctx={Image,Map,Promise,console,mode:'night',car:'car',system:{matches:true,addEventListener(){}},base:node('interior'),exterior:node('exterior'),parent:{postMessage(){}},location:{origin:'http://shelly'},window:{addEventListener(){}},document:{documentElement:{dataset:{}},querySelector:node,querySelectorAll:()=>[],getElementById:node}};
+const ctx={Image,Map,Promise,console,mode:'night',car:'car',system:{matches:true,addEventListener(){}},base:node('interior'),exterior:node('exterior'),parent:{postMessage(){}},location:{origin:'http://shelly'},window:{addEventListener(){}},document:{addEventListener(){},documentElement:{dataset:{}},querySelector:node,querySelectorAll:()=>[],getElementById:node}};
 vm.createContext(ctx);vm.runInContext(source,ctx);
 (async()=>{
   const first=ctx.apply();assert.equal(images.length,4);

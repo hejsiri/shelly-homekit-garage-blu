@@ -71,8 +71,11 @@ Status GarageDoorOpener::Init() {
       iid++, &kHAPCharacteristicType_CurrentDoorState, 0, 4, 1,
       [this](HAPAccessoryServerRef *, const HAPUInt8CharacteristicReadRequest *,
              uint8_t *value) {
-        if (!SensorsReady()) return kHAPError_Unknown;
-        *value = static_cast<uint8_t>(cur_state_);
+        // A stale BLE contact must block movement, but it must not make the
+        // whole bridged accessory look offline to HomeKit. RunOnce reports a
+        // stopped door with obstruction while sensors are unavailable.
+        *value = static_cast<uint8_t>(
+            SensorsReady() ? cur_state_ : State::kStopped);
         LOG(LL_DEBUG, ("GDO %d: Read cur: %d", id(), *value));
         return kHAPError_None;
       },
@@ -159,11 +162,11 @@ Status GarageDoorOpener::SetConfig(const std::string &config_json,
              "{blu:{enable:%B,closed_mac:%Q,open_mac:%Q,stale_after_s:%d}}",
              &blu_enable, &closed_mac, &open_mac, &stale_after);
   mgos::ScopedCPtr closed_owner(closed_mac), open_owner(open_mac);
-  const char *roles[] = {"closed", "open", "motion", "indoor", "outdoor", "button"};
-  std::string names[6];
-  bool has_name[6] = {};
+  const char *roles[] = {"closed", "open", "motion", "indoor", "outdoor", "button", "smoke"};
+  std::string names[7];
+  bool has_name[7] = {};
   // Validate every name before changing any configuration.
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 7; i++) {
     char *name = nullptr;
     const std::string format = std::string("{blu:{") + roles[i] + "_name:%Q}}";
     json_scanf(config_json.c_str(), config_json.size(), format.c_str(), &name);
@@ -226,7 +229,11 @@ Status GarageDoorOpener::SetConfig(const std::string &config_json,
     *restart_required = true;
   }
 #ifdef SHELLY_GARAGE_BLE
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 7; i++) {
+    int8_t dashboard = -1;
+    const std::string dashboard_format = std::string("{blu:{") + roles[i] + "_dashboard:%B}}";
+    json_scanf(config_json.c_str(), config_json.size(), dashboard_format.c_str(), &dashboard);
+    if (dashboard != -1) blu::SetSensorDashboard(i, dashboard != 0);
     const char *old_name = i == 5 ? mgos_sys_config_get_blu_button_name() : blu::SensorName(i);
     if (has_name[i] && names[i] != (old_name ? old_name : "")) {
       blu::SetSensorName(i, names[i].c_str());
@@ -426,7 +433,17 @@ void GarageDoorOpener::RunOnce() {
   const bool ready = SensorsReady();
 #ifdef SHELLY_GARAGE_BLE
   const bool button_press = blu::ConsumeButtonPress();
-  if (button_press && ready) ToggleState("BLUbutton");
+  if (button_press) {
+    if (ready) {
+      ToggleState("BLUbutton");
+    } else if (out_open_ == out_close_) {
+      // Button1 is a physical garage remote. On a single-relay controller its
+      // pulse can safely reach the opener even when BLE limit-switch beacons
+      // have gone stale; do not claim a door state until sensors recover.
+      out_close_->Pulse(true, cfg_->pulse_time_ms, "BLUbutton");
+      LOG(LL_INFO, ("GDO %d: BLUbutton pulse with stale sensors", id()));
+    }
+  }
 #endif
   if (ready != sensors_ready_) {
     sensors_ready_ = ready;
@@ -533,6 +550,10 @@ void GarageDoorOpener::RunOnce() {
 
 #ifdef SHELLY_GARAGE_BLE
 void GarageDoorOpener::AddBLUServices(mgos::hap::Accessory *accessory) {
+  for (int role = 0; role < 2; ++role) {
+    if (blu::SensorPaired(role))
+      blu_sensors_.push_back(blu::CreateContactService(role));
+  }
   if (blu::SensorPaired(2)) {
     blu_sensors_.push_back(blu::CreateMotionService());
     blu_sensors_.push_back(blu::CreateMotionLightService());
@@ -546,6 +567,7 @@ void GarageDoorOpener::AddBLUServices(mgos::hap::Accessory *accessory) {
     blu_sensors_.push_back(blu::CreateCarPresenceService());
     blu_sensors_.push_back(blu::CreateButtonService());
   }
+  if (blu::SensorPaired(6)) blu_sensors_.push_back(blu::CreateSmokeService());
   for (auto &service : blu_sensors_) accessory->AddService(service.get());
 }
 #endif

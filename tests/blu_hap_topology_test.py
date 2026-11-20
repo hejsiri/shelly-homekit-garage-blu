@@ -35,8 +35,11 @@ namespace shelly {
 int restarts = 0;
 void RestartService() { restarts++; }
 namespace blu {
-bool paired[6] = {};
+bool paired[7] = {};
 bool SensorPaired(int role) { return paired[role]; }
+std::unique_ptr<mgos::hap::Service> CreateContactService(int role) {
+ return std::unique_ptr<mgos::hap::Service>(new mgos::hap::Service{role, false});
+}
 std::unique_ptr<mgos::hap::Service> CreateMotionService() {
  return std::unique_ptr<mgos::hap::Service>(new mgos::hap::Service{2, false});
 }
@@ -48,6 +51,9 @@ std::unique_ptr<mgos::hap::Service> CreateHTService(int role, bool temperature) 
 }
 std::unique_ptr<mgos::hap::Service> CreateCarPresenceService() {
  return std::unique_ptr<mgos::hap::Service>(new mgos::hap::Service{5, false});
+}
+std::unique_ptr<mgos::hap::Service> CreateSmokeService() {
+ return std::unique_ptr<mgos::hap::Service>(new mgos::hap::Service{6, false});
 }
 std::unique_ptr<mgos::hap::Service> CreateButtonService() {
  return std::unique_ptr<mgos::hap::Service>(new mgos::hap::Service{5, true});
@@ -69,30 +75,32 @@ harness += selection + r'''
 }}
 int main() {
  using namespace shelly;
- for (int mask = 0; mask < 64; mask++) {
-  for (int i = 0; i < 6; i++) blu::paired[i] = (mask & (1 << i)) != 0;
+ for (int mask = 0; mask < 128; mask++) {
+  for (int i = 0; i < 7; i++) blu::paired[i] = (mask & (1 << i)) != 0;
   hap::GarageDoorOpener garage;
   mgos::hap::Accessory accessory;
   garage.AddBLUServices(&accessory);
-  int counts[6] = {};
+  int counts[7] = {};
   for (auto *service : accessory.services) counts[service->role]++;
-  assert(counts[0] == 0 && counts[1] == 0);
+  assert(counts[0] == (blu::paired[0] ? 1 : 0));
+  assert(counts[1] == (blu::paired[1] ? 1 : 0));
   assert(counts[2] == (blu::paired[2] ? 2 : 0));
   assert(counts[3] == (blu::paired[3] ? 2 : 0));
   assert(counts[4] == (blu::paired[4] ? 2 : 0));
   assert(counts[5] == (blu::paired[5] ? 2 : 0));
+  assert(counts[6] == (blu::paired[6] ? 1 : 0));
  }
- for (int selected = 0; selected < 6; selected++) {
+ for (int selected = 0; selected < 7; selected++) {
   blu::role = selected; blu::state = "waiting_encrypted_beacon";
-  blu::PairingVerified((selected + 1) % 6);
+  blu::PairingVerified((selected + 1) % 7);
   assert(blu::state == "waiting_encrypted_beacon" && mgos::callbacks.empty());
   const int before = restarts;
   blu::PairingVerified(selected);
   assert(blu::state == "done" && restarts == before);
-  assert(mgos::callbacks.size() == (selected >= 2 ? 1 : 0));
+  assert(mgos::callbacks.size() == 1);
   for (auto &cb : mgos::callbacks) cb();
   mgos::callbacks.clear();
-  assert(restarts == before + (selected >= 2 ? 1 : 0));
+  assert(restarts == before + 1);
   blu::PairingVerified(selected);
   assert(mgos::callbacks.empty());
  }
@@ -103,4 +111,4 @@ with tempfile.TemporaryDirectory(prefix='shelly-hap-topology-') as temp:
     (d / 'test.cpp').write_text(harness)
     subprocess.run(['clang++', '-std=c++14', '-Wall', '-Wextra', '-Werror', str(d / 'test.cpp'), '-o', str(d / 'test')], check=True)
     subprocess.run([str(d / 'test')], check=True)
-print('PASS: all 64 pairing combinations expose only paired services; verified optional sensors defer one HomeKit refresh')
+print('PASS: all 128 pairing combinations expose only paired services; verified optional sensors defer one HomeKit refresh')

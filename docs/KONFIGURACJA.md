@@ -1,6 +1,6 @@
 # Konfiguracja i obsługa Garage BLU
 
-Instrukcja dla **2.16.1_blu.61 / Shelly Plus 1 oraz 2.16.1_blu.59 / Shelly 1 Gen3**, stan: **2026-10-27**.
+Instrukcja dla **2.16.1_blu.78 / Shelly Plus 1 i Shelly 1 Gen3**, stan: **2026-10-28**.
 Nazwy pól i komunikatów podano tak, jak wyglądają w angielskim panelu.
 
 [Instalacja i aktualizacje](AKTUALIZACJA.md) ·
@@ -74,8 +74,13 @@ krańcówki i blokują sterowanie. Dwa Open mogą oznaczać położenie pomiędz
 
 Przy włączonych krańcówkach BLU brak świeżych danych, sprzeczność lub aktywne
 parowanie blokują polecenia. Przed pierwszymi odczytami po restarcie panel może
-pokazać No data. Krańcówki są widoczne w ustawieniach; od blu36 nie ma ich
-nazw ani statusów nad grafiką garażu.
+pokazać No data. Krańcówki są widoczne w ustawieniach i jako osobne odczyty
+pod grafiką garażu. Checkbox „Pokazuj w dashboard” pozwala ukryć każdy odczyt.
+
+Po sparowaniu **Closing sensor** i **Opening sensor** każda krańcówka jest też
+wystawiona jako osobna usługa **Contact Sensor** na akcesorium bramy w HomeKit.
+Ostatni zapamiętany stan jest odtwarzany po restarcie, a `StatusFault` sygnalizuje,
+że odczyt nie jest świeży.
 
 ## Motion, H&T i Button1
 
@@ -84,6 +89,8 @@ nazw ani statusów nad grafiką garażu.
 | Motion sensor | Status Motion / No motion, kafelek Motion detected / No motion oraz usługi ruchu i oświetlenia w HomeKit. |
 | Indoor H&T | Temperatura i wilgotność wewnątrz, odczyt nad garażem i usługi w HomeKit. |
 | Outdoor H&T | Temperatura i wilgotność na zewnątrz, odczyt nad garażem i usługi w HomeKit. |
+
+W HomeKit temperatura i wilgotność dostają osobne nazwy z typem pomiaru i lokalizacją, np. **Temperature Outdoor** i **Humidity Outdoor**. Przy własnej nazwie czujnika typ pomiaru nadal zostaje w nazwie usługi.
 | BLU Button1 | In range / Out of range, kafelek obecności i wskaźnik naciśnięcia. Dwie usługi HomeKit w akcesorium Shelly: czujnik obecności auta i przycisk programowalny. Pojedynczy nacisk steruje także istniejącą bramą. |
 
 Usługi Motion i Shelly BLU H&T są dodawane do HomeKit po bezpiecznym sparowaniu.
@@ -157,6 +164,22 @@ zgodność wymaga próby na tym egzemplarzu. Zaszyfrowane beacony tego modelu ni
 dekodowane, a wcześniejsze przypisania z blu46 nie są automatycznie przywracane.
 Dla MCCGQ02HL wybierz wariant **Bindkey BLE**. Od blu.59 LYWSD03MMC ma jedną pozycję na liście termometrów — szyfrowany beacon automatycznie wywołuje formularz 32-znakowego klucza Bindkey BLE, a pozostały wariant zachowuje eksperymentalny odczyt GATT. Szczegóły: [Bindkey BLE](BINDKEY_BLE.md). Odczyty temperatury i wilgotności są ważne przez godzinę.
 
+## Widoczność czujników w dashboardzie
+
+Każde urządzenie ma checkbox **Pokazuj w dashboard**. Zapisz wybór przyciskiem
+**Save / Zapisz** w sekcji bramy. Ustawienie jest domyślnie włączone, zapisywane
+na sterowniku i działa bez ponownego parowania oraz bez restartu.
+
+- Krańcówki otwarcia i zamknięcia można ukrywać niezależnie.
+- Czujnik ruchu steruje widocznością odczytów ruchu i światła.
+- Termometr wewnętrzny i zewnętrzny mają osobne checkboxy. Zakres temperatury
+  i wilgotności obejmuje wyłącznie urządzenia zaznaczone do wyświetlania.
+- Checkbox Button1 obejmuje dolny kafelek przycisku oraz odczyt obecności auta.
+- Czujnik dymu ma własny checkbox.
+
+Opcja dotyczy wyświetlania w dashboardzie. Odczyty BLE, sterowanie bramą
+i usługi HomeKit działają nadal zgodnie z konfiguracją urządzeń.
+
 ## Własne nazwy
 
 Pole Name urządzenia pojawia się po przypisaniu, w nowym wierszu po
@@ -205,8 +228,8 @@ pakietu obecność znika. Sam sygnał BLE potwierdza zasięg przycisku, nie miej
 
 Ręczne pokazanie lub ukrycie auta obowiązuje do następnego pakietu albo zmiany
 obecności. Odświeżenie panelu z tym samym pakietem nie cofa od razu ręcznego wyboru.
-Od blu44 ikona auta w prawym górnym rogu zmienia jednocześnie grafikę i kafelek
-Car presence: ukrycie auta wygasza kafelek i pokazuje Not detected. Nowy beacon
+Od blu75 kliknięcie odczytu Car presence pod garażem zmienia jednocześnie grafikę
+i status obecności: ukrycie auta pokazuje Not detected. Nowy beacon
 przywraca stan wynikający z BLE. Ten ręczny wybór dotyczy panelu WWW; czujnik
 obecności w HomeKit nadal korzysta z rzeczywistych pakietów.
 Sensor timeout dotyczy świeżości danych czujników i nie zmienia limitu obecności Button1.

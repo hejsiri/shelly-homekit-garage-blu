@@ -29,6 +29,7 @@ harness = r'''
 #define SHELLY_GARAGE_BLE
 #include "shelly_blu_keys.hpp"
 #include "shelly_blu_xiaomi.hpp"
+#include "shelly_blu_mibeacon.hpp"
 #include "shelly_blu_xiaomi_gatt.hpp"
 #define BLE_HS_ATT_ERR(x) (0x100 + (x))
 #define BLE_ATT_ERR_INSUFFICIENT_AUTHEN 5
@@ -103,8 +104,9 @@ void mg_rpc_send_responsef(mg_rpc_request_info *,const char *,...) { responses++
 struct {int role;const char *mac,*pin,*current_pin;} request;
 void json_scanf(const char *,size_t,const char *fmt,...) {
  va_list args;va_start(args,fmt);
- if(strcmp(fmt,"{model:%d}")==0) {
+ if(strcmp(fmt,"{model:%d,bindkey:%B}")==0) {
   *va_arg(args,int *)=requested_model;
+  *va_arg(args,bool *)=false;
  } else if(strcmp(fmt,"{pin:%Q}")==0) {
   *va_arg(args,char **)=request.pin?strdup(request.pin):nullptr;
  } else {
@@ -119,7 +121,7 @@ struct mgos_bt_gap_scan_result { Address addr; int rssi; mg_str scan_rsp; mg_str
 #define MGOS_BT_GAP_EIR_MANUFACTURER_SPECIFIC_DATA 0xff
 mg_str mgos_bt_gap_parse_adv_data(mg_str response,int) { return response; }
 void mgos_bt_addr_to_esp32(Address *addr,Address *out) { *out=*addr; }
-struct Candidate { Address addr; int rssi; bool encrypted; uint16_t model; double seen; };
+struct Candidate { Address addr; int rssi; bool encrypted; uint16_t model; double seen; std::vector<uint8_t> beacon={}; };
 std::vector<Candidate> candidates;
 void mgos_bt_addr_to_str(const Address *, int, char *out) { strcpy(out,"01:02:03:04:05:06"); }
 void mgos_sys_config_set_blu_closed_mac(const char *) {}
@@ -134,7 +136,7 @@ bool mgos_sys_config_save(int *, bool, void *) { return config_ok; }
 void shelly::blu::ResetReadings() { reset_readings++; }
 namespace shelly { namespace blu {
 XiaomiGATTCallback probe;
-bool XiaomiGATTStart(int,const mgos_bt_addr &,XiaomiGATTCallback cb) { probe=cb;return true; }
+bool XiaomiGATTStart(int,const mgos_bt_addr &,XiaomiGATTCallback cb, bool) { probe=cb;return true; }
 void XiaomiGATTCancel() { probe=nullptr; }
 void SetThermometerReading(int,const mgos_bt_addr &,const Sensor &,int) {}
 }}
@@ -151,6 +153,7 @@ using namespace shelly::blu;
 std::atomic<unsigned> generation(1);
 std::atomic<uint32_t> passkey(0);
 std::string state, error;
+bool unpair_busy = false;
 std::vector<std::string> traces;
 unsigned key_read_attempts = 0, empty_key_reads = 0, security_ticket = 0;
 unsigned connection_attempts=0;
@@ -173,7 +176,11 @@ bool key_writable=false,key_provision_used=false;
 std::array<uint8_t,16> pending_key={};
 uint32_t new_pin = 123456;
 int role = 2;
-int discovery_model=0;
+void SetRoleMAC(int,const char*){}
+int qp_applied=-1;bool qp_state=false;Reading qp_reading;
+void ApplyMiReading(int r,const Address&,const Reading &v,bool event,int){qp_applied=r;qp_state=event;qp_reading=v;}
+namespace shelly {namespace blu {bool DeleteRecord(int){return true;}void ForgetReading(int){}}}
+int discovery_model=0;bool discovery_bindkey=false;
 uint16_t conn = 1, key_handle = 10, pin_handle=11,beacon_handle=0;
 double deadline = 0;
 bool Active() { return state != "idle" && state != "done" && state != "error"; }
@@ -202,9 +209,9 @@ void Tick() {
  Drain();
 }
 void Reset() {
- config_ok=record_ok=true;indoor_mac.clear();outdoor_mac.clear();
+ probe=nullptr;config_ok=record_ok=true;indoor_mac.clear();outdoor_mac.clear();
  generation++; state = "reading_key"; error.clear(); traces.clear();requested_model=scan_stops=0;
- now=100;discovery_model=0;authorized=true;rpc_error=responses=service_restarts=0;connection_attempts=0;candidates.clear();
+ now=100;qp_applied=-1;discovery_bindkey=false;discovery_model=0;authorized=true;rpc_error=responses=service_restarts=0;connection_attempts=0;candidates.clear();
  request={1,"01:02:03:04:05:06",nullptr,nullptr};
  reads = writes = terminations = saved = reset_readings = 0;
  key_writes=0;written_key.clear();key_writable=key_provision_used=false;pending_key.fill(0);pin_handle=11;
@@ -250,11 +257,36 @@ int main() {
  discovery_model=0x01aa;PairingAdvertisement(&xr);
  assert(candidates.size()==1&&candidates[0].model==0x01aa&&!candidates[0].encrypted);
  now++;PairingAdvertisement(&xr);assert(candidates.size()==1&&candidates[0].seen==now);
+ // Both LYWSD02MMC revisions share one selection. Unencrypted frames do not qualify.
+ for (unsigned pid : {0x16e4,0x2542}) {
+   Reset();state="scanning";discovery_model=0x16e4;discovery_bindkey=true;
+   uint8_t adv[]={19,0x16,0x95,0xfe,0x48,0x58,uint8_t(pid),uint8_t(pid>>8),1,1,2,3,4,5,6,7,8,9,10,11};
+   mgos_bt_gap_scan_result clock{peer,-55,{}, {reinterpret_cast<const char*>(adv),sizeof(adv)}};
+   adv[4]=0x40;PairingAdvertisement(&clock);assert(candidates.empty());
+   adv[4]=0x48;PairingAdvertisement(&clock);
+   assert(candidates.size()==1&&candidates[0].model==pid&&candidates[0].encrypted);
+   request.role=3;PairRPC(nullptr,nullptr,nullptr,{});assert(rpc_error==400&&saved==0);
+ }
+ for (unsigned pid : {0x16e4,0x2542}) {
+   Reset();state="scanning";discovery_model=0x16e4;
+   uint8_t adv[]={8,0x16,0x95,0xfe,0x10,0x58,uint8_t(pid),uint8_t(pid>>8),42};
+   mgos_bt_gap_scan_result clock{peer,-55,{}, {reinterpret_cast<const char*>(adv),sizeof(adv)}};
+   PairingAdvertisement(&clock);assert(candidates.size()==1&&candidates[0].model==pid);
+   request.role=4;PairRPC(nullptr,nullptr,nullptr,{});assert(!rpc_error&&state=="reading_xiaomi"&&saved==0);
+   {auto cb=probe;Sensor sample;sample.seen=true;cb(sample,-1,"");}Drain();
+   assert(state=="done"&&persisted.protocol==kProtocolClockGATT);
+ }
  // GATT discovery accepts stock encrypted headers but never treats them as readings.
  Reset();state="scanning";discovery_model=0x055b;
  const char gattadv[]={7,0x16,char(0x95),char(0xfe),0x58,0x58,0x5b,0x05};
  mgos_bt_gap_scan_result gr{peer,-55,{}, {gattadv,sizeof(gattadv)}};
  PairingAdvertisement(&gr);assert(candidates.size()==1&&candidates[0].model==0x055b&&!candidates[0].encrypted);
+ // Full encrypted MiBeacon must request Bindkey instead of starting GATT.
+ Reset();state="scanning";discovery_model=0x055b;
+ const unsigned char encadv[]={19,0x16,0x95,0xfe,0x48,0x50,0x5b,0x05,1,1,2,3,4,5,6,7,8,9,10,11};
+ mgos_bt_gap_scan_result er{peer,-55,{}, {reinterpret_cast<const char*>(encadv),sizeof(encadv)}};
+ PairingAdvertisement(&er);assert(candidates.size()==1&&candidates[0].encrypted&&candidates[0].beacon.size()==16);
+ request.role=4;PairRPC(nullptr,nullptr,nullptr,{});assert(rpc_error==400&&!probe&&saved==0);
  Reset();state="scanning";discovery_model=0x055b;request.role=4;
  candidates.push_back({peer,-45,false,0x055b,now});PairRPC(nullptr,nullptr,nullptr,{});
  assert(!rpc_error&&state=="reading_xiaomi"&&saved==0&&probe);
@@ -486,6 +518,26 @@ int main() {
  Reset(); ReadKey(); Reply(0,17); assert(saved == 0);
  Reset(); ReadKey(); const unsigned old_generation = generation.load();
  generation++; Reply(0,16,old_generation); assert(saved == 0);
+ // Native Qingping discovery and actual Pair RPC never start SMP/GATT.
+ for(int target:{0,1,2,3,4}) {
+  Reset();state="scanning";request.role=target;
+  uint16_t model=target<2?0x03d6:target==2?0x0a83:0x0347;
+  discovery_model=model;
+  std::vector<uint8_t> payload={8,uint8_t(target<2?4:target==2?0x12:0x16)};
+  for(int j=5;j>=0;--j)payload.push_back(peer.addr[j]);
+  if(target<2)payload.insert(payload.end(),{4,1,1});
+  else if(target==2)payload.insert(payload.end(),{8,4,1,100,0,0});
+  else payload.insert(payload.end(),{1,4,0xd8,0,0xbb,1});
+  std::vector<uint8_t> adv={uint8_t(payload.size()+3),0x16,0xcd,0xfd};adv.insert(adv.end(),payload.begin(),payload.end());
+  mgos_bt_gap_scan_result packet{peer,-48,{}, {reinterpret_cast<const char*>(adv.data()),adv.size()}};
+  PairingAdvertisement(&packet);
+  assert(candidates.size()==1&&!candidates[0].encrypted&&candidates[0].model==model);
+  PairRPC(nullptr,nullptr,nullptr,{});
+  assert(!rpc_error&&state=="done"&&saved==1&&persisted.protocol==kProtocolQingping&&qp_applied==target&&connections==0&&writes==0);
+  assert((persisted.key[0]|uint16_t(persisted.key[1])<<8)==model);
+  if(target<2)assert(qp_state&&!qp_reading.window_open);
+  if(target==2)assert(qp_state&&qp_reading.motion&&qp_reading.illuminance100==10000);
+ }
  // Authentication failure permits only one fresh authenticated reconnect.
  Reset(); rotated = true; ReadKey(); Reply(BLE_HS_ATT_ERR(5),-1);
  assert(!key_reconnect_used && terminations == 1 && saved == 0);

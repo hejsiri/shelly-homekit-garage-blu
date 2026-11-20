@@ -7,6 +7,11 @@ Funkcja jest dostępna od 2.16.1-blu56. Dotyczy oryginalnych, szyfrowanych beaco
 | Xiaomi MCCGQ02HL, identyfikator `0x098B` | Czujnik zamknięcia lub otwarcia | Otwarty/zamknięty, bateria |
 | Xiaomi Motion Sensor 2S, identyfikatory `0x3531` i `0x4C60` | Czujnik ruchu | Ruch, jasność, bateria |
 | Xiaomi LYWSD03MMC, identyfikator `0x055B` | Temperatura i wilgotność wewnątrz lub na zewnątrz | Temperatura, wilgotność, bateria |
+| Zegar Xiaomi BHR5435GL (LYWSD02MMC), identyfikatory `0x16E4` i `0x2542` | Czujnik wewnętrzny lub zewnętrzny | Temperatura, wilgotność, bateria, jeśli nadawana |
+
+Od blu.82 opcja **Zegar Xiaomi E-Ink (BHR5435GL) · bez klucza** pobiera temperaturę i wilgotność przez krótkie połączenie GATT. Wybierz zegar i naciśnij **Sparuj**. Sterownik zapisuje przypisanie po pierwszym poprawnym pomiarze i ponawia odczyty co 5 minut. Opcja **klucz BLE** korzysta z szyfrowanych rozgłoszeń.
+
+W wersji blu.81 wybierz **Zegar Xiaomi E-Ink (BHR5435GL)** w jednym z dwóch miejsc na termometr. Zegar musi być aktywowany i znajdować się w zasięgu Bluetooth. Kliknij **Sparuj** i podaj klucz BLE tego egzemplarza. Po potwierdzeniu klucza pomiary trafiają do istniejących usług temperatury i wilgotności w HomeKit. Każdy odczyt ma osobny czas ważności. Integracja odczytuje pomiary pasywnie. Czas na wyświetlaczu ustawiasz jak dotychczas.
 
 1. Dla ruchu wybierz **Xiaomi Motion Sensor 2S · Bindkey BLE**. Dla krańcówki wybierz **Xiaomi Door & Window Sensor 2 · Bindkey BLE** lub **Xiaomi LYWSD03MMC** i naciśnij **Sparuj**. Dla LYWSD03MMC formularz klucza pojawi się po rozpoznaniu szyfrowanego beacona.
 2. Wybudź czujnik. Dla MCCGQ02HL przysuń lub odsuń magnes, aby nadał aktualny stan kontaktronu.
@@ -17,7 +22,7 @@ Przed zapisem odbiornik sprawdza autentyczność beaconu AES-CCM z 4-bajtowym MI
 
 Klucz i ostatni zaakceptowany 32-bitowy licznik są zapisywane w NVS, oddzielnie dla każdego przypisania. Duplikaty i starsze liczniki są odrzucane również po restarcie. Licznik jest utrwalany przed udostępnieniem odczytu. Nie ma automatycznej akceptacji zawinięcia lub resetu licznika dla tego samego klucza. Wycofane wpisy protokołów 2/3 z blu46 nie są wczytywane jako nowe przypisania.
 
-Status urządzenia pokazuje protokół `xiaomi_bindkey`, bez klucza. Panel wysyła klucz jedynie w chronionym poleceniu `Shelly.BLU.Bind`; nie zapisuje go w localStorage i usuwa zawartość pola po wysłaniu lub zamknięciu okna. Log wysyłanych poleceń maskuje klucz. Przycisk **Usuń** kasuje zapis NVS, przypisanie i odczyty.
+Status urządzenia pokazuje protokół `xiaomi_bindkey` lub, dla zegara, `xiaomi_clock_bindkey`. Panel wysyła klucz jedynie w chronionym poleceniu `Shelly.BLU.Bind`; nie zapisuje go w localStorage i usuwa zawartość pola po wysłaniu lub zamknięciu okna. Log wysyłanych poleceń maskuje klucz. Przycisk **Usuń** kasuje zapis NVS, przypisanie i odczyty.
 
 MCCGQ02HL może nadawać rzadko, dlatego sterowanie bramą pozostaje zablokowane po przekroczeniu istniejącego limitu świeżości krańcówki. Pakiet baterii nie potwierdza położenia magnesu i nie przedłuża ważności tego stanu. Sprzeczne stany obu krańcówek nadal blokują sterowanie. Dla temperatury i wilgotności obowiązuje oddzielna ważność po jednej godzinie.
 

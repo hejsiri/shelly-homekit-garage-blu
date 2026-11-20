@@ -7,6 +7,8 @@
 #include <vector>
 #include "esp32xx_bt.h"
 #include "esp_system.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "mgos.hpp"
 #include "mgos_bt_gap.h"
 #include "mgos_rpc.h"
@@ -20,9 +22,11 @@ extern "C" {
 #include "host/ble_store.h"
 #include "host/util/util.h"
 }
+#include "shelly_blu_bond_cleanup.hpp"
 #include "shelly_blu_garage.hpp"
 #include "shelly_blu_keys.hpp"
 #include "shelly_blu_xiaomi.hpp"
+#include "shelly_blu_mibeacon.hpp"
 #include "shelly_blu_xiaomi_gatt.hpp"
 #include "shelly_main.hpp"
 
@@ -35,12 +39,15 @@ struct Candidate {
   bool encrypted;  // Legacy RPC field name: BLE authentication enabled.
   uint16_t model;
   double seen;
+  std::vector<uint8_t> beacon;
 };
 std::vector<Candidate> candidates;
 std::string state = "idle", error;
+bool unpair_busy = false;
 double deadline = 0;
 int role = -1;
 int discovery_model = 0;
+bool discovery_bindkey = false;
 mgos_bt_addr peer = {};
 ble_addr_t native_peer = {};
 std::atomic<uint32_t> passkey(0);
@@ -726,13 +733,15 @@ void DiscoverRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *, mg_str ar
         ri, 503, "Bluetooth is not running; enable it and restart Shelly");
     return;
   }
-  if (Active()) {
+  if (Active() || unpair_busy) {
     mg_rpc_send_errorf(ri, 409, "Pairing already active");
     return;
   }
   int model = 0;
-  json_scanf(args.p, args.len, "{model:%d}", &model);
-  if (model != 0 && model != 3 && model != 0x01aa && model != 0x055b) {
+  discovery_bindkey = false;
+  json_scanf(args.p, args.len, "{model:%d,bindkey:%B}", &model, &discovery_bindkey);
+  if (((model == 0x098b || model == 0x0997 || XiaomiMotion2SModel(model)) && !discovery_bindkey) ||
+      (!XiaomiClockModel(model) && !QingpingModel(model) && model != 0 && model != 3 && model != 0x01aa && model != 0x055b && model != 0x098b && model != 0x0997 && !XiaomiMotion2SModel(model))) {
     mg_rpc_send_errorf(ri, 400, "Unsupported thermometer model");
     return;
   }
@@ -770,6 +779,217 @@ void StoreXiaomi(int selected_role, const Candidate &candidate) {
   state = "waiting_beacon";
   deadline = mgos_uptime() + 60;
 }
+void SetRoleMAC(int selected_role, const char *mac) {
+  switch (selected_role) {
+    case 0: mgos_sys_config_set_blu_closed_mac(mac); break;
+    case 1: mgos_sys_config_set_blu_open_mac(mac); break;
+    case 2: mgos_sys_config_set_blu_motion_mac(mac); break;
+    case 3: mgos_sys_config_set_blu_indoor_mac(mac); break;
+    case 4: mgos_sys_config_set_blu_outdoor_mac(mac); break;
+    case 6: mgos_sys_config_set_blu_smoke_mac(mac); break;
+  }
+}
+void BindRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *, mg_str args) {
+  if (!Authorized(ri)) return;
+  int selected_role=-1; char *mac=nullptr, *key=nullptr;
+  json_scanf(args.p,args.len,"{role:%d,mac:%Q,bindkey:%Q}",&selected_role,&mac,&key);
+  mgos::ScopedCPtr mac_owner(mac), key_owner(key);
+  SecureRecord record={}; record.version=1; record.protocol=kProtocolMiBindkey;
+  const bool valid_role=(selected_role>=0 && selected_role<=4) || selected_role==6;
+  bool valid_key=key && strlen(key)==32;
+  for (int i=0; valid_key && i<16; ++i) {
+    int value=0;
+    for (int j=0;j<2;++j) {
+      char c=key[i*2+j]; int digit=c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:c>='A'&&c<='F'?c-'A'+10:-1;
+      if (digit<0) { valid_key=false; break; }
+      value=value*16+digit;
+    }
+    record.key[i]=value;
+  }
+  if (key) memset(key,0,strlen(key));
+  if (!valid_role || !ValidMAC(mac) || !valid_key || state!="scanning" || (!discovery_bindkey && !QingpingModel(discovery_model) && discovery_model != 0x055b)) {
+    mg_rpc_send_errorf(ri,400,"Select a Xiaomi device and enter a 32-character hexadecimal bindkey"); return;
+  }
+  mgos_bt_addr address; mgos_bt_addr_from_str(mg_mk_str(mac),&address);
+  memcpy(record.mac,address.addr,6);
+  const Candidate *candidate=nullptr;
+  for (const auto &item:candidates) if (memcmp(item.addr.addr,address.addr,6)==0 && mgos_uptime()-item.seen<=15) candidate=&item;
+  if (!candidate || candidate->beacon.empty() ||
+      !MiRoleModel(selected_role,candidate->model)) {
+    mg_rpc_send_errorf(ri,400,"Wake the selected Xiaomi device and try again"); return;
+  }
+  for (int i=0;i<7;++i) if (i!=selected_role && SensorMAC(i) && strcasecmp(mac,SensorMAC(i))==0) {
+    mg_rpc_send_errorf(ri,400,"Device is already assigned to another role"); return;
+  }
+  if (XiaomiClockModel(candidate->model)) record.protocol = kProtocolClockBindkey;
+  if(QingpingModel(candidate->model))record.protocol=kProtocolQingpingBindkey;
+  uint8_t plain[64]; size_t length=sizeof(plain); uint16_t model; uint32_t counter;
+  Reading reading; bool contact;
+  if (!DecryptMi(record,candidate->beacon.data(),candidate->beacon.size(),plain,&length,&counter,&model) ||
+      model != candidate->model || !MiObjects(model,plain,length,&reading,&contact) || (selected_role<=2 && !contact)) {
+    mg_rpc_send_errorf(ri,400,"Bindkey verification failed; check the key and trigger a new reading"); return;
+  }
+  SecureRecord old={}; bool had_old=LoadRecord(selected_role,&old);
+  if (had_old && old.protocol==record.protocol && memcmp(old.mac,record.mac,6)==0 &&
+      memcmp(old.key,record.key,16)==0 && !NewCounter(old.counter_seen,old.counter,counter)) {
+    mg_rpc_send_errorf(ri,400,"This beacon was already received; trigger a new reading"); return;
+  }
+  record.counter_seen=true; record.counter=counter;
+  if (!SaveRecord(selected_role,record)) { mg_rpc_send_errorf(ri,500,"Cannot save device key"); return; }
+  const std::string previous=SensorMAC(selected_role)?SensorMAC(selected_role):"";
+  SetRoleMAC(selected_role,mac);
+  if (!mgos_sys_config_save(&mgos_sys_config,false,nullptr)) {
+    SetRoleMAC(selected_role,previous.c_str());
+    const bool restored=had_old?SaveRecord(selected_role,old):DeleteRecord(selected_role);
+    if (!restored) ForgetReading(selected_role);
+    mg_rpc_send_errorf(ri,500,"Cannot save device assignment; pair again"); return;
+  }
+  role=selected_role;
+  ForgetReading(role); ApplyMiReading(role,candidate->addr,reading,contact,candidate->rssi);
+  state="done"; error.clear(); candidates.clear();
+  mg_rpc_send_responsef(ri,"{}");
+  mgos::InvokeCB([] { RestartService(); });
+}
+
+void CompleteUnpair(mg_rpc_request_info *ri, int selected_role) {
+  LOG(LL_INFO, ("BLU unpair role=%d: deleting application key", selected_role));
+  if (!DeleteRecord(selected_role)) {
+    mg_rpc_send_errorf(ri, 500, "Cannot delete device key");
+    return;
+  }
+  XiaomiGATTForget(selected_role);
+  switch (selected_role) {
+    case 0: mgos_sys_config_set_blu_closed_mac(""); break;
+    case 1: mgos_sys_config_set_blu_open_mac(""); break;
+    case 2: mgos_sys_config_set_blu_motion_mac(""); break;
+    case 3: mgos_sys_config_set_blu_indoor_mac(""); break;
+    case 4: mgos_sys_config_set_blu_outdoor_mac(""); break;
+    case 6: mgos_sys_config_set_blu_smoke_mac(""); break;
+    case 5:
+      mgos_sys_config_set_blu_button_mac("");
+      mgos_sys_config_set_blu_car_name("");
+      break;
+  }
+  SetSensorName(selected_role, "");
+  ForgetReading(selected_role);
+  if (!mgos_sys_config_save(&mgos_sys_config, false, nullptr)) {
+    mg_rpc_send_errorf(ri, 500, "Cannot save device removal; retry");
+    return;
+  }
+  LOG(LL_INFO, ("BLU unpair role=%d: saved removal", selected_role));
+  mg_rpc_send_responsef(ri, "{}");
+  mgos::InvokeCB([] {
+    LOG(LL_INFO, ("BLU unpair: refreshing HomeKit services"));
+    RestartService();
+    LOG(LL_INFO, ("BLU unpair: HomeKit refresh requested"));
+  });
+}
+struct TransportRemoval {
+  mg_rpc_request_info *request = nullptr;  // Accessed only on the mgos task.
+  int role = -1;
+  ble_addr_t peer = {};
+  double started = 0;
+  std::atomic<bool> done{false};
+  std::atomic<int> result{0};
+} transport_removal;
+void TransportRemovalTask(void *) {
+  int result = 0;
+  // NimBLE store/NVS calls may wait for another task. Never run them from
+  // the HTTP/RPC event loop: it must remain able to process host callbacks.
+  for (int type = 0; type <= 1; ++type) {
+    ble_addr_t peer = transport_removal.peer;
+    peer.type = type;
+    result = DeleteTransportBond(peer);
+    if (result != 0 && result != BLE_HS_ENOENT) break;
+  }
+  transport_removal.result.store(result);
+  transport_removal.done.store(true);
+  vTaskDelete(nullptr);
+}
+void PollTransportRemoval() {
+  if (!unpair_busy) return;
+  auto &job = transport_removal;
+  if (!job.done.load()) {
+    if (job.request && mgos_uptime() - job.started >= 8) {
+      auto *request = job.request;
+      job.request = nullptr;
+      LOG(LL_ERROR, ("BLU unpair role=%d: transport cleanup timed out", job.role));
+      mg_rpc_send_errorf(request, 504, "BLE bond removal timed out; device assignment was preserved");
+    }
+    return;  // Do not reuse the worker or its address while it is still running.
+  }
+  auto *request = job.request;
+  job.request = nullptr;
+  unpair_busy = false;
+  const int result = job.result.load();
+  LOG(LL_INFO, ("BLU unpair role=%d: transport cleanup result=0x%x", job.role, result));
+  if (!request) return;  // The timed-out request was already answered.
+  if (result != 0 && result != BLE_HS_ENOENT) {
+    mg_rpc_send_errorf(request, 500, "Cannot delete device BLE bond");
+    return;
+  }
+  CompleteUnpair(request, job.role);
+}
+void QueueTransportRemoval(mg_rpc_request_info *request, int role,
+                           const ble_addr_t &peer) {
+  auto &job = transport_removal;
+  job.request = request;
+  job.role = role;
+  job.peer = peer;
+  job.started = mgos_uptime();
+  job.done.store(false);
+  job.result.store(0);
+  unpair_busy = true;
+  LOG(LL_INFO, ("BLU unpair role=%d: queuing transport cleanup", role));
+  if (xTaskCreate(TransportRemovalTask, "blu-unpair", 4096, nullptr,
+                  tskIDLE_PRIORITY + 1, nullptr) != pdPASS) {
+    job.request = nullptr;
+    unpair_busy = false;
+    mg_rpc_send_errorf(request, 503, "Cannot start BLE bond removal; try again");
+  }
+}
+void UnpairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *, mg_str args) {
+  if (!Authorized(ri)) return;
+  int selected_role = -1;
+  json_scanf(args.p, args.len, "{role:%d}", &selected_role);
+  if (selected_role < 0 || selected_role > 6) {
+    mg_rpc_send_errorf(ri, 400, "Invalid device role");
+    return;
+  }
+  if (Active() || unpair_busy) {
+    mg_rpc_send_errorf(ri, 409, "Close the pairing window first");
+    return;
+  }
+  // Only Shelly BTHome pairing creates a transport bond. Passive MiBeacon,
+  // bindkey imports and read-only Xiaomi GATT never bond with this receiver.
+  // Do not enter NimBLE's transport-store cleanup for those assignments.
+  SecureRecord assignment = {};
+  const bool transport_bond = LoadRecord(selected_role, &assignment) &&
+                              assignment.protocol == kProtocolBTHome;
+  mgos_bt_addr address;
+  if (transport_bond && ValidMAC(SensorMAC(selected_role)) &&
+      mgos_bt_addr_from_str(mg_mk_str(SensorMAC(selected_role)), &address)) {
+    // Keep transport bonds used by another assignment of the same device.
+    bool shared = false;
+    for (int i = 0; i < 7; ++i) {
+      mgos_bt_addr other;
+      const char *other_mac = SensorMAC(i);
+      // Empty config strings are NULL in Mongoose OS. Its BT parser calls
+      // sscanf directly, so never pass an unassigned slot to that parser.
+      if (i != selected_role && ValidMAC(other_mac) &&
+          mgos_bt_addr_from_str(mg_mk_str(other_mac), &other) &&
+          memcmp(other.addr, address.addr, 6) == 0) shared = true;
+    }
+    if (!shared) {
+      ble_addr_t native = {};
+      mgos_bt_addr_to_esp32(&address, &native);
+      QueueTransportRemoval(ri, selected_role, native);
+      return;
+    }
+  }
+  CompleteUnpair(ri, selected_role);
+}
+
 void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
              mg_str args) {
   if (!Authorized(ri)) return;
@@ -778,7 +998,7 @@ void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
   json_scanf(args.p, args.len, "{role:%d,mac:%Q,pin:%Q,current_pin:%Q}",
              &selected_role, &mac, &pin, &current_pin);
   mgos::ScopedCPtr mac_owner(mac), pin_owner(pin), current_owner(current_pin);
-  if (state != "scanning" || selected_role < 0 || selected_role > 5 ||
+  if (state != "scanning" || (discovery_bindkey && !QingpingModel(discovery_model)) || selected_role < 0 || selected_role > 6 ||
       !ValidMAC(mac)) {
     mg_rpc_send_errorf(
         ri, 400,
@@ -804,30 +1024,62 @@ void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
     mg_rpc_send_errorf(ri, 400, "Device expired; scan and wake it again");
     return;
   }
-  if ((discovery_model && candidate->model != discovery_model) ||
+  if ((discovery_model && candidate->model != discovery_model &&
+       !(XiaomiClockModel(discovery_model) && XiaomiClockModel(candidate->model)) &&
+       !(discovery_model==0x0347 && candidate->model==0x0b48)) ||
+      (!((QingpingModel(candidate->model) || (XiaomiClockModel(discovery_model) && XiaomiClockModel(candidate->model))) && MiRoleModel(selected_role,candidate->model)) &&
       (selected_role == 5 ? candidate->model != 1 : selected_role >= 3 ?
       (candidate->model != 3 && candidate->model != 0x01aa && candidate->model != 0x055b) :
-      candidate->model != (selected_role == 2 ? 5 : 2))) {
+      candidate->model != (selected_role == 2 ? 5 : 2)))) {
     mg_rpc_send_errorf(ri, 400, "Select the correct device model for this role");
     return;
   }
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 7; i++) {
     const char *other = SensorMAC(i);
     if (i != selected_role && other && strcasecmp(mac, other) == 0) {
       mg_rpc_send_errorf(ri, 400, "Device is already assigned to another role");
       return;
     }
   }
-  if (candidate->model == 0x055b) {
+  if (candidate->model == 0x055b && candidate->encrypted) {
+    mg_rpc_send_errorf(ri, 400, "This device requires a BLE bindkey"); return;
+  }
+  if(QingpingModel(candidate->model)) {
+    if(candidate->encrypted){mg_rpc_send_errorf(ri,400,"This device requires a BLE bindkey");return;}
+    Reading reading;bool event;uint16_t model;
+    if(!DecodeQingping(candidate->beacon.data(),candidate->beacon.size(),candidate->addr.addr,&model,&reading,&event) ||
+       !MiRoleModel(selected_role,model) || (selected_role<=2 && !event)) {
+      mg_rpc_send_errorf(ri,400,"Wake the selected Xiaomi device and try again");return;
+    }
+    SecureRecord record={},old={};record.version=1;record.protocol=kProtocolQingping;
+    memcpy(record.mac,candidate->addr.addr,6);record.key[0]=model&255;record.key[1]=model>>8;
+    const bool had_old=LoadRecord(selected_role,&old);
+    const std::string previous=SensorMAC(selected_role)?SensorMAC(selected_role):"";
+    if(!SaveRecord(selected_role,record)){mg_rpc_send_errorf(ri,500,"Cannot save device key");return;}
+    SetRoleMAC(selected_role,mac);
+    if(!mgos_sys_config_save(&mgos_sys_config,false,nullptr)) {
+      SetRoleMAC(selected_role,previous.c_str());
+      const bool restored=had_old?SaveRecord(selected_role,old):DeleteRecord(selected_role);
+      if(!restored)ForgetReading(selected_role);
+      mg_rpc_send_errorf(ri,500,"Cannot save device assignment; pair again");return;
+    }
+    ForgetReading(selected_role);ApplyMiReading(selected_role,candidate->addr,reading,event,candidate->rssi);
+    role=selected_role;state="done";error.clear();candidates.clear();
+    mg_rpc_send_responsef(ri,"{}");
+    mgos::InvokeCB([]{RestartService();});
+    return;
+  }
+  const bool clock = XiaomiClockModel(candidate->model);
+  if (clock || candidate->model == 0x055b) {
     role = selected_role;
     peer = candidate->addr;
     const auto address = peer;
     const unsigned current = ++generation;
     diagnostics.clear();
     state = "reading_xiaomi";
-    deadline = mgos_uptime() + 22;
+    deadline = mgos_uptime() + (clock ? 42 : 22);
     const bool started = XiaomiGATTStart(role, peer,
-        [selected_role, address, current](const Sensor &reading, int voltage, const std::string &failure) {
+        [selected_role, address, current, clock](const Sensor &reading, int voltage, const std::string &failure) {
       if (generation != current || state != "reading_xiaomi") return;
       if (!failure.empty()) { Finish(failure.c_str()); return; }
       // Keep the previous assignment until the model and measurements verify.
@@ -846,7 +1098,8 @@ void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
       }
       SecureRecord record = {};
       record.version = 1;
-      record.protocol = kProtocolXiaomiGATT;
+      record.protocol = clock ? kProtocolClockGATT : kProtocolXiaomiGATT;
+      if (clock) record.key[0] = address.type;  // Preserve BLE address type for the next poll.
       memcpy(record.mac, address.addr, 6);
       if (!SaveRecord(selected_role, record)) {
         set_mac(previous.c_str());
@@ -857,7 +1110,7 @@ void PairRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *,
       SetThermometerReading(selected_role, address, reading, voltage);
       Finish(nullptr);
       mgos::InvokeCB([] { RestartService(); });
-    });
+    }, clock);
     if (!started) Finish("Wait until the garage stops, then retry adding the thermometer");
     mg_rpc_send_responsef(ri, "{}");
     return;
@@ -952,10 +1205,10 @@ bool PairingScan() {
          state == "waiting_user_pairing" || state == "verifying_existing_key";
 }
 bool PairingConnecting() {
-  return XiaomiGATTConnecting() || (Active() && state != "reading_xiaomi" && !PairingScan());
+  return unpair_busy || XiaomiGATTConnecting() || (Active() && state != "reading_xiaomi" && !PairingScan());
 }
 bool PairingBusy() {
-  return Active() && state != "reading_xiaomi";
+  return unpair_busy || (Active() && state != "reading_xiaomi");
 }
 void PairingVerified(int verified_role) {
   if ((state == "waiting_encrypted_beacon" || state == "waiting_beacon" ||
@@ -963,7 +1216,7 @@ void PairingVerified(int verified_role) {
     Finish(nullptr);
     // A newly verified optional sensor changes the HomeKit service list.
     // Rebuild outside the scan callback and increment HomeKit's config number.
-    if (verified_role >= 2) mgos::InvokeCB([] { RestartService(); });
+    mgos::InvokeCB([] { RestartService(); });
   }
 }
 void PairingAdvertisement(void *data) {
@@ -973,7 +1226,24 @@ void PairingAdvertisement(void *data) {
   bool pairing = false, encrypted = false;
   uint16_t model = 0;
   Reading reading;
-  if (state == "scanning" && discovery_model == 0x01aa &&
+  std::vector<uint8_t> beacon;
+  if (state == "scanning" && (discovery_bindkey || QingpingModel(discovery_model))) {
+    const uint8_t *service=nullptr;size_t size=0;MiFrame frame;
+    if(!FindQingpingService(reinterpret_cast<const uint8_t *>(result->adv_data.p),result->adv_data.len,&service,&size) &&
+       !FindQingpingService(reinterpret_cast<const uint8_t *>(result->scan_rsp.p),result->scan_rsp.len,&service,&size))return;
+    if(ParseMiFrame(service,size,result->addr.addr,&frame) && frame.encrypted) {
+      model=frame.model;encrypted=true;
+    } else {
+      Reading decoded;bool event;uint16_t id;
+      if(discovery_bindkey || !DecodeQingping(service,size,result->addr.addr,&id,&decoded,&event))return;
+      model=id;encrypted=false;
+    }
+    pairing=true;beacon.assign(service,service+size);
+  } else if (state == "scanning" && XiaomiClockModel(discovery_model)) {
+    model = ClockAdvertisement(reinterpret_cast<const uint8_t *>(result->adv_data.p), result->adv_data.len);
+    if (!model) model = ClockAdvertisement(reinterpret_cast<const uint8_t *>(result->scan_rsp.p), result->scan_rsp.len);
+    pairing = model != 0;
+  } else if (state == "scanning" && discovery_model == 0x01aa &&
       (DecodeXiaomiAdvertisement(
            reinterpret_cast<const uint8_t *>(result->adv_data.p),
            result->adv_data.len, result->addr.addr, &reading) ||
@@ -987,6 +1257,14 @@ void PairingAdvertisement(void *data) {
        Xiaomi03Advertisement(reinterpret_cast<const uint8_t *>(result->scan_rsp.p), result->scan_rsp.len))) {
     model = 0x055b;
     pairing = true;
+    // One model entry supports encrypted MiBeacon and direct GATT readings.
+    const uint8_t *service = nullptr; size_t size = 0; MiFrame frame;
+    if ((FindQingpingService(reinterpret_cast<const uint8_t *>(result->adv_data.p), result->adv_data.len, &service, &size) ||
+         FindQingpingService(reinterpret_cast<const uint8_t *>(result->scan_rsp.p), result->scan_rsp.len, &service, &size)) &&
+        ParseMiFrame(service, size, result->addr.addr, &frame) && frame.model == 0x055b && frame.encrypted) {
+      encrypted = true;
+      beacon.assign(service, service + size);
+    }
   } else {
   mg_str manufacturer = mgos_bt_gap_parse_adv_data(
         result->scan_rsp, MGOS_BT_GAP_EIR_MANUFACTURER_SPECIFIC_DATA);
@@ -1006,8 +1284,11 @@ void PairingAdvertisement(void *data) {
       i += n;
     }
   }
-  if (!pairing || (model != 1 && model != 2 && model != 5 && model != 3 && model != 0x01aa && model != 0x055b) ||
-      (state == "scanning" && discovery_model && model != discovery_model)) return;
+  if (!pairing || (!XiaomiClockModel(model) && !QingpingModel(model) && model != 1 && model != 2 && model != 5 && model != 3 && model != 0x01aa && model != 0x055b && model != 0x098b && model != 0x0997 && !XiaomiMotion2SModel(model)) ||
+      (state == "scanning" && discovery_model && model != discovery_model &&
+       !(discovery_model==0x0347 && model==0x0b48) &&
+       !(XiaomiClockModel(discovery_model) && XiaomiClockModel(model)) &&
+       !(XiaomiMotion2SModel(discovery_model) && XiaomiMotion2SModel(model)))) return;
   if (state == "waiting_pairing_mode" || state == "waiting_security_retry" ||
       state == "waiting_user_pairing") {
     if (memcmp(peer.addr, result->addr.addr, 6) == 0) {
@@ -1027,12 +1308,13 @@ void PairingAdvertisement(void *data) {
       candidate.encrypted = encrypted;
       candidate.model = model;
       candidate.seen = mgos_uptime();
+      candidate.beacon = beacon;
       return;
     }
   }
   if (candidates.size() < 8)
     candidates.push_back(
-        {result->addr, result->rssi, encrypted, model, mgos_uptime()});
+        {result->addr, result->rssi, encrypted, model, mgos_uptime(), beacon});
 }
 void PairingTimeout() {
   if (!Active() || mgos_uptime() < deadline) return;
@@ -1049,17 +1331,19 @@ void PairingTimeout() {
 }
 void PairingInit() {
   auto *rpc = mgos_rpc_get_global();
-  mg_rpc_add_handler(rpc, "Shelly.BLU.Discover", "{model:%d}", DiscoverRPC, nullptr);
+  mg_rpc_add_handler(rpc, "Shelly.BLU.Discover", "{model:%d,bindkey:%B}", DiscoverRPC, nullptr);
   mg_rpc_add_handler(rpc, "Shelly.BLU.Pair",
                      "{role:%d,mac:%Q,pin:%Q,current_pin:%Q}", PairRPC,
                      nullptr);
   mg_rpc_add_handler(rpc, "Shelly.BLU.Status", "", StatusRPC, nullptr);
+  mg_rpc_add_handler(rpc, "Shelly.BLU.Bind", "{role:%d,mac:%Q,bindkey:%Q}", BindRPC, nullptr);
+  mg_rpc_add_handler(rpc, "Shelly.BLU.Unpair", "{role:%d}", UnpairRPC, nullptr);
   mg_rpc_add_handler(rpc, "Shelly.BLU.Cancel", "", CancelRPC, nullptr);
   mg_rpc_add_handler(rpc, "Shelly.BLU.Resume", "", ResumeRPC, nullptr);
   mg_rpc_add_handler(rpc, "Shelly.BLU.SetPIN", "{pin:%Q}", EncryptionPINRPC, nullptr);
   mgos_set_timer(
       500, MGOS_TIMER_REPEAT,
-      [](void *) { PairingTimeout(); },
+      [](void *) { PollTransportRemoval(); PairingTimeout(); },
       nullptr);
 }
 }  // namespace blu

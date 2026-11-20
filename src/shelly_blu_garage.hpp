@@ -7,6 +7,7 @@
 struct mgos_bt_addr;
 namespace shelly {
 namespace blu {
+void ApplyMiReading(int role, const mgos_bt_addr &address, const Reading &reading, bool contact, int rssi);
 void Init();
 void Invalidate();
 bool Enabled();
@@ -17,6 +18,8 @@ bool ValidMAC(const char *mac);
 const char *SensorMAC(int role);
 const char *SensorName(int role);
 void SetSensorName(int role, const char *name);
+bool SensorDashboard(int role);
+void SetSensorDashboard(int role, bool visible);
 const Sensor &MotionReading();
 bool MotionReady();
 bool MotionLightReady();

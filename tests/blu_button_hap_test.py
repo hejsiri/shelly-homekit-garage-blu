@@ -23,6 +23,7 @@ harness = r'''
 #include <vector>
 #include "shelly_blu_bthome.hpp"
 #include "shelly_blu_xiaomi.hpp"
+#include "shelly_blu_mibeacon.hpp"
 using HAPError = int;
 struct HAPAccessoryServerRef {};
 struct HAPBoolCharacteristicReadRequest {};
@@ -35,6 +36,11 @@ const int kHAPCharacteristicType_MotionDetected=1,kHAPCharacteristicType_StatusF
  kHAPCharacteristicType_CurrentTemperature=3,kHAPCharacteristicType_CurrentRelativeHumidity=4,
  kHAPCharacteristicType_OccupancyDetected=5,kHAPCharacteristicType_ProgrammableSwitchEvent=6,kHAPCharacteristicType_StatusActive=7,kHAPCharacteristicType_CurrentAmbientLightLevel=8;
 const int kHAPCharacteristicUnits_Lux=1;
+const int kHAPServiceType_SmokeSensor=7,kHAPCharacteristicType_SmokeDetected=9;
+const int kHAPServiceType_ContactSensor=8,kHAPCharacteristicType_ContactSensorState=10;
+const int kHAPCharacteristicValue_ContactSensorState_Detected=1,kHAPCharacteristicValue_ContactSensorState_NotDetected=0;
+const char *kHAPServiceDebugDescription_ContactSensor="contact",*kHAPCharacteristicDebugDescription_ContactSensorState="contact";
+const char *kHAPServiceDebugDescription_SmokeSensor="smoke",*kHAPCharacteristicDebugDescription_SmokeDetected="smoke";
 const char *kHAPServiceDebugDescription_LightSensor="light",*kHAPCharacteristicDebugDescription_CurrentAmbientLightLevel="lux";
 const char *kHAPServiceDebugDescription_MotionSensor="motion",*kHAPServiceDebugDescription_TemperatureSensor="temperature",
  *kHAPServiceDebugDescription_HumiditySensor="humidity",*kHAPServiceDebugDescription_OccupancySensor="occupancy",
@@ -104,10 +110,10 @@ struct mgos_bt_gap_scan_result {Address addr;Buffer adv_data;int rssi;Buffer sca
 namespace shelly {
 int GetIdentifyCB(){return 0;}
 namespace blu {
-Sensor sensors[6];Address addresses[6]={};bool known[6]={};
+Sensor sensors[7];Address addresses[7]={};bool known[7]={};
 ButtonEvents button_events;ProgrammableButtonEvents programmable_button_events;
 std::function<void(uint8_t)> button_event_handler;
-bool button_pending=false;double button_press_time=0;uint32_t button_press_sequence=0,packet_sequence[6]={};
+bool button_pending=false;double button_press_time=0;uint32_t button_press_sequence=0,packet_sequence[7]={};
 void PairingAdvertisement(void*){}
 bool PairingBusy(){return pairing;}
 void PairingVerified(int){}
@@ -122,6 +128,11 @@ const Sensor &MotionReading(){return sensors[2];}
 const Sensor &ReadingFor(int role){return sensors[role];}
 bool SensorReady(int role);
 bool HTReady(int role,bool temperature);
+bool QingpingFor(int,const unsigned char*){return false;}
+bool XiaomiBindkeyFor(int,const unsigned char*){return false;}
+bool AcceptQingping(int,const uint8_t*,const uint8_t*,size_t,Reading*,bool*){return false;}
+bool AcceptMi(int,const uint8_t*,const uint8_t*,size_t,uint8_t*,size_t*,uint16_t*){return false;}
+void ApplyMiReading(int,const Address&,const Reading&,bool,int){}
 bool SecureFor(int,const uint8_t*){return false;}
 bool XiaomiFor(int role,const uint8_t*){return role==3&&xiaomi;}
 int mgos_sys_config_get_blu_stale_after_s(){return 180;}
@@ -164,7 +175,7 @@ int main(){
  tick();beacon(1,0);tick();assert(CarPresent()&&presence->values.back()==1&&event->values.empty()&&!ConsumeButtonPress());
  const int notifications=presence->notifications;tick();assert(presence->notifications==notifications);
  now=55;assert(CarPresent());now=55.01;tick();assert(!CarPresent()&&presence->values.back()==0);
- assert(fault->read(nullptr,nullptr,&value)==kHAPError_None&&value==0); // Absence is a normal reading.
+ assert(fault->read(nullptr,nullptr,&value)==kHAPError_None&&value==1); // Expired beacons clear occupancy and mark stale data.
  now=60;beacon(2,0);tick();assert(CarPresent()&&presence->values.back()==1);
  now=60.1;beacon(3,1);assert(event->values==std::vector<int>{0});assert(ConsumeButtonPress()&&!ConsumeButtonPress());
  now=60.3;beacon(3,1);assert(event->values.size()==1&&!ConsumeButtonPress());
@@ -180,10 +191,10 @@ int main(){
  now=65;pairing=true;beacon(12,1);pairing=false;beacon(12,1);
  assert(event->values.size()==5&&!ConsumeButtonPress());
  beacon(13,2);assert(event->values.back()==1&&!ConsumeButtonPress());
- bluetooth=false;tick();assert(!CarPresent()&&presence->read(nullptr,nullptr,&value)==kHAPError_None&&value==1);
+ bluetooth=false;tick();assert(!CarPresent()&&presence->read(nullptr,nullptr,&value)==kHAPError_None&&value==0);
  assert(fault->read(nullptr,nullptr,&value)==kHAPError_None&&value==1);
  bluetooth=true;tick();assert(presence->values.back()==1);
- scanning=false;tick();assert(!CarPresenceReady()&&presence->read(nullptr,nullptr,&value)==kHAPError_None&&value==1);
+ scanning=false;tick();assert(!CarPresenceReady()&&presence->read(nullptr,nullptr,&value)==kHAPError_None&&value==0);
  scanning=true;tick();assert(CarPresenceReady()&&presence->values.back()==1);
  accessory.reset();assert(!button_event_handler&&mgos::Timer::timers.empty());
  beacon(14,4); // No callback after the accessory was destroyed.
@@ -211,7 +222,7 @@ int main(){
 '''
 with tempfile.TemporaryDirectory(prefix='shelly-button-hap-') as temp:
     p=Path(temp);(p/'test.cpp').write_text(harness)
-    subprocess.run(['clang++','-std=c++14','-DSHELLY_GARAGE_BLE','-Wall','-Wextra','-Werror',
+    subprocess.run(['clang++','-std=c++14','-DSHELLY_GARAGE_BLE','-Wall','-Wextra','-Werror','-Wno-unused-lambda-capture',
                     '-fsanitize=address,undefined','-I',str(root/'src'),str(p/'test.cpp'),'-o',str(p/'test')],check=True)
     subprocess.run([str(p/'test')],check=True)
 print('PASS: production BLE path, shared HomeKit accessory, three press types, duplicates, pairing suppression, 45s absence and callback lifetime')
