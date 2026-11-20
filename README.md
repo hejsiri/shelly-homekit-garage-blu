@@ -2,6 +2,9 @@
 
 # Shelly HomeKit Garage BLU
 
+<img width="458" height="549" alt="image" src="https://github.com/user-attachments/assets/11bf9826-26bd-460c-860c-ee133c3d9730" />
+
+
 **Pierwsza instalacja:** najnowszy stabilny firmware fabryczny, potem
 [jeden adres Garage BLU](https://hejsiri.pl/firmware/garage-blu/update/).
 Serwer rozpoznaje model. Układy sprawdzone: Plus 1 — stock 1.7.6, Gen3 — stock 2.2.0.
