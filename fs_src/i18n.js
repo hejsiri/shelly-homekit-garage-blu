@@ -4,7 +4,7 @@
   'use strict';
   const translations = {
     'This device requires Wi-Fi power saving mode 1 or 2 while Bluetooth is enabled.':'To urządzenie wymaga trybu oszczędzania Wi-Fi 1 lub 2 przy włączonym Bluetooth.',
-    'Show in dashboard':'Pokazuj w dashboard',
+    'Show in HomeKit':'Pokazuj w HomeKit','Show in dashboard':'Pokazuj w dashboard',
     'Temperature':'Temperatura','Humidity':'Wilgotność','Garage doors':'Drzwi garażu',
     'Contact sensor':'Czujnik kontaktowy','Light':'Światło','Smoke':'Dym',
     'Contacts open':'Otwarte','Contacts closed':'Zamknięte','Obstacles':'Przeszkody',

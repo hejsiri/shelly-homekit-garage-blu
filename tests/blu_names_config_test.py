@@ -30,6 +30,7 @@ Status Errorf(int,const char*,...){return {false};}
 void mgos_conf_set_str(char **p,const char *s){free(*p);*p=strdup(s);}
 std::string names[7], car_name;
 bool dashboards[7]={true,true,true,true,true,true,true};
+bool homekits[7]={true,true,true,true,true,true,true};
 const char *mgos_sys_config_get_blu_car_name(){return car_name.c_str();}
 void mgos_sys_config_set_blu_car_name(const char *s){car_name=s;}
 bool enabled=false;int stale=180;std::string closed_mac="AA:BB:CC:DD:EE:01",open_mac="AA:BB:CC:DD:EE:02";
@@ -56,13 +57,30 @@ for i,role in enumerate(['closed','open','motion','indoor','outdoor','button','s
     harness+=f'void mgos_sys_config_set_blu_{role}_name(const char *s){{names[{i}]=s;}}\n'
     harness+=f'bool mgos_sys_config_get_blu_{role}_dashboard(){{return dashboards[{i}];}}\n'
     harness+=f'void mgos_sys_config_set_blu_{role}_dashboard(bool visible){{dashboards[{i}]=visible;}}\n'
+for i,role in enumerate(['closed','open','motion','indoor','outdoor','button','smoke']):
+    harness+=f'bool mgos_sys_config_get_blu_{role}_homekit(){{return homekits[{i}];}}\n'
+    harness+=f'void mgos_sys_config_set_blu_{role}_homekit(bool visible){{homekits[{i}]=visible;}}\n'
 harness+='namespace blu {\nint invalidations=0;void Invalidate(){invalidations++;}\nbool ValidMAC(const char *s){return strlen(s)==17;}\n'
-for sig in ['const char *SensorName(', 'void SetSensorName(', 'bool SensorDashboard(', 'void SetSensorDashboard(']:
+for sig in ['const char *SensorName(', 'void SetSensorName(', 'bool SensorDashboard(', 'void SetSensorDashboard(', 'bool SensorHomeKit(', 'void SetSensorHomeKit(']:
     harness+=extract('src/shelly_blu_garage.cpp',sig)+'\n'
 harness+='}\n'+extract('src/shelly_hap_garage_door_opener.cpp','Status GarageDoorOpener::SetConfig(')
 harness+=r'''
 int main(){
  GarageDoorOpener g;bool restart=false;
+ for(int role=0;role<7;role++) {
+  assert(blu::SensorHomeKit(role));
+  const char *roles[]={"closed","open","motion","indoor","outdoor","button","smoke"};
+  const std::string key=std::string(roles[role])+"_homekit";
+  assert(g.SetConfig("{\"blu\":{\""+key+"\":false}}",&restart).ok&&restart);
+  assert(!blu::SensorHomeKit(role)&&blu::SensorDashboard(role)&&blu::invalidations==0);
+  restart=false;assert(g.SetConfig("{}",&restart).ok&&!restart&&!blu::SensorHomeKit(role));
+  assert(g.SetConfig("{\"blu\":{\""+key+"\":false}}",&restart).ok&&!restart);
+  assert(!g.SetConfig("{\"blu\":{\""+key+"\":true,\"stale_after_s\":1}}",&restart).ok);
+  assert(!restart&&!blu::SensorHomeKit(role));
+  assert(g.SetConfig("{\"blu\":{\""+key+"\":true}}",&restart).ok&&restart&&blu::SensorHomeKit(role));
+  restart=false;
+ }
+
  for(int i=0;i<7;i++)assert(blu::SensorDashboard(i));
  assert(g.SetConfig(R"({"blu":{"open_dashboard":false,"motion_dashboard":false,"indoor_dashboard":false,"button_dashboard":false}})",&restart).ok);
  assert(!restart&&blu::invalidations==0);

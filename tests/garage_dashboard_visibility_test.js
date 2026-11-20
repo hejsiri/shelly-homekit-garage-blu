@@ -39,6 +39,8 @@ const schema=fs.readFileSync('mos.yml','utf8'),index=fs.readFileSync('fs_src/ind
 for(const role of ['closed','open','motion','indoor','outdoor','button','smoke']){
   assert.equal(schema.split('["blu.'+role+'_dashboard", "b", true,').length-1,2);
   assert(index.includes('id="blu_'+role+'_dashboard" checked'));
+  assert.equal(schema.split('["blu.'+role+'_homekit", "b", true,').length-1,2);
+  assert(index.indexOf('id="blu_'+role+'_homekit"')>index.indexOf('id="blu_'+role+'_dashboard"'));
 }
 const storage=new Map(),preview=fs.readFileSync('tools/simulator/panel-preview.js','utf8');
 const previewContext=()=>({localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)},garageDashboardSetAccess(){},updateElement(){}});

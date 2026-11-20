@@ -17,6 +17,9 @@
 
 #include "shelly_rpc_service.hpp"
 
+#include <memory>
+#include <new>
+
 #include "mgos.hpp"
 #include "mgos_dns_sd.h"
 #include "mgos_http_server.h"
@@ -228,6 +231,16 @@ static void SetConfigHandler(struct mg_rpc_request_info *ri, void *cb_arg,
     return;
   }
 
+  auto free_config = [](mgos_config *config) {
+    mgos_config_free(config);
+    delete config;
+  };
+  std::unique_ptr<mgos_config, decltype(free_config)> previous_config(
+      new (std::nothrow) mgos_config{}, free_config);
+  if (!previous_config || !mgos_config_copy(&mgos_sys_config, previous_config.get())) {
+    mg_rpc_send_errorf(ri, 500, "Cannot prepare configuration update");
+    return;
+  }
   Status st = Status::OK();
   bool restart_required = false;
   if (id == -1 && type == -1) {
@@ -290,13 +303,14 @@ static void SetConfigHandler(struct mg_rpc_request_info *ri, void *cb_arg,
       st = mgos::Errorf(STATUS_INVALID_ARGUMENT, "component not found");
     }
   }
-  if (st.ok()) {
-    LOG(LL_ERROR, ("SetConfig ok, %d", restart_required));
-    mgos_sys_config_save(&mgos_sys_config, false /* try once */, nullptr);
-    if (restart_required) {
-      LOG(LL_INFO, ("Configuration change requires %s", "server restart"));
-      RestartService();
-    }
+  if (!st.ok() || !mgos_sys_config_save(&mgos_sys_config, false /* try once */, nullptr)) {
+    if (st.ok()) st = mgos::Errorf(STATUS_UNAVAILABLE, "Cannot save configuration");
+    mgos_config_free(&mgos_sys_config);
+    mgos_sys_config = *previous_config;
+    *previous_config = {};
+  } else if (restart_required) {
+    LOG(LL_INFO, ("Configuration change requires %s", "server restart"));
+    RestartService();
   }
   SendStatusResp(ri, st);
 

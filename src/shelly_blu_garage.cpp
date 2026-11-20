@@ -332,6 +332,30 @@ void SetSensorDashboard(int role, bool visible) {
   }
 }
 const Sensor &ReadingFor(int role) { return sensors[role]; }
+bool SensorHomeKit(int role) {
+  switch (role) {
+    case 0: return mgos_sys_config_get_blu_closed_homekit();
+    case 1: return mgos_sys_config_get_blu_open_homekit();
+    case 2: return mgos_sys_config_get_blu_motion_homekit();
+    case 3: return mgos_sys_config_get_blu_indoor_homekit();
+    case 4: return mgos_sys_config_get_blu_outdoor_homekit();
+    case 5: return mgos_sys_config_get_blu_button_homekit();
+    case 6: return mgos_sys_config_get_blu_smoke_homekit();
+    default: return true;
+  }
+}
+void SetSensorHomeKit(int role, bool visible) {
+  switch (role) {
+    case 0: mgos_sys_config_set_blu_closed_homekit(visible); break;
+    case 1: mgos_sys_config_set_blu_open_homekit(visible); break;
+    case 2: mgos_sys_config_set_blu_motion_homekit(visible); break;
+    case 3: mgos_sys_config_set_blu_indoor_homekit(visible); break;
+    case 4: mgos_sys_config_set_blu_outdoor_homekit(visible); break;
+    case 5: mgos_sys_config_set_blu_button_homekit(visible); break;
+    case 6: mgos_sys_config_set_blu_smoke_homekit(visible); break;
+  }
+}
+
 bool SensorPaired(int role) {
   mgos_bt_addr address;
   const char *mac = SensorMAC(role);
@@ -421,9 +445,9 @@ std::string GetInfoJSON() {
     const int battery = i < 2 && known[i] && XiaomiBindkeyFor(i, addresses[i].addr) && !QingpingFor(i, addresses[i].addr)
         ? CachedBattery(i, addresses[i].addr, time(nullptr), mgos_uptime()) : sensor.battery;
     result += mgos::JSONPrintStringf(
-        ",%Q:%Q,%Q:{name:%Q,dashboard:%B,packet_seq:%u,paired:%B,protocol:%Q,ready:%B,temperature_ready:%B,humidity_ready:%B,secure:%B,seen:%B,smoke_seen:%B,smoke_age_s:%d,active:%B,battery:%d,rssi:%d,age_s:%d,temperature:%.1f,humidity:%d,illuminance:%.2f,illuminance_ready:%B,illuminance_age_s:%d,timeout_s:%d,battery_estimated:%B,voltage_mv:%d,gatt:%s}",
+        ",%Q:%Q,%Q:{name:%Q,dashboard:%B,homekit:%B,packet_seq:%u,paired:%B,protocol:%Q,ready:%B,temperature_ready:%B,humidity_ready:%B,secure:%B,seen:%B,smoke_seen:%B,smoke_age_s:%d,active:%B,battery:%d,rssi:%d,age_s:%d,temperature:%.1f,humidity:%d,illuminance:%.2f,illuminance_ready:%B,illuminance_age_s:%d,timeout_s:%d,battery_estimated:%B,voltage_mv:%d,gatt:%s}",
         (std::string(roles[i]) + "_mac").c_str(), SensorMAC(i) ? SensorMAC(i) : "", roles[i],
-        SensorName(i), SensorDashboard(i), packet_sequence[i],
+        SensorName(i), SensorDashboard(i), SensorHomeKit(i), packet_sequence[i],
         SensorPaired(i), known[i] && QingpingFor(i,addresses[i].addr) ?
           (XiaomiBindkeyFor(i,addresses[i].addr)?"qingping_bindkey":"qingping") :
                          known[i] && XiaomiClockFor(i, addresses[i].addr) ?

@@ -5,7 +5,7 @@ po zaktualizowaniu fabrycznego firmware do najnowszego stabilnego (sprawdzono st
 Paczka blu.78 ma poprzedni układ; bezpośrednia aktualizacja istniejącego Gen3
 blu.78 do blu.79 jest zablokowana. Odczyt zegara Xiaomi bez klucza i odświeżanie kliknięciem sprawdzono na fizycznym Gen3.
 
-Dla **2.16.1_blu.85**, stan: **2026-11-20**.
+Dla **2.16.1_blu.87**, stan: **2026-11-20**.
 
 Od blu38 dostępna jest osobna paczka Garage BLU dla **Shelly 1 Gen3**. Korzysta
 z platformy **ESP32-C3**, ma nazwę aplikacji **S1G3**, a w kanale OTA jest
@@ -17,8 +17,8 @@ rozpoznawana jako **Shelly1Gen3**.
 
 ## Właściwa paczka
 
-- [Pobierz ZIP 2.16.1_blu.85 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.85.zip)
-- [Pobierz sumę SHA-256](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.85.zip.sha256)
+- [Pobierz ZIP 2.16.1_blu.87 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.87.zip)
+- [Pobierz sumę SHA-256](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.87.zip.sha256)
 - [Strona pobierania i metadane](https://hejsiri.pl/firmware/garage-blu/)
 
 | Parametr | Wartość |
@@ -26,10 +26,10 @@ rozpoznawana jako **Shelly1Gen3**.
 | Sterownik | Shelly 1 Gen3 |
 | Identyfikator OTA / aplikacja | Shelly1Gen3 / S1G3 |
 | Platforma | ESP32-C3 |
-| Wersja | 2.16.1_blu.85 |
-| Build | 20261120-184914 |
-| ZIP | 2 361 423 bajtów |
-| SHA-256 | `6e4febd20dfd96c4ce21e1a3f5a328e1b8767af9a111d1c045377141f98c3f53` |
+| Wersja | 2.16.1_blu.87 |
+| Build | 20261120-195316 |
+| ZIP | 2 362 431 bajtów |
+| SHA-256 | `e3441479f257a0ab6d8a2c4e6437e883984c63e62dc92962d58439da2fc154d5` |
 
 ZIP jest dla **Shelly 1 Gen3**, nie dla **Shelly 1 Mini Gen3**, **1PM Gen3**, innych
 Gen3 ani Gen4. Paczka S1G3 nie jest zamienna z paczką Plus1 dla Shelly Plus 1.

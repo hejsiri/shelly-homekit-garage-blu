@@ -813,6 +813,7 @@
             <section class="blu-accessory-panel" aria-labelledby="blu_closed_heading">
               <h3 id="blu_closed_heading" class="blu-accessory-title">Closing sensor</h3>
             <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_closed_dashboard" checked></label></div>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in HomeKit</span><input type="checkbox" id="blu_closed_homekit" checked></label></div>
             <div class="form-control">
               <label>Device type:</label>
               <select id="blu_closed_type"><option value="shelly">Shelly BLU Door Window</option><option value="xiaomi_bindkey">Xiaomi Door &amp; Window Sensor 2</option><option value="qingping_cgh1">Qingping Door &amp; Window Contact Sensor</option></select>
@@ -831,6 +832,7 @@
             <section class="blu-accessory-panel" aria-labelledby="blu_open_heading">
               <h3 id="blu_open_heading" class="blu-accessory-title">Opening sensor</h3>
             <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_open_dashboard" checked></label></div>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in HomeKit</span><input type="checkbox" id="blu_open_homekit" checked></label></div>
             <div class="form-control">
               <label>Device type:</label>
               <select id="blu_open_type"><option value="shelly">Shelly BLU Door Window</option><option value="xiaomi_bindkey">Xiaomi Door &amp; Window Sensor 2</option><option value="qingping_cgh1">Qingping Door &amp; Window Contact Sensor</option></select>
@@ -849,6 +851,7 @@
             <section class="blu-accessory-panel" aria-labelledby="blu_motion_heading">
               <h3 id="blu_motion_heading" class="blu-accessory-title">Motion sensor</h3>
             <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_motion_dashboard" checked></label></div>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in HomeKit</span><input type="checkbox" id="blu_motion_homekit" checked></label></div>
             <div class="form-control">
               <label>Device type:</label>
               <select id="blu_motion_type"><option value="shelly">Shelly BLU Motion</option><option value="qingping_cgpr1">Qingping Motion &amp; Ambient Light Sensor</option><option value="xiaomi_bindkey">Xiaomi Motion Sensor 2S</option></select>
@@ -867,6 +870,7 @@
             <section class="blu-accessory-panel" aria-labelledby="blu_indoor_heading">
               <h3 id="blu_indoor_heading" class="blu-accessory-title">Indoor H&amp;T</h3>
             <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_indoor_dashboard" checked></label></div>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in HomeKit</span><input type="checkbox" id="blu_indoor_homekit" checked></label></div>
             <div class="form-control">
               <label>Device type:</label>
               <select id="blu_indoor_type" aria-label="Indoor thermometer type"><option value="shelly">Shelly BLU H&amp;T</option><option value="xiaomi">Xiaomi Temperature and Humidity Monitor</option><option value="xiaomi_gatt">Xiaomi Temperature and Humidity Monitor 2</option><option value="xiaomi_clock_direct">Xiaomi E-Ink Clock (BHR5435GL) · without key</option><option value="xiaomi_clock">Xiaomi E-Ink Clock (BHR5435GL) · BLE bindkey</option><option value="qingping_cgg1">Qingping Temperature &amp; Humidity Monitor</option></select>
@@ -885,6 +889,7 @@
             <section class="blu-accessory-panel" aria-labelledby="blu_outdoor_heading">
               <h3 id="blu_outdoor_heading" class="blu-accessory-title">Outdoor H&amp;T</h3>
             <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_outdoor_dashboard" checked></label></div>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in HomeKit</span><input type="checkbox" id="blu_outdoor_homekit" checked></label></div>
             <div class="form-control">
               <label>Device type:</label>
               <select id="blu_outdoor_type" aria-label="Outdoor thermometer type"><option value="shelly">Shelly BLU H&amp;T</option><option value="xiaomi">Xiaomi Temperature and Humidity Monitor</option><option value="xiaomi_gatt">Xiaomi Temperature and Humidity Monitor 2</option><option value="xiaomi_clock_direct">Xiaomi E-Ink Clock (BHR5435GL) · without key</option><option value="xiaomi_clock">Xiaomi E-Ink Clock (BHR5435GL) · BLE bindkey</option><option value="qingping_cgg1">Qingping Temperature &amp; Humidity Monitor</option></select>
@@ -903,6 +908,7 @@
             <section class="blu-accessory-panel" aria-labelledby="blu_button_heading">
               <h3 id="blu_button_heading" class="blu-accessory-title">Button</h3>
             <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_button_dashboard" checked></label></div>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in HomeKit</span><input type="checkbox" id="blu_button_homekit" checked></label></div>
             <div class="form-control"><label>Device type:</label><span data-i18n-ignore>Shelly BLU Button1</span></div>
             <div class="form-control"><label>Device:</label><input type="text" id="blu_button_mac" readonly placeholder="Not paired" maxlength="17"><button type="button" id="blu_pair_button">Pair</button></div>
             <div class="form-control" id="blu_button_name_row" style="display:none">
@@ -919,6 +925,7 @@
             <section class="blu-accessory-panel" aria-labelledby="blu_smoke_heading">
               <h3 id="blu_smoke_heading" class="blu-accessory-title">Smoke sensor</h3>
             <div class="form-control"><label class="blu-dashboard-option"><span>Show in dashboard</span><input type="checkbox" id="blu_smoke_dashboard" checked></label></div>
+            <div class="form-control"><label class="blu-dashboard-option"><span>Show in HomeKit</span><input type="checkbox" id="blu_smoke_homekit" checked></label></div>
               <div class="form-control"><label>Device type:</label><select id="blu_smoke_type"><option value="xiaomi_bindkey">Xiaomi Honeywell Smoke Detector</option></select></div>
               <div class="form-control"><label>Device:</label><input type="text" id="blu_smoke_mac" readonly placeholder="Not paired" maxlength="17"><button type="button" id="blu_pair_smoke">Pair</button></div>
               <div class="form-control" id="blu_smoke_name_row" style="display:none"><label>Name:</label><input type="text" id="blu_smoke_name" aria-label="Smoke device name" maxlength="64"></div>

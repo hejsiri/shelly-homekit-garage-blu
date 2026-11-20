@@ -32,6 +32,8 @@ const Sensor &ReadingFor(int role);
 bool SensorReady(int role);
 bool HTReady(int role, bool temperature);
 bool SensorPaired(int role);
+bool SensorHomeKit(int role);
+void SetSensorHomeKit(int role, bool visible);
 int SensorTimeout(int role);
 void SetThermometerReading(int role, const mgos_bt_addr &address,
                            const Sensor &reading, int voltage_mv);

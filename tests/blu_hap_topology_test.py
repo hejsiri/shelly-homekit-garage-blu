@@ -36,6 +36,8 @@ int restarts = 0;
 void RestartService() { restarts++; }
 namespace blu {
 bool paired[7] = {};
+bool visible[7] = {};
+bool SensorHomeKit(int role) { return visible[role]; }
 bool SensorPaired(int role) { return paired[role]; }
 std::unique_ptr<mgos::hap::Service> CreateContactService(int role) {
  return std::unique_ptr<mgos::hap::Service>(new mgos::hap::Service{role, false});
@@ -75,6 +77,8 @@ harness += selection + r'''
 }}
 int main() {
  using namespace shelly;
+ for (int visibility = 0; visibility < 128; visibility++) {
+ for (int i=0;i<7;i++) blu::visible[i]=(visibility & (1<<i))!=0;
  for (int mask = 0; mask < 128; mask++) {
   for (int i = 0; i < 7; i++) blu::paired[i] = (mask & (1 << i)) != 0;
   hap::GarageDoorOpener garage;
@@ -82,13 +86,14 @@ int main() {
   garage.AddBLUServices(&accessory);
   int counts[7] = {};
   for (auto *service : accessory.services) counts[service->role]++;
-  assert(counts[0] == (blu::paired[0] ? 1 : 0));
-  assert(counts[1] == (blu::paired[1] ? 1 : 0));
-  assert(counts[2] == (blu::paired[2] ? 2 : 0));
-  assert(counts[3] == (blu::paired[3] ? 2 : 0));
-  assert(counts[4] == (blu::paired[4] ? 2 : 0));
-  assert(counts[5] == (blu::paired[5] ? 2 : 0));
-  assert(counts[6] == (blu::paired[6] ? 1 : 0));
+  assert(counts[0] == (blu::paired[0] && blu::visible[0] ? 1 : 0));
+  assert(counts[1] == (blu::paired[1] && blu::visible[1] ? 1 : 0));
+  assert(counts[2] == (blu::paired[2] && blu::visible[2] ? 2 : 0));
+  assert(counts[3] == (blu::paired[3] && blu::visible[3] ? 2 : 0));
+  assert(counts[4] == (blu::paired[4] && blu::visible[4] ? 2 : 0));
+  assert(counts[5] == (blu::paired[5] && blu::visible[5] ? 2 : 0));
+  assert(counts[6] == (blu::paired[6] && blu::visible[6] ? 1 : 0));
+ }
  }
  for (int selected = 0; selected < 7; selected++) {
   blu::role = selected; blu::state = "waiting_encrypted_beacon";
@@ -111,4 +116,4 @@ with tempfile.TemporaryDirectory(prefix='shelly-hap-topology-') as temp:
     (d / 'test.cpp').write_text(harness)
     subprocess.run(['clang++', '-std=c++14', '-Wall', '-Wextra', '-Werror', str(d / 'test.cpp'), '-o', str(d / 'test')], check=True)
     subprocess.run([str(d / 'test')], check=True)
-print('PASS: all 128 pairing combinations expose only paired services; verified optional sensors defer one HomeKit refresh')
+print('PASS: all 16384 pairing/visibility combinations expose only paired services; verified optional sensors defer one HomeKit refresh')

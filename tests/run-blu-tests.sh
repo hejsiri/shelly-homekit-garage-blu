@@ -44,6 +44,7 @@ python3 tests/blu_hap_database_test.py
 python3 tests/garage_fs_cleanup_test.py
 python3 tests/homekit_kvs_persistence_test.py
 python3 tests/auth_file_persistence_test.py
+python3 tests/config_save_transaction_test.py
 python3 tests/ota_fs_budget_test.py
 python3 tests/blu_button_hap_test.py
 python3 tests/blu_key_read_test.py

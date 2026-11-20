@@ -290,3 +290,9 @@ Po odebraniu poziomu baterii Xiaomi Door & Window Sensor 2 sterownik zapisuje go
 ### Język panelu
 
 W sekcji **System** wybierz z menu **English** lub **Polski**. Wybór działa od razu dla ustawień, parowania i wizualizacji. Przeglądarka zapamiętuje go dla adresu sterownika i przywraca po ponownym otwarciu panelu.
+
+## Widoczność akcesoriów BLU
+
+Dla każdego czujnika dostępne są niezależne opcje „Show in dashboard” i „Show in HomeKit”.
+Po zmianie „Show in HomeKit” naciśnij „Save”. Shelly zapisze ustawienia, zrestartuje usługę HomeKit i zgłosi zmianę konfiguracji aplikacji Dom.
+Opcja dla termometru obejmuje temperaturę i wilgotność, dla czujnika ruchu ruch i światło, a dla przycisku przycisk programowalny i obecność auta.

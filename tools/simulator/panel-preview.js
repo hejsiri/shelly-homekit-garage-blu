@@ -1,7 +1,7 @@
 // Preview adapter only: original firmware HTML/CSS/script.js are served unchanged.
 const previewInfo = {
  name:'Shelly-Garage-BLU',model:'Shelly1Gen3',device_id:'Shelly1G3-DEMO00000001',
- version:'2.16.1_blu.78',fw_build:'20261027-235635',sys_mode:2,gdo_avail:true,wc_avail:false,
+ version:'2.16.1_blu.87',fw_build:'20261027-235635',sys_mode:2,gdo_avail:true,wc_avail:false,
  hap_cn:1,hap_paired:false,hap_running:true,hap_ip_conns_pending:0,hap_ip_conns_active:0,hap_ip_conns_max:16,
  uptime:3600,sys_temp:39,auth_en:true,wifi_connected:true,wifi_conn_rssi:-58,
  components:[{id:1,type:5,name:'Garage door',cur_state:1,cur_state_str:'closed',move_time:20,pulse_time_ms:500,
@@ -17,6 +17,11 @@ const previewDashboardKey='garage-preview-dashboard';
 let previewDashboard={};
 try{previewDashboard=JSON.parse(localStorage.getItem(previewDashboardKey)||'{}')||{};}catch(_){}
 for(const role of ['closed','open','motion','indoor','outdoor','button','smoke'])previewInfo.components[0].blu[role].dashboard=previewDashboard[role]!==false;
+
+const previewHomeKitKey='garage-preview-homekit';
+let previewHomeKit={};
+try{previewHomeKit=JSON.parse(localStorage.getItem(previewHomeKitKey)||'{}')||{};}catch(_){}
+for(const role of ['closed','open','motion','indoor','outdoor','button','smoke'])previewInfo.components[0].blu[role].homekit=previewHomeKit[role]!==false;
 
 let previewBeaconAt = Date.now();
 let previewMoveStart = 0, previewPosition = 0, previewMoveFrom = 0;
@@ -124,6 +129,11 @@ callDevice=function(method,params){
        if(key.endsWith('_dashboard')&&c.blu[dashboardRole]&&typeof value==='boolean'){
          c.blu[dashboardRole].dashboard=value;previewDashboard[dashboardRole]=value;
          try{localStorage.setItem(previewDashboardKey,JSON.stringify(previewDashboard));}catch(_){}
+       }
+       else if(key.endsWith('_homekit')&&c.blu[key.slice(0,-8)]&&typeof value==='boolean'){
+         const homekitRole=key.slice(0,-8);
+         c.blu[homekitRole].homekit=value;previewHomeKit[homekitRole]=value;
+         try{localStorage.setItem(previewHomeKitKey,JSON.stringify(previewHomeKit));}catch(_){}
        }
        else if(key==='button_name') {c.blu.button_name=value;c.blu.button.name=value||'Button';}
        else if(key.endsWith('_name')&&c.blu[role]) c.blu[role].name=value;

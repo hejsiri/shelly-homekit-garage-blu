@@ -1,6 +1,6 @@
 author: Shelly-HomeKit contributors
 description: Garage BLU HomeKit firmware for Shelly Plus 1 and Shelly 1 Gen3
-version: 2.16.1_blu.85
+version: 2.16.1_blu.87
 
 libs_version: latest
 modules_version: latest
@@ -298,12 +298,19 @@ conds:
         - ["blu.smoke_mac", "s", "", {title: "Xiaomi smoke sensor MAC"}]
         - ["blu.smoke_name", "s", "", {title: "Smoke sensor accessory name"}]
         - ["blu.closed_dashboard", "b", true, {title: "Show closed sensor in dashboard"}]
+        - ["blu.closed_homekit", "b", true, {title: "Show closed sensor in HomeKit"}]
         - ["blu.open_dashboard", "b", true, {title: "Show open sensor in dashboard"}]
+        - ["blu.open_homekit", "b", true, {title: "Show open sensor in HomeKit"}]
         - ["blu.motion_dashboard", "b", true, {title: "Show motion sensor in dashboard"}]
+        - ["blu.motion_homekit", "b", true, {title: "Show motion sensor in HomeKit"}]
         - ["blu.indoor_dashboard", "b", true, {title: "Show indoor sensor in dashboard"}]
+        - ["blu.indoor_homekit", "b", true, {title: "Show indoor sensor in HomeKit"}]
         - ["blu.outdoor_dashboard", "b", true, {title: "Show outdoor sensor in dashboard"}]
+        - ["blu.outdoor_homekit", "b", true, {title: "Show outdoor sensor in HomeKit"}]
         - ["blu.button_dashboard", "b", true, {title: "Show button sensor in dashboard"}]
+        - ["blu.button_homekit", "b", true, {title: "Show button sensor in HomeKit"}]
         - ["blu.smoke_dashboard", "b", true, {title: "Show smoke sensor in dashboard"}]
+        - ["blu.smoke_homekit", "b", true, {title: "Show smoke sensor in HomeKit"}]
         - ["blu.car_name", "s", "", {title: "Car presence tile name"}]
         - ["blu.hap_layout_version", "i", 0, {title: "Internal BLU HomeKit layout revision"}]
         - ["blu.presence_timeout_s", "i", 45, {title: "Button presence timeout seconds"}]
@@ -391,12 +398,19 @@ conds:
         - ["blu.smoke_mac", "s", "", {title: "Xiaomi smoke sensor MAC"}]
         - ["blu.smoke_name", "s", "", {title: "Smoke sensor accessory name"}]
         - ["blu.closed_dashboard", "b", true, {title: "Show closed sensor in dashboard"}]
+        - ["blu.closed_homekit", "b", true, {title: "Show closed sensor in HomeKit"}]
         - ["blu.open_dashboard", "b", true, {title: "Show open sensor in dashboard"}]
+        - ["blu.open_homekit", "b", true, {title: "Show open sensor in HomeKit"}]
         - ["blu.motion_dashboard", "b", true, {title: "Show motion sensor in dashboard"}]
+        - ["blu.motion_homekit", "b", true, {title: "Show motion sensor in HomeKit"}]
         - ["blu.indoor_dashboard", "b", true, {title: "Show indoor sensor in dashboard"}]
+        - ["blu.indoor_homekit", "b", true, {title: "Show indoor sensor in HomeKit"}]
         - ["blu.outdoor_dashboard", "b", true, {title: "Show outdoor sensor in dashboard"}]
+        - ["blu.outdoor_homekit", "b", true, {title: "Show outdoor sensor in HomeKit"}]
         - ["blu.button_dashboard", "b", true, {title: "Show button sensor in dashboard"}]
+        - ["blu.button_homekit", "b", true, {title: "Show button sensor in HomeKit"}]
         - ["blu.smoke_dashboard", "b", true, {title: "Show smoke sensor in dashboard"}]
+        - ["blu.smoke_homekit", "b", true, {title: "Show smoke sensor in HomeKit"}]
         - ["blu.car_name", "s", "", {title: "Car presence tile name"}]
         - ["blu.hap_layout_version", "i", 0, {title: "Internal BLU HomeKit layout revision"}]
         - ["blu.presence_timeout_s", "i", 45, {title: "Button presence timeout seconds"}]

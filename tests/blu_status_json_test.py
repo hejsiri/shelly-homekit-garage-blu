@@ -70,6 +70,7 @@ std::string XiaomiGATTStatusJSON(int) { return "{}"; }
 int SensorTimeout(int role) { return role==4 ? 900 : 180; }
 bool SensorPaired(int role) { return role!=4; }
 bool SensorDashboard(int role) { return role!=1; }
+bool SensorHomeKit(int role) { return role!=2; }
 bool SensorReady(int role) { return role!=4; }
 bool HTReady(int role,bool) { return role==3; }
 const char *SensorName(int) { return "Czujnik \"garaż\" <test>"; }
@@ -114,6 +115,7 @@ with tempfile.TemporaryDirectory(prefix='shelly-status-json-') as temp:
     assert result['car_name'] == 'Auto "garaż" <test>'
     assert result['closed']['active'] is True
     assert result['closed']['age_s'] == 6
+    assert result['motion']['homekit'] is False and result['indoor']['homekit'] is True
     assert result['indoor']['paired'] is True and result['indoor']['secure'] is False
     assert result['indoor']['protocol']=='xiaomi' and result['indoor']['temperature_ready'] is True
     assert result['indoor']['temperature'] == -5.2

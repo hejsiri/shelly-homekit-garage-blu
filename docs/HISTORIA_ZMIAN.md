@@ -1,5 +1,12 @@
 # Historia zmian
 
+## 2.16.1_blu.87 — 2026-11-20
+
+- Każde akcesorium BLU ma niezależne ustawienie „Show in HomeKit” pod „Show in dashboard”.
+- Zmiana widoczności po zapisaniu przebudowuje usługi HomeKit i zwiększa numer konfiguracji akcesorium.
+- Opcja „Show in HomeKit” ma domyślną wartość true dla konfiguracji Plus 1 i Gen3.
+- Restart HomeKit następuje po udanym zapisie. Błąd zapisu przywraca poprzednią konfigurację.
+
 ## 2.16.1_blu.85 — 2026-11-20
 
 - Ograniczone ponowienie połączenia po przejściowym przerwaniu przez stos BLE.

@@ -76,6 +76,7 @@ namespace shelly { namespace blu {
 Sensor sensor, smoke_sensor;
 bool smoke_paired=false,smoke_ready=false;
 bool ht=false;
+bool SensorHomeKit(int){return true;}
 bool SensorPaired(int role){return role==2||role==5||(ht&&role==3)||(role==6&&smoke_paired);}
 const char *SensorName(int role){return role==2?"Motion sensor":role==3?"Indoor":"Button";}
 const char *CarName(){return "Car presence";}

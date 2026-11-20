@@ -234,6 +234,13 @@ Status GarageDoorOpener::SetConfig(const std::string &config_json,
     const std::string dashboard_format = std::string("{blu:{") + roles[i] + "_dashboard:%B}}";
     json_scanf(config_json.c_str(), config_json.size(), dashboard_format.c_str(), &dashboard);
     if (dashboard != -1) blu::SetSensorDashboard(i, dashboard != 0);
+    int8_t homekit = -1;
+    const std::string homekit_format = std::string("{blu:{") + roles[i] + "_homekit:%B}}";
+    json_scanf(config_json.c_str(), config_json.size(), homekit_format.c_str(), &homekit);
+    if (homekit != -1 && blu::SensorHomeKit(i) != (homekit != 0)) {
+      blu::SetSensorHomeKit(i, homekit != 0);
+      *restart_required = true;
+    }
     const char *old_name = i == 5 ? mgos_sys_config_get_blu_button_name() : blu::SensorName(i);
     if (has_name[i] && names[i] != (old_name ? old_name : "")) {
       blu::SetSensorName(i, names[i].c_str());
@@ -551,23 +558,23 @@ void GarageDoorOpener::RunOnce() {
 #ifdef SHELLY_GARAGE_BLE
 void GarageDoorOpener::AddBLUServices(mgos::hap::Accessory *accessory) {
   for (int role = 0; role < 2; ++role) {
-    if (blu::SensorPaired(role))
+    if (blu::SensorPaired(role) && blu::SensorHomeKit(role))
       blu_sensors_.push_back(blu::CreateContactService(role));
   }
-  if (blu::SensorPaired(2)) {
+  if (blu::SensorPaired(2) && blu::SensorHomeKit(2)) {
     blu_sensors_.push_back(blu::CreateMotionService());
     blu_sensors_.push_back(blu::CreateMotionLightService());
   }
   for (int role = 3; role <= 4; role++) {
-    if (!blu::SensorPaired(role)) continue;
+    if (!blu::SensorPaired(role) || !blu::SensorHomeKit(role)) continue;
     blu_sensors_.push_back(blu::CreateHTService(role, true));
     blu_sensors_.push_back(blu::CreateHTService(role, false));
   }
-  if (blu::SensorPaired(5)) {
+  if (blu::SensorPaired(5) && blu::SensorHomeKit(5)) {
     blu_sensors_.push_back(blu::CreateCarPresenceService());
     blu_sensors_.push_back(blu::CreateButtonService());
   }
-  if (blu::SensorPaired(6)) blu_sensors_.push_back(blu::CreateSmokeService());
+  if (blu::SensorPaired(6) && blu::SensorHomeKit(6)) blu_sensors_.push_back(blu::CreateSmokeService());
   for (auto &service : blu_sensors_) accessory->AddService(service.get());
 }
 #endif

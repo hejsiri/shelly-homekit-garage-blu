@@ -1062,6 +1062,7 @@ function gdoSetConfig(c, cfg, spinner) {
     };
     for (const role of ["closed", "open", "motion", "indoor", "outdoor", "button", "smoke"]) {
       cfg.blu[role + "_dashboard"] = el(c, "blu_" + role + "_dashboard").checked;
+      cfg.blu[role + "_homekit"] = el(c, "blu_" + role + "_homekit").checked;
       if (!c.data.blu[role] || !(c.data.blu[role].paired ?? c.data.blu[role].secure)) continue;
       const name = el(c, "blu_" + role + "_name").value.trim();
       if (new TextEncoder().encode(name).length > 64) {
@@ -1480,6 +1481,7 @@ function updateComponent(cd) {
         for (const role of ["closed", "open", "motion", "indoor", "outdoor", "button", "smoke"]) {
           const sensor = cd.blu[role];
           checkIfNotModified(el(c, "blu_" + role + "_dashboard"), !sensor || sensor.dashboard !== false);
+          checkIfNotModified(el(c, "blu_" + role + "_homekit"), !sensor || sensor.homekit !== false);
           el(c, "blu_" + role + "_name_row").style.display = sensor && (sensor.paired ?? sensor.secure) ? "" : "none";
           const paired = !!(sensor && (sensor.paired ?? sensor.secure));
           const action = el(c, "blu_pair_" + role);
