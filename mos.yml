@@ -1,6 +1,6 @@
 author: Shelly-HomeKit contributors
 description: Garage BLU HomeKit firmware for Shelly Plus 1 and Shelly 1 Gen3
-version: 2.16.1_blu.82
+version: 2.16.1_blu.85
 
 libs_version: latest
 modules_version: latest

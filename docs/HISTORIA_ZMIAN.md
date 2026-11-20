@@ -1,3 +1,21 @@
+# Historia zmian
+
+## 2.16.1_blu.85 — 2026-11-20
+
+- Ograniczone ponowienie połączenia po przejściowym przerwaniu przez stos BLE.
+
+- Skaner BLU pozostaje wstrzymany podczas połączenia i odczytu GATT, co zapobiega kolizji operacji Bluetooth.
+
+- Kliknięcie odczytu termometru GATT uruchamia ręczny odczyt. Panel pokazuje postęp i błędy.
+- Odczyt zegara po UUID z alternatywną obsługą powiadomień, limit połączenia BLE 12 sekund.
+
+- Naprawiono wykrywanie usługi GATT zegara Xiaomi. Potwierdzono odczyt bez klucza na Shelly 1 Gen3 i zegarze F3_A1 z firmware 2.0.1_0060.
+
+- Miniatura zegara Xiaomi E-Ink w oknie parowania dla obu wariantów modelu.
+- Nazwa „Czujniki bramy Bluetooth” i przełącznik w jednym wierszu.
+- Opcja kontynuowania kierunku po zatrzymaniu z przełącznikiem w jednym wierszu.
+- Przycisk „Uruchom ponownie” dopasowuje szerokość do tekstu.
+
 # Historia zmian Garage BLU
 
 ## 2.16.1_blu.82 — 2026-11-20

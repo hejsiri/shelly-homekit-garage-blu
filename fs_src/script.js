@@ -575,6 +575,54 @@ function bluSensorStatus(node, sensor, timeout, kind = false, source = "") {
   }
 }
 
+function bluThermometerRefresh(node, role, sensor) {
+  const enabled = sensor.paired && ["xiaomi_clock_gatt", "xiaomi_gatt"].includes(sensor.protocol);
+  node.classList.toggle("blu-refreshable", enabled);
+  node.onclick = null;
+  node.onkeydown = null;
+  node.removeAttribute("role");
+  node.removeAttribute("tabindex");
+  node.removeAttribute("aria-label");
+  node.title = "";
+  if (!enabled) return;
+  const working = node.bluReadSending || sensor.gatt?.busy;
+  node.setAttribute("role", "button");
+  node.tabIndex = 0;
+  node.setAttribute("aria-disabled", working ? "true" : "false");
+  node.title = "Read temperature and humidity now";
+  node.setAttribute("aria-label", "Read temperature and humidity now");
+  const message = working ? "Reading thermometer..." : node.bluReadError || sensor.gatt?.error;
+  if (message) {
+    const feedback = document.createElement("span");
+    feedback.className = "blu-read-feedback";
+    feedback.textContent = message;
+    node.appendChild(feedback);
+    // Render the base status again on the next poll before adding feedback.
+    node.bluHTML = null;
+  }
+  node.onclick = async () => {
+    if (working || node.bluReadSending) return;
+    node.bluReadSending = true;
+    node.bluReadError = "";
+    bluSensorStatus(node, sensor, sensor.timeout_s || 3600, "ht");
+    bluThermometerRefresh(node, role, sensor);
+    try {
+      await callDevice("Shelly.BLU.Read", {role});
+    } catch (error) {
+      node.bluReadError = error.message || String(error);
+    } finally {
+      node.bluReadSending = false;
+      refreshUI();
+    }
+  };
+  node.onkeydown = event => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      node.onclick();
+    }
+  };
+}
+
 function bluPairStatus(c, message, state) {
   const status = el(c, "blu_pair_status");
   updateInnerText(status, message);
@@ -1445,6 +1493,7 @@ function updateComponent(cd) {
           const name = role === "button" ? cd.blu.button_name ?? sensor.name ?? "" : sensor.name || "";
           setValueIfNotModified(el(c, "blu_" + role + "_name"), name);
           bluSensorStatus(el(c, "blu_" + role + "_status"), sensor, role === "button" ? cd.blu.presence_timeout_s || 45 : sensor.timeout_s || cd.blu.stale_after_s, role === "button" ? "button" : role === "motion" ? true : role === "smoke" ? "smoke" : ["indoor", "outdoor"].includes(role) ? "ht" : false, (cd.blu[role + "_mac"] || "") + ":" + (sensor.protocol || ""));
+          if (["indoor", "outdoor"].includes(role)) bluThermometerRefresh(el(c, "blu_" + role + "_status"), role === "indoor" ? 3 : 4, sensor);
         }
         el(c, "blu_car_name_row").style.display = cd.blu.button && cd.blu.button.secure ? "" : "none";
         setValueIfNotModified(el(c, "blu_car_name"), cd.blu.car_name || "");
@@ -2281,7 +2330,7 @@ async function uploadFW(blob, spinner, status, ar) {
     // Get a Digest challenge with no body. Sending the ZIP before a 401 can
     // stall the browser's second large upload on the embedded HTTP server.
     if (!ar) {
-      const probe = await fetch("/update", {cache: "no-store", signal: controller.signal});
+      const probe = await fetch("/update", {credentials: "omit", cache: "no-store", signal: controller.signal});
       if (probe.status === 401) {
         const challenge = probe.headers.get("www-authenticate");
         if (!challenge) throw new Error("Missing update authentication challenge");

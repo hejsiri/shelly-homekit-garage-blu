@@ -134,7 +134,7 @@ void Scan(void *) {
   bool paired = false;
   for (int i = 0; i < 7; i++)
     paired = paired || SensorPaired(i);
-  if ((!Enabled() && !paired && !PairingScan()) || PairingConnecting() ||
+  if ((!Enabled() && !paired && !PairingScan()) || PairingConnecting() || XiaomiGATTScanPaused() ||
       mgos_bt_get_status() != MGOS_BT_STARTED || mgos_bt_gap_scan_in_progress())
     return;
   mgos_bt_gap_scan_opts opts = {};

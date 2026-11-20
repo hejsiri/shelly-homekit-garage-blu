@@ -45,6 +45,14 @@
     "2691": {
       "page": "https://custom-components.github.io/ble_monitor/by_brand#qingping",
       "image": "https://custom-components.github.io/ble_monitor/assets/images/CGPR1.png"
+    },
+    "5860": {
+      "page": "https://www.mi.com/global/product/xiaomi-temperature-and-humidity-monitor-clock/",
+      "image": "https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1666841408.15629447.png"
+    },
+    "9538": {
+      "page": "https://www.mi.com/global/product/xiaomi-temperature-and-humidity-monitor-clock/",
+      "image": "https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1666841408.15629447.png"
     }
   }
 }

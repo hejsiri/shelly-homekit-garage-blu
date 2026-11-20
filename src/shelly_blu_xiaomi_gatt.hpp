@@ -72,6 +72,7 @@ namespace shelly {
 namespace blu {
 using XiaomiGATTCallback = std::function<void(const Sensor &, int, const std::string &)>;
 void XiaomiGATTInit();
+bool XiaomiGATTRequestRead(int role);
 bool XiaomiGATTStart(int role, const mgos_bt_addr &peer, XiaomiGATTCallback callback, bool clock = false);
 void XiaomiGATTCancel();
 void XiaomiGATTForget(int role);

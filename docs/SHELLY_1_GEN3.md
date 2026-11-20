@@ -3,9 +3,9 @@
 **Instalacja od blu.79:** użyj [jednego adresu instalacji](INSTALACJA_JEDEN_ADRES.md)
 po zaktualizowaniu fabrycznego firmware do najnowszego stabilnego (sprawdzono stock 2.2.0).
 Paczka blu.78 ma poprzedni układ; bezpośrednia aktualizacja istniejącego Gen3
-blu.78 do blu.79 jest zablokowana. Test blu.82 na sprzęcie pozostaje do wykonania.
+blu.78 do blu.79 jest zablokowana. Odczyt zegara Xiaomi bez klucza i odświeżanie kliknięciem sprawdzono na fizycznym Gen3.
 
-Dla **2.16.1_blu.82**, stan: **2026-11-20**.
+Dla **2.16.1_blu.85**, stan: **2026-11-20**.
 
 Od blu38 dostępna jest osobna paczka Garage BLU dla **Shelly 1 Gen3**. Korzysta
 z platformy **ESP32-C3**, ma nazwę aplikacji **S1G3**, a w kanale OTA jest
@@ -17,8 +17,8 @@ rozpoznawana jako **Shelly1Gen3**.
 
 ## Właściwa paczka
 
-- [Pobierz ZIP 2.16.1_blu.82 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.82.zip)
-- [Pobierz sumę SHA-256](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.82.zip.sha256)
+- [Pobierz ZIP 2.16.1_blu.85 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.85.zip)
+- [Pobierz sumę SHA-256](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.85.zip.sha256)
 - [Strona pobierania i metadane](https://hejsiri.pl/firmware/garage-blu/)
 
 | Parametr | Wartość |
@@ -26,10 +26,10 @@ rozpoznawana jako **Shelly1Gen3**.
 | Sterownik | Shelly 1 Gen3 |
 | Identyfikator OTA / aplikacja | Shelly1Gen3 / S1G3 |
 | Platforma | ESP32-C3 |
-| Wersja | 2.16.1_blu.82 |
-| Build | 20261120-172610 |
+| Wersja | 2.16.1_blu.85 |
+| Build | 20261120-184914 |
 | ZIP | 2 359 375 bajtów |
-| SHA-256 | `1fd6aefb947b9ba2045aea6fc2d514c355207cf762d5fee162216a05247d70b7` |
+| SHA-256 | `6e4febd20dfd96c4ce21e1a3f5a328e1b8767af9a111d1c045377141f98c3f53` |
 
 ZIP jest dla **Shelly 1 Gen3**, nie dla **Shelly 1 Mini Gen3**, **1PM Gen3**, innych
 Gen3 ani Gen4. Paczka S1G3 nie jest zamienna z paczką Plus1 dla Shelly Plus 1.

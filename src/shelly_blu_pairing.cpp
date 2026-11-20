@@ -1329,8 +1329,23 @@ void PairingTimeout() {
   else
     Finish("Pairing timed out; wake the device and retry");
 }
+void ReadThermometerRPC(mg_rpc_request_info *ri, void *, mg_rpc_frame_info *, mg_str args) {
+  if (!Authorized(ri)) return;
+  int selected_role = -1;
+  json_scanf(args.p, args.len, "{role:%d}", &selected_role);
+  if (selected_role != 3 && selected_role != 4) {
+    mg_rpc_send_errorf(ri, 400, "Invalid thermometer role");
+    return;
+  }
+  if (!XiaomiGATTRequestRead(selected_role)) {
+    mg_rpc_send_errorf(ri, 409, "Cannot read thermometer now; check pairing, Bluetooth and garage state");
+    return;
+  }
+  mg_rpc_send_responsef(ri, "{}");
+}
 void PairingInit() {
   auto *rpc = mgos_rpc_get_global();
+  mg_rpc_add_handler(rpc, "Shelly.BLU.Read", "{role:%d}", ReadThermometerRPC, nullptr);
   mg_rpc_add_handler(rpc, "Shelly.BLU.Discover", "{model:%d,bindkey:%B}", DiscoverRPC, nullptr);
   mg_rpc_add_handler(rpc, "Shelly.BLU.Pair",
                      "{role:%d,mac:%Q,pin:%Q,current_pin:%Q}", PairRPC,

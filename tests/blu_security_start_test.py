@@ -16,7 +16,7 @@ retry_end=source.index('bool ResumeKeyAfterDisconnect()',retry_start)
 disc_start=source.index('    const int reason =',enc_end)
 disc_end=source.index('\n  }\n  return 0;',disc_start)
 timeout_start=source.index('void PairingTimeout()')
-timeout_end=source.index('void PairingInit()',timeout_start)
+timeout_end=source.index('void ReadThermometerRPC(',timeout_start)
 harness=r'''
 #include <cassert>
 #include <cstdarg>

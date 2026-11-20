@@ -356,7 +356,7 @@
         </div>
         <div class="button-container">
           <button class="btn" id="reboot_btn">
-            <label>Reboot</label>
+            <span>Reboot</span>
           </button>
           <button class="btn" id="reset_btn">
             <label>Reset</label>
@@ -803,10 +803,10 @@
             <span id="state"></span>
           </div>
           <div id="blu_config" style="display:none">
-            <div class="form-control">
-              <label>BLU sensors:</label>
+            <div class="form-control blu-gate-toggle">
+              <label for="blu_enable">Bluetooth gate sensors</label>
               <label class="switch">
-                <input type="checkbox" id="blu_enable" role="switch" aria-label="BLU sensors">
+                <input type="checkbox" id="blu_enable" role="switch" aria-label="Bluetooth gate sensors">
                 <span class="slider round"></span>
               </label>
             </div>
@@ -963,8 +963,8 @@
             </dialog>
             <p id="blu_status"></p>
           </div>
-          <div class="form-control">
-            <label>Continue previous direction after stop:</label>
+          <div class="form-control garage-direction-toggle">
+            <label for="resume_after_stop">Continue previous direction after stop:</label>
             <label class="switch">
               <input type="checkbox" id="resume_after_stop" role="switch" aria-label="Continue previous direction after stop">
               <span class="slider round"></span>

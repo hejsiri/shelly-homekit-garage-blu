@@ -29,6 +29,7 @@ struct Mbuf {std::vector<uint8_t> bytes;};
 struct ble_gatt_error {int status;};
 struct ble_gatt_attr {Mbuf *om;};
 struct ble_gatt_chr {ble_uuid_any_t uuid;uint16_t val_handle;uint16_t def_handle=0;uint8_t properties=0;};
+struct ble_gatt_svc {uint16_t start_handle,end_handle;};
 struct ble_gatt_dsc {uint16_t handle; ble_uuid_any_t uuid;};
 uint16_t ble_uuid_u16(const ble_uuid_t *u){return u->text=="2902"?0x2902:0;}
 int ble_uuid_cmp(const ble_uuid_t *a,const ble_uuid_t *b){return a->text.compare(b->text);}
@@ -46,6 +47,7 @@ struct ble_gap_event {
 #define BLE_HS_CONN_HANDLE_NONE 0xffff
 #define BLE_HS_EDONE 14
 #define BLE_HS_ENOENT 5
+#define BLE_HS_EPREEMPTED 29
 #define BLE_ERR_REM_USER_CONN_TERM 0x13
 #define MGOS_BT_STARTED 1
 #define MGOS_TIMER_REPEAT 1
@@ -71,7 +73,7 @@ Gap gap_cb=nullptr;void *gap_arg=nullptr;
 std::vector<std::string> reads;
 int connects=0,terminates=0,cancels=0,stops=0,delivered=0;
 int start_result=0,read_result=0;
-int ble_gap_connect(uint8_t,const ble_addr_t *,int timeout,void *,Gap cb,void *arg){assert(timeout==3000);connects++;gap_cb=cb;gap_arg=arg;return start_result;}
+int ble_gap_connect(uint8_t,const ble_addr_t *,int timeout,void *,Gap cb,void *arg){assert(timeout==3000||timeout==12000);connects++;gap_cb=cb;gap_arg=arg;return start_result;}
 int ble_gap_terminate(uint16_t,int){terminates++;return 0;}
 int ble_gap_conn_cancel(){cancels++;return 0;}
 int ble_gap_conn_rssi(uint16_t,int8_t *out){*out=-47;return 0;}
@@ -80,7 +82,18 @@ void mgos_bt_addr_to_esp32(const mgos_bt_addr *a,ble_addr_t *b){memcpy(b->val,a-
 void mgos_bt_gap_scan_stop(){stops++;}
 void mgos_bt_uuid_from_str(mg_str s,mgos_bt_uuid *out){out->text=std::string(s.p,s.len);}
 void mgos_bt_uuid_to_esp32(const mgos_bt_uuid *s,ble_uuid_any_t *out){out->u.text=s->text;}
-int ble_gattc_disc_all_chrs(uint16_t h,int begin,int end,Chr cb,void *arg){assert(h==7&&begin==1&&end==0xffff);discoveries++;chr_cb=cb;chr_arg=arg;return discover_result;}
+int ble_gattc_disc_svc_by_uuid(uint16_t h,const ble_uuid_t *uuid,int(*cb)(uint16_t,const ble_gatt_error*,const ble_gatt_svc*,void*),void *arg){
+ assert(h==7&&uuid->text=="ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6");
+ ble_gatt_error ok{0},done{BLE_HS_EDONE};ble_gatt_svc service{70,100};
+ cb(h,&ok,&service,arg);cb(h,&done,nullptr,arg);return 0;
+}
+int ble_gattc_disc_all_chrs(uint16_t h,int begin,int end,Chr cb,void *arg){assert(h==7&&((begin==1&&end==0xffff)||(begin==70&&end==100)));discoveries++;chr_cb=cb;chr_arg=arg;return discover_result;}
+bool direct_clock_read=false;
+int ble_gattc_read_by_uuid(uint16_t h,int begin,int end,const ble_uuid_t *uuid,Reader cb,void *arg){
+ assert(h==7&&begin==70&&end==100&&uuid->text==expected_uuids[3]);
+ if(!direct_clock_read)return BLE_HS_ENOENT;
+ read_cb=cb;read_arg=arg;return 0;
+}
 int ble_gattc_read(uint16_t h,uint16_t attribute,Reader cb,void *arg){assert(h==7&&attribute>handle_base&&attribute<=handle_base+5);reads.push_back(expected_uuids[attribute-handle_base-1]);read_cb=cb;read_arg=arg;return read_result;}
 using Desc=int(*)(uint16_t,const ble_gatt_error*,uint16_t,const ble_gatt_dsc*,void*);
 Desc desc_cb=nullptr; void*desc_arg=nullptr;
@@ -143,6 +156,22 @@ int main(){
  const uint8_t adv[]={7,0x16,0x95,0xfe,0x58,0x58,0x5b,0x05};
  assert(Xiaomi03Advertisement(adv,sizeof(adv)));
  for(size_t n=0;n<sizeof(adv);n++)assert(!Xiaomi03Advertisement(adv,n));
+ // Scan preemption is retried after one tick, with a bounded failure path.
+ Reset();start_result=BLE_HS_EPREEMPTED;Begin();assert(busy&&connects==1&&!delivered);
+ now+=0.5;Tick(nullptr);assert(busy&&connects==2&&!delivered);
+ start_result=0;now+=0.5;Tick(nullptr);assert(busy&&connects==3&&!delivered);
+ XiaomiGATTCancel();
+ Reset();start_result=BLE_HS_EPREEMPTED;Begin();now+=0.5;Tick(nullptr);now+=0.5;Tick(nullptr);
+ assert(!busy&&connects==3&&delivered==1);
+ // Manual reads use the existing scheduler, reject duplicates, invalid roles,
+ // pairing and motion, and preserve current samples until a new read succeeds.
+ Reset();assert(!XiaomiGATTRequestRead(0)&&!XiaomiGATTRequestRead(4));
+ assert(XiaomiGATTRequestRead(3));assert(status[0].queued&&status[0].next==now);
+ assert(!XiaomiGATTRequestRead(3));
+ XiaomiGATTForget(3);assert(!status[0].queued);
+ pairing=true;assert(!XiaomiGATTRequestRead(3));pairing=false;
+ XiaomiGATTSetGarageMoving(true);assert(!XiaomiGATTRequestRead(3));
+ XiaomiGATTSetGarageMoving(false);
  // Clock-only discovery, subscribe to the measured value's actual CCCD and use one sample.
  const uint8_t name[]={11,9,'L','Y','W','S','D','0','2','M','M','C'};
  assert(ClockAdvertisement(name,sizeof(name)) && !ClockAdvertisement(name,sizeof(name)-1));
@@ -163,6 +192,18 @@ int main(){
    rx.notify_rx.attr_handle=84;gap_cb(&rx,gap_arg);Drain();
    assert(delivered==1&&failure.empty()&&received.temperature10==199&&received.humidity==58&&mv==(len==3?-1:3000));
  }
+ // Background scanning remains paused beyond the initial connect grace while GATT owns BLE.
+ Reset();Begin();now+=6;assert(XiaomiGATTScanPaused());
+ XiaomiGATTCancel();assert(!XiaomiGATTScanPaused());
+ // Readable stock clocks return a sample without characteristic enumeration or CCCD writes.
+ Reset();direct_clock_read=true;
+ assert(XiaomiGATTStart(3,mgos_bt_addr(),[](const Sensor &s,int volts,const std::string &e){
+   ++delivered;received=s;mv=volts;failure=e;
+ },true));
+ Connected(0,false);assert(discoveries==0);
+ Reply({0x06,0x09,53,0xef,0x0b});
+ assert(delivered==1&&failure.empty()&&received.temperature10==231&&received.humidity==53&&mv==3055);
+ direct_clock_read=false;
  // No sample -> no assignment. Timeouts terminate the connection and late data is ignored.
  Reset();assert(XiaomiGATTStart(4,mgos_bt_addr(),[](const Sensor &s,int,const std::string &e){
    ++delivered;received=s;failure=e;

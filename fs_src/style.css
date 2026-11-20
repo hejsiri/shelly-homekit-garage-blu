@@ -532,3 +532,18 @@ button.blu-device-card:focus-visible {outline:2px solid var(--primary);outline-o
 .blu-sensor .blu-badge.blu-alarm { background:#c9272c; color:#fff; }
 .garage-settings .blu-accessory-panel .form-control > label.blu-dashboard-option { display:inline-flex; align-items:center; gap:10px; flex:0 1 auto; min-width:0; max-width:100%; cursor:pointer; }
 .blu-dashboard-option > input[type="checkbox"] { flex:none; margin:0; }
+
+.garage-settings .blu-gate-toggle { display:flex; align-items:center; flex-wrap:nowrap; gap:12px; }
+.garage-settings .blu-gate-toggle > label:first-child:not(.switch) { display:inline-block; flex:0 1 auto; min-width:0; max-width:none; margin:0; white-space:nowrap; }
+.garage-settings .blu-gate-toggle > .switch { flex:0 0 40px; width:40px; min-width:40px; max-width:40px; margin:0; }
+
+.garage-settings .garage-direction-toggle { display:flex; align-items:center; flex-wrap:nowrap; gap:12px; }
+.garage-settings .garage-direction-toggle > label:first-child:not(.switch) { display:inline-block; flex:0 1 auto; min-width:0; max-width:none; margin:0; }
+.garage-settings .garage-direction-toggle > .switch { flex:0 0 40px; width:40px; min-width:40px; max-width:40px; margin:0; }
+.garage-settings .garage-direction-toggle > label:first-child:not(.switch) { white-space:nowrap; font-size:clamp(10px, 2.9vw, 14px); }
+
+#reboot_btn { width:auto; white-space:nowrap; }
+
+.blu-refreshable { cursor:pointer; }
+.blu-refreshable:focus-visible { outline:2px solid var(--primary); outline-offset:4px; }
+.blu-read-feedback { flex-basis:100%; font-size:12px; }

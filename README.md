@@ -13,11 +13,11 @@ pełne zamknięcie i otwarcie. Sterownik komunikuje się z HomeKit przez Wi-Fi,
 a z urządzeniami BLU przez Bluetooth. Projekt bazuje na
 [Shelly-HomeKit](https://github.com/mongoose-os-apps/shelly-homekit).
 
-**Publiczne OTA: Shelly Plus 1 i Shelly 1 Gen3 — 2.16.1_blu.82 (2026-11-20).**
+**Publiczne OTA: Shelly Plus 1 i Shelly 1 Gen3 — 2.16.1_blu.85 (2026-11-20).**
 Dla każdego modelu jest osobny ZIP i suma SHA-256. Panel WWW obsługuje **polski i angielski**;
 wybór języka znajduje się w sekcji System. Dokumentacja użytkownika jest po polsku.
 
-**Nowość w blu.82** — zegar Xiaomi BHR5435GL może udostępniać temperaturę i wilgotność przez Bluetooth bez wpisywania klucza.
+**Nowość w blu.85** — poprawiony odczyt zegara Xiaomi BHR5435GL bez klucza, odświeżanie kliknięciem, miniatura zegara i poprawki układu panelu.
 
 [Instalacja i aktualizacje](docs/AKTUALIZACJA.md) ·
 [Konfiguracja i obsługa](docs/KONFIGURACJA.md) ·
@@ -52,7 +52,7 @@ napędu. Pozycja pomiędzy krańcówkami jest szacowana z czasu ruchu.
 <tr><th colspan="3" align="left">Temperatura i wilgotność: wewnątrz i na zewnątrz</th></tr>
 <tr><td width="340"><strong>Shelly BLU H&amp;T</strong><br><code>SBHT-003C</code></td><td align="center"><a href="https://www.shelly.com/products/shelly-blu-h-t-ivory"><img src="https://www.shelly.com/cdn/shop/files/Shelly-BLU-H-and-T-Ivory-main-image.png?v=1739798205" alt="SBHT-003C" width="96"></a></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><td width="340"><strong>Xiaomi Mi Temperature and Humidity Monitor</strong><br><code>LYWSDCGQ/01ZM</code></td><td align="center"><a href="https://www.mi.com/uk/mi-temperature-and-humidity-monitor/"><img src="docs/images/devices/lywsdcgq-01zm.webp" alt="LYWSDCGQ/01ZM" width="96"></a></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
-<tr><td width="340"><strong>Zegar Xiaomi E-Ink z termometrem i higrometrem</strong><br><code>BHR5435GL / LYWSD02MMC</code></td><td align="center"><a href="https://www.mi.com/global/product/xiaomi-temperature-and-humidity-monitor-clock/"><img src="https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1666841408.15629447.png" alt="Zegar Xiaomi BHR5435GL" width="96"></a></td><td>Temperatura (°C) i wilgotność (%) w HomeKit. Od wersji <code>2.16.1_blu.82</code> wybierz zegar z opcją „bez klucza” jako czujnik wewnętrzny lub zewnętrzny. Shelly co 5 minut łączy się z nim przez Bluetooth. Od blu.81 dostępny jest też nasłuch z kluczem BLE. Test z fizycznym zegarem jest jeszcze przed nami.</td></tr>
+<tr><td width="340"><strong>Zegar Xiaomi E-Ink z termometrem i higrometrem</strong><br><code>BHR5435GL / LYWSD02MMC</code></td><td align="center"><a href="https://www.mi.com/global/product/xiaomi-temperature-and-humidity-monitor-clock/"><img src="https://i01.appmifile.com/v1/MI_18455B3E4DA706226CF7535A58E875F0267/pms_1666841408.15629447.png" alt="Zegar Xiaomi BHR5435GL" width="96"></a></td><td>Temperatura (°C) i wilgotność (%) w HomeKit. Od wersji <code>2.16.1_blu.85</code> wybierz zegar z opcją „bez klucza” jako czujnik wewnętrzny lub zewnętrzny. Shelly co 5 minut łączy się z nim przez Bluetooth. Od blu.81 dostępny jest też nasłuch z kluczem BLE. Odczyt bez klucza i odświeżanie kliknięciem są dostępne od blu.85. Sprawdzono je na Shelly 1 Gen3 z zegarem F3_A1, firmware 2.0.1_0060. Na czas odczytu zamknij aktywne połączenie zegara z Xiaomi Home.</td></tr>
 <tr><td width="340"><strong>Xiaomi Mi Temperature and Humidity Monitor 2</strong><br><code>LYWSD03MMC</code></td><td align="center"><a href="https://www.mi.com/co/product/mi-temperature-and-humidity-monitor-2/specs/"><img src="https://i02.appmifile.com/540_operator_sg/30/06/2021/e16eb0570f3712376f4234988faf5481.png" alt="LYWSD03MMC" width="96"></a></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%; z GATT szacowany z napięcia)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><td width="340"><strong>Qingping Temperature &amp; Humidity Monitor</strong><br><code>CGG1</code></td><td align="center"><a href="https://custom-components.github.io/ble_monitor/by_brand#qingping"><img src="https://custom-components.github.io/ble_monitor/assets/images/CGG1.png" alt="CGG1" width="96"></a></td><td><ul><li>Temperatura (°C)</li><li>Wilgotność (%)</li><li>Poziom baterii (%)</li><li>Siła sygnału Bluetooth (RSSI)</li></ul></td></tr>
 <tr><th colspan="3" align="left">Przycisk i obecność auta</th></tr>
@@ -113,10 +113,10 @@ Instrukcje budowania, testów i struktura kodu są w [README-BLU.md](README-BLU.
 ## Pobieranie i aktualizacja
 
 - [Paczki i opis na hejsiri.pl](https://hejsiri.pl/firmware/garage-blu/)
-- [ZIP 2.16.1_blu.82 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.82.zip)
-- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.82.zip.sha256)
-- [ZIP 2.16.1_blu.82 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.82.zip)
-- [SHA-256 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.82.zip.sha256)
+- [ZIP 2.16.1_blu.85 dla Shelly Plus 1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.85.zip)
+- [SHA-256 Plus1](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-ShellyPlus1-2.16.1_blu.85.zip.sha256)
+- [ZIP 2.16.1_blu.85 dla Shelly 1 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.85.zip)
+- [SHA-256 Gen3](https://hejsiri.pl/firmware/garage-blu/shelly-homekit-garage-blu-Shelly1Gen3-2.16.1_blu.85.zip.sha256)
 - [Instrukcja instalacji, aktualizacji i kontroli po restarcie](docs/AKTUALIZACJA.md)
 
 Kanały dla Plus 1 i Gen3 mogą udostępniać różne wersje. Paczki mają osobne profile sprzętu.
